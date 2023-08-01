@@ -1,0 +1,2 @@
+; Classic hello world program in UglyLang
+PRINT: name
