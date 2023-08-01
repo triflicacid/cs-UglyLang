@@ -117,9 +117,23 @@ namespace UglyLang.Source
                 }
 
                 // Create keyword node
-                KeywordNode keywordNode;
+                KeywordNode? keywordNode = null;
                 switch (keyword)
                 {
+                    case "CAST":
+                        {
+                            ValueType? type = Value.TypeFromString(after);
+                            if (type == null)
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", after));
+                            }
+                            else
+                            {
+                                keywordNode = new CastKeywordNode(before, (ValueType) type);
+                            }
+
+                            break;
+                        }
                     case "LET":
                         {
                             ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
@@ -148,6 +162,9 @@ namespace UglyLang.Source
                         throw new Exception("Reached default statement in switch, which should not happen.");
                 }
 
+                if (keywordNode == null)
+                    break;
+
                 keywordNode.LineNumber = lineNumber;
                 tree.AddNode(keywordNode);
             }
@@ -167,6 +184,7 @@ namespace UglyLang.Source
         private static readonly Regex SymbolRegex = new("^[A-Za-z_\\$][A-Za-z_\\$0-9]*$");
         private static readonly Regex LeadingSymbolCharRegex = new("[A-Za-z_\\$]");
         private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9]*)");
+        private static readonly Regex NumberRegex = new("^(?<number>-?(0|[1-9]\\d*)(\\.\\d+)?)");
 
         /// <summary>
         /// Extract the leading symbol from the given string
@@ -175,6 +193,14 @@ namespace UglyLang.Source
         {
             Match match = LeadingSymbolRegex.Match(str);
             return match.Groups["symbol"].Value;
+        }
+
+        /// <summary>
+        /// Extract a number from a string
+        /// </summary>
+        private string ExtractNumberFromString(string str) {
+            Match match = NumberRegex.Match(str);
+            return match.Groups["number"].Value;
         }
 
         /// <summary>
@@ -200,6 +226,9 @@ namespace UglyLang.Source
                 return null;
             }
 
+            ASTNode node;
+            int startPos = col;
+
             // Is a string literal?
             if (expr[col] == '"')
             {
@@ -212,15 +241,27 @@ namespace UglyLang.Source
                 }
 
                 col += end + 1;
-                while (col < expr.Length && expr[col] == ' ') col++;
+                node = new ValueNode(new StringValue(str));
+            }
 
-                if (col < expr.Length)
+            // Is a number?
+            else if (char.IsDigit(expr[col]) || (expr[col] == '-' && col + 1 < expr.Length && char.IsDigit(expr[col + 1])))
+            {
+                string str = ExtractNumberFromString(expr[col..]);
+                col += str.Length;
+                double number = Convert.ToDouble(str);
+                Value value;
+
+                if (number == (long) number)
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col]));
-                    return null;
+                    value = new IntValue((long) number);
+                }
+                else
+                {
+                    value = new FloatValue(number);
                 }
 
-                return new ValueNode(new StringValue(str)) { LineNumber = lineNumber, ColumnNumber = colNumber + col };
+                node = new ValueNode(value);
             }
 
             // Is a symbol?
@@ -230,14 +271,7 @@ namespace UglyLang.Source
                 col += symbol.Length;
                 // TODO: call with parameters?
 
-                while (col < expr.Length && expr[col] == ' ') col++;
-                if (col < expr.Length)
-                {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col]));
-                    return null;
-                }
-
-                return new SymbolNode(symbol) { LineNumber = lineNumber, ColumnNumber = colNumber + col };
+                node = new SymbolNode(symbol);
             }
 
             else
@@ -245,6 +279,42 @@ namespace UglyLang.Source
                 Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("invalid syntax: '{0}'", expr[col]));
                 return null;
             }
+
+            // Eat whitespace
+            while (col < expr.Length && expr[col] == ' ') col++;
+
+            // Type casting?
+            if (col < expr.Length && expr[col] == '(')
+            {
+                int end = GetMatchingClosingItem(expr[col..], '(', ')');
+                if (end == -1)
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("unterminated bracket '{0}'", expr[col]));
+                    return null;
+                }
+
+                string str = expr[(col + 1) .. (col + end)];
+                ValueType? type = Value.TypeFromString(str);
+                if (type == null)
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("{0} is not a valid type", str));
+                    return null;
+                }
+
+                node.CastType = type;
+                col += end + 1;
+            }
+
+            // Should be at the end of the line
+            if (col < expr.Length)
+            {
+                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col]));
+                return null;
+            }
+
+            node.LineNumber = lineNumber;
+            node.ColumnNumber = colNumber + startPos;
+            return node;
         }
 
         /// <summary>

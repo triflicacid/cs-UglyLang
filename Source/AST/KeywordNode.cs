@@ -19,6 +19,11 @@ namespace UglyLang.Source.AST
             Keyword = kw;
         }
 
+        public override Value Evaluate(Context context)
+        {
+            throw new NotImplementedException("Should not call Evaluate on this node");
+        }
+
         public class KeywordInfo
         {
             /// Does the keyword expect something immediatley after it?
@@ -35,6 +40,7 @@ namespace UglyLang.Source.AST
         }
 
         public static readonly Dictionary<string, KeywordInfo> KeywordDict = new() {
+            { "CAST", new(true, true) },
             { "LET", new(true, true) },
             { "PRINT", new(false, true) },
             { "SET", new(true, true) },

@@ -1,4 +1,5 @@
-LET name: "Ruben"
-PRINT: name
-SET name: "Ben"
-PRINT: name
+LET x: 3.14
+PRINT: x
+CAST x: STRING
+SET x: "pi"
+PRINT: x

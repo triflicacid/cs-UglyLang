@@ -1,11 +1,12 @@
 # Syntax
 Each line of the source file is considered to be a new statement. A line may either a comment if the line begins with `;`, or in the form:
 
-`<KEYWORD> [arg][: <value>]`
+`<KEYWORD> [arg][: <value> [(<type>)]]`
 
 Depending on the keyword, neither, one or both of `arg` and `value` must be provided.
 - `arg` : generally a single symbol, will be specified otherwise.
 - `value` : generally an expression to be evaluated, will be specified otherwise.
+- `type` : if present, the type to cast the expression to *before* it is passed into the keyword
 
 # Keywords
 
@@ -26,7 +27,7 @@ Creates a new symbol
 - PRINT: <expr>
 Prints the given value to the screen
 - SET <symbol>: <expr>
-Sets the given symbol to the given value
+Sets the given symbol to the given value. Note that the type of the variable and the type of `expr` must match.
 
 ## Conditional Statement
 

@@ -15,6 +15,7 @@ namespace UglyLang.Source.AST
         public ASTNodeType Type;
         public int LineNumber = 0;
         public int ColumnNumber = 0;
+        public ValueType? CastType = null;
 
         /// Retrieve a Value from a node
         public abstract Value Evaluate(Context context);

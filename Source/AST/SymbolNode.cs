@@ -30,7 +30,8 @@ namespace UglyLang.Source.AST
             {
                 if (context.HasVariable(Symbol))
                 {
-                    return context.GetVariable(Symbol);
+                    Value value = context.GetVariable(Symbol);
+                    return CastType == null ? value : value.To((ValueType) CastType);
                 }
                 else
                 {

@@ -22,7 +22,8 @@ namespace UglyLang.Source.AST
 
         public override Value Evaluate(Context context)
         {
-            return Child.Evaluate(context);
+            Value value = Child.Evaluate(context);
+            return CastType == null ? value : value.To((ValueType)CastType);
         }
     }
 }

@@ -21,17 +21,23 @@ namespace UglyLang.Source.AST.Keyword
             Value = value;
         }
 
-        public override Value Evaluate(Context context)
-        {
-            throw new Exception("Should not call Evaluate on this node");
-        }
-
         public override Signal Action(Context context)
         {
             Value evaldValue = Value.Evaluate(context);
             if (context.Error != null) // Propagate error?
             {
                 return Signal.ERROR;
+            }
+
+            // Make sure that the types line up
+            if (context.HasVariable(Name))
+            {
+                Value oldValue = context.GetVariable(Name);
+                if (oldValue.Type != evaldValue.Type)
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot match {0} with {1} (in assignment to {2})", evaldValue.Type.ToString(), oldValue.Type.ToString(), Name));
+                    return Signal.ERROR;
+                }
             }
 
             context.SetVariable(Name, evaldValue);

@@ -13,6 +13,7 @@ namespace UglyLang.Source
             General, // Generic error
             Syntax,  // The syntax is incorrect
             Name,    // Cannot find a name/variable
+            Type,    // Incorrect/mismatching type(s)
         }
 
         public readonly int LineNumber;
@@ -30,7 +31,7 @@ namespace UglyLang.Source
 
         public override string ToString()
         {
-            return Type.ToString() + " Error:" + LineNumber + ":" + ColumnNumber + " - " + Message;
+            return Type.ToString() + " Error (" + LineNumber + ":" + ColumnNumber + ") - " + Message;
         }
     }
 }
