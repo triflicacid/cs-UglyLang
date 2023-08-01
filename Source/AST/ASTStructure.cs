@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UglyLang.source;
+using UglyLang.Source;
 
 namespace UglyLang.Source.AST
 {
-    public class AST
+    public class ASTStructure
     {
         private readonly List<ASTNode> roots = new();
 

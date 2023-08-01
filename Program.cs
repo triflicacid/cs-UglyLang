@@ -1,5 +1,5 @@
 ﻿// MAIN
-using UglyLang.source;
+using UglyLang.Source;
 
 //Console.WriteLine("Enter the name of the file: ");
 //string filepath = Console.ReadLine() ?? "";

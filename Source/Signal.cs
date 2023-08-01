@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UglyLang.source
+namespace UglyLang.Source
 {
     public enum Signal
     {

@@ -7,17 +7,19 @@ using System.Threading.Tasks;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
 
-namespace UglyLang.source
+namespace UglyLang.Source
 {
     public partial class Parser
     {
         public Error? Error = null;
-        public AST? AST = null;
+        public ASTStructure? AST = null;
 
         public void Parse(string program)
         {
-            AST = new();
+            this.AST = null;
             Error = null;
+
+            ASTStructure tree = new();
 
             string[] lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             for (int lineNumber = 0, colNumber = 0; lineNumber < lines.Length; lineNumber++, colNumber = 0)
@@ -50,13 +52,11 @@ namespace UglyLang.source
                 if (keyword.Length == 0)
                 {
                     Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected keyword, got '{0}'", line[colNumber]));
-                    AST = null;
                     break;
                 }
                 else if (!KeywordNode.KeywordDict.ContainsKey(keyword))
                 {
                     Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("unknown keyword '{0}'", keyword));
-                    AST = null;
                     break;
                 }
 
@@ -77,7 +77,6 @@ namespace UglyLang.source
                         if (!IsValidSymbol(before))
                         {
                             Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", before));
-                            AST = null;
                             break;
                         }
                     }
@@ -91,7 +90,6 @@ namespace UglyLang.source
                         if (colNumber >= line.Length)
                         {
                             Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected colon ':', got end of line");
-                            AST = null;
                         }
                         else if (line[colNumber] == ':')
                         {
@@ -106,7 +104,6 @@ namespace UglyLang.source
                         else
                         {
                             Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected colon ':', got '{0}'", line[colNumber]));
-                            AST = null;
                             break;
                         }
                     }
@@ -116,7 +113,6 @@ namespace UglyLang.source
                 if (colNumber < line.Length)
                 {
                     Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected end of line, got '{0}'", line[colNumber]));
-                    AST = null;
                     break;
                 }
 
@@ -153,8 +149,11 @@ namespace UglyLang.source
                 }
 
                 keywordNode.LineNumber = lineNumber;
-                AST.AddNode(keywordNode);
+                tree.AddNode(keywordNode);
             }
+
+            // Assign newly generated AST
+            AST = tree;
         }
 
         /// <summary>
@@ -162,24 +161,19 @@ namespace UglyLang.source
         /// </summary>
         public static bool IsValidSymbol(string symbol)
         {
-            return SymbolRegex().IsMatch(symbol);
+            return SymbolRegex.IsMatch(symbol);
         }
 
-        [GeneratedRegex("^[A-Za-z_\\$][A-Za-z_\\$0-9]*$")]
-        private static partial Regex SymbolRegex();
-
-        [GeneratedRegex("[A-Za-z_\\$]")]
-        private static partial Regex LeadingSymbolCharRegex();
-
-        [GeneratedRegex("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9]*)")]
-        private static partial Regex LeadingSymbolRegex();
+        private static readonly Regex SymbolRegex = new("^[A-Za-z_\\$][A-Za-z_\\$0-9]*$");
+        private static readonly Regex LeadingSymbolCharRegex = new("[A-Za-z_\\$]");
+        private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9]*)");
 
         /// <summary>
         /// Extract the leading symbol from the given string
         /// </summary>
         private string ExtractSymbolFromString(string str)
         {
-            Match match = LeadingSymbolRegex().Match(str);
+            Match match = LeadingSymbolRegex.Match(str);
             return match.Groups["symbol"].Value;
         }
 
@@ -230,7 +224,7 @@ namespace UglyLang.source
             }
 
             // Is a symbol?
-            else if (LeadingSymbolCharRegex().IsMatch(expr[col].ToString()))
+            else if (LeadingSymbolCharRegex.IsMatch(expr[col].ToString()))
             {
                 string symbol = ExtractSymbolFromString(expr[col..]);
                 col += symbol.Length;

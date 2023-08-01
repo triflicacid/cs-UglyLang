@@ -1,4 +1,4 @@
-﻿namespace UglyLang.source
+﻿namespace UglyLang.Source
 {
     abstract public class Value
     {
