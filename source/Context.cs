@@ -122,7 +122,7 @@ namespace UglyLang.source
         }
 
         /// <summary>
-        /// Set the value of the given symbol (that already exists). Sets from the topmost scope down.
+        /// Set the value of the given symbol, or create a new one. Sets from the topmost scope down.
         /// </summary>
         public void SetVariable(string name, Value value)
         {
@@ -135,7 +135,7 @@ namespace UglyLang.source
                 }
             }
 
-            throw new Exception(string.Format("Failed to set variable: name '{0}' could not be found", name));
+            CreateVariable(name, value);
         }
 
         /// <summary>

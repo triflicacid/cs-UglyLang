@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using UglyLang.Source.AST;
+using UglyLang.Source.AST.Keyword;
 
 namespace UglyLang.source
 {
@@ -11,15 +13,10 @@ namespace UglyLang.source
     {
         public Error? Error = null;
         public AST? AST = null;
-        public Parser()
-        {
-
-        }
 
         public void Parse(string program)
         {
             AST = new();
-            //Error = new(0, 0, Error.Types.General, "Parse method not implemented");
             Error = null;
 
             string[] lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
@@ -79,7 +76,7 @@ namespace UglyLang.source
 
                         if (!IsValidSymbol(before))
                         {
-                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, "invalid symbol");
+                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", before));
                             AST = null;
                             break;
                         }
@@ -143,10 +140,19 @@ namespace UglyLang.source
                             keywordNode = new PrintKeywordNode(expr);
                             break;
                         }
+                    case "SET":
+                        {
+                            ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
+                            if (expr == null) return; // Propagate error
+
+                            keywordNode = new SetKeywordNode(before, expr);
+                            break;
+                        }
                     default:
                         throw new Exception("Reached default statement in switch, which should not happen.");
                 }
 
+                keywordNode.LineNumber = lineNumber;
                 AST.AddNode(keywordNode);
             }
         }

@@ -1,0 +1,2 @@
+; This is a classical hello world program
+PRINT: "Hello, world!"

@@ -1,2 +1,4 @@
-; Classic hello world program in UglyLang
+LET name: "Ruben"
+PRINT: name
+SET name: "Ben"
 PRINT: name

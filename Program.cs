@@ -1,8 +1,12 @@
 ﻿// MAIN
 using UglyLang.source;
 
+//Console.WriteLine("Enter the name of the file: ");
+//string filepath = Console.ReadLine() ?? "";
+//Console.WriteLine();
 string filepath = "source.txt";
-string fullFilePath = Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory);
+
+string fullFilePath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
 fullFilePath = Directory.GetParent(Directory.GetParent(Directory.GetParent(fullFilePath).FullName).FullName).FullName;
 fullFilePath += "\\" + filepath;
 
@@ -21,7 +25,7 @@ if (File.Exists(fullFilePath))
     {
         Context ctx = new(filepath);
         Signal sig = p.AST.Evaluate(ctx);
-        Console.WriteLine(string.Format("Program terminated with signal {0:s}", sig.ToString()));
+        Console.WriteLine(string.Format("Program terminated with signal {0} ({1})", sig.ToString(), (int) sig));
         if (ctx.Error != null)
         {
             Console.WriteLine(ctx.GetErrorString());
