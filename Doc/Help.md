@@ -8,6 +8,8 @@ Depending on the keyword, neither, one or both of `arg` and `value` must be prov
 - `value` : generally an expression to be evaluated, will be specified otherwise.
 - `type` : if present, the type to cast the expression to *before* it is passed into the keyword
 
+There is the general pattern that `arg` acts as the input symbol/the symbol to affect, and `value` is the output value/value to use. For example, `INPUT x` places user input into `x` whilst `PRINT: x` outputs the value of `x`.
+
 # Keywords
 
 ## General
@@ -20,7 +22,7 @@ Execute the expression
 Marks the end of a loop/function
 - EXIT / EXIT: <expr>
 Exits the current loop/function. The second form is used to return a value from a function
-- INPUT: <symbol>
+- INPUT <symbol>
 Prompts the user for input, setting the symbol to the given value.
 - LET <symbol>: <expr>
 Creates a new symbol

@@ -134,6 +134,11 @@ namespace UglyLang.Source
 
                             break;
                         }
+                    case "INPUT":
+                        {
+                            keywordNode = new InputKeywordNode(before);
+                            break;
+                        }
                     case "LET":
                         {
                             ExprNode? expr = ParseExpression(after, lineNumber, colNumber);

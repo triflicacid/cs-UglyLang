@@ -1,5 +1,5 @@
-LET x: 3.14
-PRINT: x
-CAST x: STRING
-SET x: "pi"
-PRINT: x
+LET name: ""
+PRINT: "What is your name?"
+INPUT name
+PRINT: "Hello, "
+PRINT: name
