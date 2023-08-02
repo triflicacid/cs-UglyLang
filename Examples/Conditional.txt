@@ -1,0 +1,9 @@
+LET x: -2
+
+IF: EQ<x,0>
+PRINTLN: "Zero"
+ELSEIF: LT<x,0>
+PRINTLN: "Negative"
+ELSE
+PRINTLN: "Positive"
+END

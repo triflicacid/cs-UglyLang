@@ -19,6 +19,11 @@ namespace UglyLang.Source.Values
             Type = ValueType.STRING;
         }
 
+        public override bool IsTruthy()
+        {
+            return Value.Length > 0;
+        }
+
         public static StringValue From(Value value)
         {
             if (value is IntValue ivalue) return new(ivalue.Value.ToString());

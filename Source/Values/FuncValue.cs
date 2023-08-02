@@ -18,6 +18,11 @@ namespace UglyLang.Source.Values
         }
 
         public abstract Value? Call(Context context, List<Value> arguments);
+
+        public override bool IsTruthy()
+        {
+            return true;
+        }
     }
 
     /// <summary>

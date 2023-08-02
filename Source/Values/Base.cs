@@ -33,6 +33,8 @@ namespace UglyLang.Source.Values
 
         public abstract Value To(ValueType type);
 
+        public abstract bool IsTruthy();
+
         /// <summary>
         /// Does type2 match with type1?
         /// </summary>

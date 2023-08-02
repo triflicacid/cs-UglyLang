@@ -25,6 +25,11 @@ namespace UglyLang.Source.Values
             Type = ValueType.INT;
         }
 
+        public override bool IsTruthy()
+        {
+            return Value != 0;
+        }
+
         public static IntValue From(Value value)
         {
             if (value is IntValue ivalue) return new(ivalue.Value);

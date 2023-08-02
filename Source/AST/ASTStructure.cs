@@ -16,6 +16,12 @@ namespace UglyLang.Source.AST
             roots.Add(node);
         }
 
+        public ASTNode PeekNode()
+        {
+            if (roots.Count == 0) throw new NullReferenceException();
+            return roots[roots.Count - 1];
+        }
+
         public Signal Evaluate(Context context)
         {
             foreach (ASTNode root in roots)

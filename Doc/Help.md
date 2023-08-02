@@ -39,6 +39,8 @@ Sets the given symbol to the given value. Note that the type of the variable and
 Start a new conditional block. Execute the block if the condition is met.
 - `ELSEIF: <expr>`
 Used after an IF keyword to introduce a new conditional. Block will be executed if the condition is true and other if/elseif conditions in the block before it have not been executed.
+- `ELSE`
+Used after an `IF`/`ELSEIF` keyword. Contents will be executed if none of the chained if/elseif blocks were executed.
 
 ## Conditional Loop
 

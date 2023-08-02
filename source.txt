@@ -1,3 +1,7 @@
-PRINT: "Hello "
-DO: SLEEP<1000>
-PRINTLN: "world"
+IF: 1
+PRINTLN: "Yes"
+ELSEIF: 1
+PRINTLN: "Maybe"
+ELSE
+PRINTLN: "No"
+END

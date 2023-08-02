@@ -20,20 +20,17 @@ namespace UglyLang.Source
             this.AST = null;
             Error = null;
 
-            ASTStructure tree = new();
+            // Nested structure
+            Stack<ASTStructure> trees = new();
+            trees.Push(new());
 
             string[] lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             for (int lineNumber = 0, colNumber = 0; lineNumber < lines.Length; lineNumber++, colNumber = 0)
             {
                 string line = lines[lineNumber];
 
-                // Extract keyword
-                string keyword = "";
-            
-                while (colNumber < line.Length && char.IsLetter(line[colNumber]))
-                {
-                    keyword += line[colNumber++];
-                }
+                // Eat whitespace
+                while (colNumber < line.Length && line[colNumber] == ' ') colNumber++;
 
                 // Is the line empty?
                 if (colNumber == line.Length)
@@ -47,6 +44,16 @@ namespace UglyLang.Source
                     continue;
                 }
 
+                // Extract keyword
+                string keyword = "";
+            
+                while (colNumber < line.Length && char.IsLetter(line[colNumber]))
+                {
+                    keyword += line[colNumber++];
+                }
+
+                //Console.WriteLine(string.Format("KEYWORD: {0}", keyword));
+
                 // Check if the keyword exists
                 if (keyword.Length == 0)
                 {
@@ -55,12 +62,13 @@ namespace UglyLang.Source
                 }
                 else if (!KeywordNode.KeywordDict.ContainsKey(keyword))
                 {
-                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("unknown keyword '{0}'", keyword));
+                    Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
                     break;
                 }
 
                 var keywordInfo = KeywordNode.KeywordDict[keyword];
                 string before = "", after = "";
+
 
                 if (keywordInfo != null)
                 {
@@ -107,6 +115,7 @@ namespace UglyLang.Source
                         }
                     }
                 }
+                if (Error != null) break;
 
                 // Must be at end of line
                 if (colNumber < line.Length)
@@ -117,6 +126,8 @@ namespace UglyLang.Source
 
                 // Create keyword node
                 KeywordNode? keywordNode = null;
+                bool createNewNest = false; // If true, push a new ASTStructure
+
                 switch (keyword)
                 {
                     case "CAST":
@@ -139,6 +150,107 @@ namespace UglyLang.Source
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new DoKeywordNode(expr);
+                            break;
+                        }
+                    case "ELSE":
+                        {
+                            if (trees.Count < 2) // Nothing to close!
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                            }
+                            else
+                            {
+                                ASTStructure previousTree = trees.Pop();
+                                ASTNode latest = trees.Peek().PeekNode();
+
+                                if (latest is IfKeywordNode ifKeyword && ifKeyword.Conditions.Count > 0 && !ifKeyword.MetElseKeyword)
+                                {
+                                    ifKeyword.Conditions.Last().Body = previousTree;
+                                    ifKeyword.MetElseKeyword = true;
+                                }
+                                else
+                                {
+                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                                }
+
+                                createNewNest = true;
+                            }
+
+                            break;
+                        }
+                    case "ELSEIF":
+                        {
+                            if (trees.Count < 2) // Nothing to close!
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                            }
+                            else
+                            {
+                                ASTStructure previousTree = trees.Pop();
+                                ASTNode latest = trees.Peek().PeekNode();
+
+                                if (latest is IfKeywordNode ifKeyword && ifKeyword.Conditions.Count > 0)
+                                {
+                                    (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
+                                    if (expr == null) return; // Propagate error
+
+                                    ifKeyword.Conditions.Last().Body = previousTree;
+                                    ifKeyword.Conditions.Add(new(expr));
+                                }
+                                else
+                                {
+                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                                }
+
+                                createNewNest = true;
+                            }
+
+                            break;
+                        }
+                    case "END":
+                        {
+                            if (trees.Count < 2) // Nothing to close!
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                            }
+                            else
+                            {
+                                ASTStructure previousTree = trees.Pop();
+                                ASTNode latest = trees.Peek().PeekNode();
+
+                                if (latest is IfKeywordNode ifKeyword)
+                                {
+                                    if (ifKeyword.MetElseKeyword)
+                                    {
+                                        ifKeyword.Otherwise = previousTree;
+                                    }
+                                    else if (ifKeyword.Conditions.Count > 0)
+                                    {
+                                        ifKeyword.Conditions.Last().Body = previousTree;
+                                    }
+                                    else
+                                    {
+                                        Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
+                                    }
+                                }
+                                else
+                                {
+                                    // Should never be the case
+                                    throw new InvalidOperationException();
+                                }
+                            }
+
+                            break;
+                        }
+                    case "IF":
+                        {
+                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
+                            if (expr == null) return; // Propagate error
+
+                            IfKeywordNode ifKeyword = new();
+                            ifKeyword.Conditions.Add(new(expr));
+                            keywordNode = ifKeyword;
+                            createNewNest = true;
                             break;
                         }
                     case "INPUT":
@@ -182,15 +294,33 @@ namespace UglyLang.Source
                         throw new InvalidOperationException();
                 }
 
-                if (keywordNode == null)
-                    break;
+                if (Error != null) return;
 
-                keywordNode.LineNumber = lineNumber;
-                tree.AddNode(keywordNode);
+                if (keywordNode != null)
+                {
+                    keywordNode.LineNumber = lineNumber;
+
+                    // Add keyword onto the current tree
+                    trees.Peek().AddNode(keywordNode);
+                }
+
+                if (createNewNest)
+                {
+                    trees.Push(new());
+                }
             }
 
-            // Assign newly generated AST
-            AST = tree;
+            if (Error != null) return;
+
+            // End - should not be nested anymore
+            if (trees.Count > 1)
+            {
+                Error = new(lines.Length, 0, Error.Types.Syntax, "expected END, got end of input");
+            }
+            else
+            {
+                AST = trees.Peek();
+            }
         }
 
         /// <summary>

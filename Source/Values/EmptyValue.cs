@@ -21,6 +21,11 @@ namespace UglyLang.Source.Values
             throw new NotSupportedException();
         }
 
+        public override bool IsTruthy()
+        {
+            return false;
+        }
+
         public override Value To(ValueType type)
         {
             throw new NotSupportedException();

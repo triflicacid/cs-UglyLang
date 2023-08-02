@@ -19,6 +19,11 @@ namespace UglyLang.Source.Values
             Type = ValueType.FLOAT;
         }
 
+        public override bool IsTruthy()
+        {
+            return Value != 0;
+        }
+
         public static FloatValue From(Value value)
         {
             if (value is IntValue ivalue) return new(ivalue.Value);
