@@ -16,8 +16,8 @@ namespace UglyLang.Source
             Type,    // Incorrect/mismatching type(s)
         }
 
-        public readonly int LineNumber;
-        public readonly int ColumnNumber;
+        public int LineNumber;
+        public int ColumnNumber;
         public readonly Types Type;
         public readonly string Message;
 

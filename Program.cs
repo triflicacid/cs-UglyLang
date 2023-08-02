@@ -28,6 +28,7 @@ if (File.Exists(fullFilePath))
     else
     {
         Context ctx = new(filepath);
+        ctx.InitialiseBuiltinFunctions();
         Signal sig = p.AST.Evaluate(ctx);
         Console.WriteLine(string.Format("Program terminated with signal {0} ({1})", (int) sig, sig.ToString()));
         if (ctx.Error != null)

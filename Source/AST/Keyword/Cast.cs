@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
+using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST.Keyword
 {
@@ -13,9 +14,9 @@ namespace UglyLang.Source.AST.Keyword
     public class CastKeywordNode : KeywordNode
     {
         public readonly string Symbol;
-        public new readonly ValueType CastType;
+        public new readonly Values.ValueType CastType;
 
-        public CastKeywordNode(string symbol, ValueType type) : base("CAST")
+        public CastKeywordNode(string symbol, Values.ValueType type) : base("CAST")
         {
             Symbol = symbol;
             CastType = type;

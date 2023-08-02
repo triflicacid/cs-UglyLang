@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
+using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST
 {
@@ -22,7 +23,7 @@ namespace UglyLang.Source.AST
 
         public override Value Evaluate(Context context)
         {
-            return CastType == null ? Value : Value.To((ValueType) CastType);
+            return CastType == null ? Value : Value.To((Values.ValueType) CastType);
         }
     }
 }

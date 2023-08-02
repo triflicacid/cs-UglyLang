@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
+using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST
 {
@@ -26,22 +27,64 @@ namespace UglyLang.Source.AST
 
         public override Value Evaluate(Context context)
         {
-            if (CallArguments == null)
+            if (context.HasVariable(Symbol))
             {
-                if (context.HasVariable(Symbol))
+                Value variable = context.GetVariable(Symbol);
+                Value value;
+
+                // Push new stack context
+                context.PushStackContext(LineNumber, ColumnNumber, Context.StackContext.Types.Function, Symbol);
+
+                if (variable is FuncValue func)
                 {
-                    Value value = context.GetVariable(Symbol);
-                    return CastType == null ? value : value.To((ValueType) CastType);
+                    // Evaluate arguments
+                    List<Value> arguments = new();
+                    if (CallArguments != null)
+                    {
+                        foreach (ExprNode expr in CallArguments)
+                        {
+                            Value arg = expr.Evaluate(context);
+                            if (context.Error != null)
+                            {
+                                return new EmptyValue(); // Propagate error
+                            }
+
+                            arguments.Add(arg);
+                        }
+                    }
+
+                    // Call function
+                    Value? returnedValue = func.Call(context, arguments);
+                    if (returnedValue == null)
+                    {
+                        // Propagate error
+                        if (context.Error != null)
+                        {
+                            context.Error.LineNumber = LineNumber;
+                            context.Error.ColumnNumber = ColumnNumber;
+                        }
+
+                        return new EmptyValue();
+                    }
+                    else
+                    {
+                        value = returnedValue;
+                    }
+
+                    // Pop stack context
+                    context.PopStackContext();
                 }
                 else
                 {
-                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, Symbol);
-                    return new EmptyValue();
+                    value = variable;
                 }
+
+                return CastType == null ? value : value.To((Values.ValueType)CastType);
             }
             else
             {
-                throw new NotImplementedException();
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, Symbol);
+                return new EmptyValue();
             }
         }
     }

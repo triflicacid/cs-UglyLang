@@ -5,12 +5,14 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using UglyLang.Source.Functions;
+using UglyLang.Source.Values;
 
 namespace UglyLang.Source
 {
     public class Context
     {
-        class StackContext
+        public class StackContext
         {
             public enum Types
             {
@@ -157,13 +159,39 @@ namespace UglyLang.Source
         private string ErrorToString(Error error)
         {
             string str = "";
-            for (int i = Stack.Count - 1; i >= 0; i--)
+            for (int i = 0; i < Stack.Count; i++)
             {
                 str += Stack[i].ToString() + Environment.NewLine;
             }
 
             str += error.ToString();
             return str;
+        }
+
+        public void PushStackContext(int line, int col, StackContext.Types type, string name)
+        {
+            Stack.Add(new(line, col, type, name));
+        }
+
+        public void PopStackContext()
+        {
+            if (Stack.Count > 1)
+                Stack.RemoveAt(Stack.Count - 1);
+        }
+
+        public void InitialiseBuiltinFunctions()
+        {
+            var context = Stack[0];
+            context.SetSymbol("CONCAT", new BuiltinFuncValue(new FConcat()));
+            context.SetSymbol("RANDOM", new BuiltinFuncValue(new FRandom()));
+            context.SetSymbol("SUCC", new BuiltinFuncValue(new FSucc()));
+            context.SetSymbol("TYPE", new BuiltinFuncValue(new FType()));
+
+            context.SetSymbol("EQ", new BuiltinFuncValue(new FEq()));
+            context.SetSymbol("GT", new BuiltinFuncValue(new FGt()));
+            context.SetSymbol("GE", new BuiltinFuncValue(new FGe()));
+            context.SetSymbol("LT", new BuiltinFuncValue(new FLt()));
+            context.SetSymbol("LE", new BuiltinFuncValue(new FLe()));
         }
     }
 }

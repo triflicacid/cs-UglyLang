@@ -95,14 +95,20 @@ Returns a % b.
 Returns a * b.
 - `EXP<a,b>`
 Returns a ^ b.
+- `SUCC<a>`
+Returns the successor of integer a.
 
 ## Generic Functions
 
 - `CAST<a,t>`
 Returns a casted to type t.
 Note that this is different to the CAST keyword.
+- `CONCAT<a,b>`
+Convert a and b to strings and concatenate them.
 - `RANDOM` / `RANDOM<max>` / `RANDOM<min,max>`
 Returns random number in the range: [0,1) / [0,max) / [min,max).
 - `SLEEP<t>`
 Suspend execution for t milliseconds.
+- `TYPE<a>`
+Returns the type of a after evaluation as a string.
 

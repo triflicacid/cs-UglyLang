@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
+using UglyLang.Source.Values;
 
 namespace UglyLang.Source
 {
@@ -45,8 +46,6 @@ namespace UglyLang.Source
                 {
                     continue;
                 }
-
-                //Console.WriteLine(string.Format("Line {0}: keyword {1}", lineNumber, keyword));
 
                 // Check if the keyword exists
                 if (keyword.Length == 0)
@@ -122,14 +121,14 @@ namespace UglyLang.Source
                 {
                     case "CAST":
                         {
-                            ValueType? type = Value.TypeFromString(after);
+                            Values.ValueType? type = Value.TypeFromString(after);
                             if (type == null)
                             {
                                 Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", after));
                             }
                             else
                             {
-                                keywordNode = new CastKeywordNode(before, (ValueType) type);
+                                keywordNode = new CastKeywordNode(before, (Values.ValueType) type);
                             }
 
                             break;
@@ -141,7 +140,7 @@ namespace UglyLang.Source
                         }
                     case "LET":
                         {
-                            ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
+                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new LetKeywordNode(before, expr);
@@ -149,7 +148,7 @@ namespace UglyLang.Source
                         }
                     case "PRINT":
                         {
-                            ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
+                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new PrintKeywordNode(expr, false);
@@ -157,7 +156,7 @@ namespace UglyLang.Source
                         }
                     case "PRINTLN":
                         {
-                            ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
+                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new PrintKeywordNode(expr, true);
@@ -165,7 +164,7 @@ namespace UglyLang.Source
                         }
                     case "SET":
                         {
-                            ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
+                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new SetKeywordNode(before, expr);
@@ -217,15 +216,15 @@ namespace UglyLang.Source
         }
 
         /// <summary>
-        /// Parse a string as an expresion
+        /// Parse a string as an expresion. Return the expression node and the ending index. The expression must terminate with endChar (NULL means that the line must end)
         /// </summary>
-        private ExprNode? ParseExpression(string expr, int lineNumber = 0, int colNumber = 0)
+        private (ExprNode?, int) ParseExpression(string expr, int lineNumber = 0, int colNumber = 0, char?[]? endChar = null)
         {
-            var node = _ParseExpression(expr, lineNumber, colNumber);
-            return node == null ? null : new ExprNode(node);
+            (var node, int endColNumber) = _ParseExpression(expr, lineNumber, colNumber, endChar);
+            return (node == null ? null : new ExprNode(node), endColNumber);
         }
 
-        private ASTNode? _ParseExpression(string expr, int lineNumber, int colNumber)
+        private (ASTNode?, int) _ParseExpression(string expr, int lineNumber, int colNumber, char?[]? endChar)
         {
             int col = 0;
 
@@ -236,7 +235,7 @@ namespace UglyLang.Source
             if (col == expr.Length)
             {
                 Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
-                return null;
+                return (null, col);
             }
 
             ASTNode node;
@@ -250,7 +249,7 @@ namespace UglyLang.Source
                 if (end == -1)
                 {
                     Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unterminated string literal");
-                    return null;
+                    return (null, col);
                 }
 
                 col += end + 1;
@@ -282,15 +281,57 @@ namespace UglyLang.Source
             {
                 string symbol = ExtractSymbolFromString(expr[col..]);
                 col += symbol.Length;
-                // TODO: call with parameters?
 
-                node = new SymbolNode(symbol);
+                SymbolNode symbolNode = new(symbol);
+
+                // Where any arguments provided?
+                if (col < expr.Length && expr[col] == '<')
+                {
+                    int argStartPos = col;
+                    symbolNode.CallArguments = new();
+                    col++;
+
+                    // Extract each argument, seperated by ','
+                    while (col < expr.Length)
+                    {
+                        (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
+
+                        if (argExpr == null)
+                        {
+                            return (null, col);
+                        }
+                        else
+                        {
+                            col += end;
+                            symbolNode.CallArguments.Add(argExpr);
+                            if (expr[col] == '>') break;
+                            col++;
+                        }
+                    }
+
+                    if (col == expr.Length)
+                    {
+                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
+                        return (null, col);
+                    }
+                    else if (expr[col] == '>')
+                    {
+                        col++;
+                    }
+                    else
+                    {
+                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", expr[col]));
+                        return (null, col);
+                    }
+                }
+
+                node = symbolNode;
             }
 
             else
             {
                 Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("invalid syntax: '{0}'", expr[col]));
-                return null;
+                return (null, col);
             }
 
             // Eat whitespace
@@ -303,31 +344,54 @@ namespace UglyLang.Source
                 if (end == -1)
                 {
                     Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("unterminated bracket '{0}'", expr[col]));
-                    return null;
+                    return (null, col);
                 }
 
                 string str = expr[(col + 1) .. (col + end)];
-                ValueType? type = Value.TypeFromString(str);
+                Values.ValueType? type = Value.TypeFromString(str);
                 if (type == null)
                 {
                     Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("{0} is not a valid type", str));
-                    return null;
+                    return (null, col);
                 }
 
                 node.CastType = type;
                 col += end + 1;
             }
 
-            // Should be at the end of the line
+            // Eat whitespace
+            while (col < expr.Length && expr[col] == ' ') col++;
+
+            // The line should end with `endChar`
             if (col < expr.Length)
             {
-                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col]));
-                return null;
+                if (endChar == null)
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col]));
+                    return (null, col);
+                }
+                else if (endChar.Contains(expr[col]))
+                {
+
+                }
+                else
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected {0}, got {1}", string.Join(" or ", endChar.Select(a => a == null ? "end of line" : a.ToString())), expr[col]));
+                    return (null, col);
+                }
+            }
+            else
+            {
+                if (endChar != null && !endChar.Contains(null))
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
+                    return (null, col);
+                }
             }
 
             node.LineNumber = lineNumber;
             node.ColumnNumber = colNumber + startPos;
-            return node;
+            return (node, col);
         }
 
         /// <summary>
