@@ -32,11 +32,11 @@ namespace UglyLang.Source.AST
                 Value variable = context.GetVariable(Symbol);
                 Value value;
 
-                // Push new stack context
-                context.PushStackContext(LineNumber, ColumnNumber, Context.StackContext.Types.Function, Symbol);
-
                 if (variable is FuncValue func)
                 {
+                    // Push new stack context
+                    context.PushStackContext(LineNumber, ColumnNumber, Context.StackContext.Types.Function, Symbol);
+
                     // Evaluate arguments
                     List<Value> arguments = new();
                     if (CallArguments != null)

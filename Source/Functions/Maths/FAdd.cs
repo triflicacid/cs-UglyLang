@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source.Values;
 
-namespace UglyLang.Source.Functions.Comparative
+namespace UglyLang.Source.Functions.Maths
 {
-    public class FLe : Function
+    public class FAdd : Function
     {
 
         private static readonly Values.ValueType[][] ArgumentType = new Values.ValueType[][]
@@ -16,11 +16,11 @@ namespace UglyLang.Source.Functions.Comparative
             new Values.ValueType[] { Values.ValueType.FLOAT, Values.ValueType.FLOAT },
         };
 
-        public FLe() : base(ArgumentType, Values.ValueType.INT) { }
+        public FAdd() : base(ArgumentType, Values.ValueType.FLOAT) { }
 
         public override Value Call(Context context, List<Value> arguments)
         {
-            return new IntValue(((FloatValue)arguments[0]).Value <= ((FloatValue)arguments[1]).Value);
+            return new FloatValue(((FloatValue)arguments[0]).Value + ((FloatValue)arguments[1]).Value);
         }
     }
 }

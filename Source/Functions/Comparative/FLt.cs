@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source.Values;
 
-namespace UglyLang.Source.Functions
+namespace UglyLang.Source.Functions.Comparative
 {
     public class FLt : Function
     {

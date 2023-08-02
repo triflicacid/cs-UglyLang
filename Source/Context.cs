@@ -175,8 +175,8 @@ namespace UglyLang.Source
 
         public void PopStackContext()
         {
-            if (Stack.Count > 1)
-                Stack.RemoveAt(Stack.Count - 1);
+            if (Stack.Count < 2) throw new InvalidOperationException();
+            Stack.RemoveAt(Stack.Count - 1);
         }
 
         public void InitialiseBuiltinFunctions()
@@ -184,14 +184,22 @@ namespace UglyLang.Source
             var context = Stack[0];
             context.SetSymbol("CONCAT", new BuiltinFuncValue(new FConcat()));
             context.SetSymbol("RANDOM", new BuiltinFuncValue(new FRandom()));
-            context.SetSymbol("SUCC", new BuiltinFuncValue(new FSucc()));
+            context.SetSymbol("SUCC", new BuiltinFuncValue(new Functions.Maths.FSucc()));
             context.SetSymbol("TYPE", new BuiltinFuncValue(new FType()));
 
-            context.SetSymbol("EQ", new BuiltinFuncValue(new FEq()));
-            context.SetSymbol("GT", new BuiltinFuncValue(new FGt()));
-            context.SetSymbol("GE", new BuiltinFuncValue(new FGe()));
-            context.SetSymbol("LT", new BuiltinFuncValue(new FLt()));
-            context.SetSymbol("LE", new BuiltinFuncValue(new FLe()));
+            context.SetSymbol("EQ", new BuiltinFuncValue(new Functions.Comparative.FEq()));
+            context.SetSymbol("GT", new BuiltinFuncValue(new Functions.Comparative.FGt()));
+            context.SetSymbol("GE", new BuiltinFuncValue(new Functions.Comparative.FGe()));
+            context.SetSymbol("LT", new BuiltinFuncValue(new Functions.Comparative.FLt()));
+            context.SetSymbol("LE", new BuiltinFuncValue(new Functions.Comparative.FLe()));
+
+            context.SetSymbol("ADD", new BuiltinFuncValue(new Functions.Maths.FAdd()));
+            context.SetSymbol("SUB", new BuiltinFuncValue(new Functions.Maths.FSub()));
+            context.SetSymbol("DIV", new BuiltinFuncValue(new Functions.Maths.FDiv()));
+            context.SetSymbol("MOD", new BuiltinFuncValue(new Functions.Maths.FMod()));
+            context.SetSymbol("MUL", new BuiltinFuncValue(new Functions.Maths.FMul()));
+            context.SetSymbol("EXP", new BuiltinFuncValue(new Functions.Maths.FExp()));
+            context.SetSymbol("NEG", new BuiltinFuncValue(new Functions.Maths.FNeg()));
         }
     }
 }
