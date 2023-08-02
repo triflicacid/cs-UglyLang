@@ -1,5 +1,0 @@
-LET name: ""
-PRINT: "What is your name?"
-INPUT name
-PRINT: "Hello, "
-PRINT: name

@@ -44,6 +44,7 @@ namespace UglyLang.Source.AST
             { "INPUT", new(true, false) },
             { "LET", new(true, true) },
             { "PRINT", new(false, true) },
+            { "PRINTLN", new(false, true) },
             { "SET", new(true, true) },
         };
     }

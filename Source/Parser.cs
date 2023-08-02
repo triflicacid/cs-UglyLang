@@ -152,7 +152,15 @@ namespace UglyLang.Source
                             ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
                             if (expr == null) return; // Propagate error
 
-                            keywordNode = new PrintKeywordNode(expr);
+                            keywordNode = new PrintKeywordNode(expr, false);
+                            break;
+                        }
+                    case "PRINTLN":
+                        {
+                            ExprNode? expr = ParseExpression(after, lineNumber, colNumber);
+                            if (expr == null) return; // Propagate error
+
+                            keywordNode = new PrintKeywordNode(expr, true);
                             break;
                         }
                     case "SET":

@@ -13,10 +13,12 @@ namespace UglyLang.Source.AST.Keyword
     public class PrintKeywordNode : KeywordNode
     {
         public readonly ExprNode Expr;
+        public bool Newline;
 
-        public PrintKeywordNode(ExprNode expr) : base("PRINT")
+        public PrintKeywordNode(ExprNode expr, bool newline = false) : base("PRINT")
         {
             Expr = expr;
+            Newline = newline;
         }
 
         public override Signal Action(Context context)
@@ -25,7 +27,16 @@ namespace UglyLang.Source.AST.Keyword
             if (context.Error != null) // Propagate error?
                 return Signal.ERROR;
 
-            Console.WriteLine(StringValue.From(value).Value);
+            string str = StringValue.From(value).Value;
+            if (Newline)
+            {
+                Console.WriteLine(str);
+            }
+            else
+            {
+                Console.Write(str);
+            }
+            
             return Signal.NONE;
         }
     }
