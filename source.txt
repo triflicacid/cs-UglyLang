@@ -1,0 +1,3 @@
+PRINT: "Hello "
+DO: SLEEP<1000>
+PRINTLN: "world"

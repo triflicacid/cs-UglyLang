@@ -133,6 +133,14 @@ namespace UglyLang.Source
 
                             break;
                         }
+                    case "DO":
+                        {
+                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
+                            if (expr == null) return; // Propagate error
+
+                            keywordNode = new DoKeywordNode(expr);
+                            break;
+                        }
                     case "INPUT":
                         {
                             keywordNode = new InputKeywordNode(before);
@@ -171,7 +179,7 @@ namespace UglyLang.Source
                             break;
                         }
                     default:
-                        throw new Exception("Reached default statement in switch, which should not happen.");
+                        throw new InvalidOperationException();
                 }
 
                 if (keywordNode == null)
