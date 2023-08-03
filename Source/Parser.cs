@@ -246,6 +246,18 @@ namespace UglyLang.Source
 
                             break;
                         }
+                    case "EXIT":
+                        {
+                            if (trees.Count < 2)
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
+                            }
+                            else
+                            {
+                                keywordNode = new ExitKeywordNode();
+                            }
+                            break;
+                        }
                     case "IF":
                         {
                             (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
@@ -292,6 +304,11 @@ namespace UglyLang.Source
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new SetKeywordNode(before, expr);
+                            break;
+                        }
+                    case "STOP":
+                        {
+                            keywordNode = new StopKeywordNode();
                             break;
                         }
                     case "WHILE":

@@ -32,6 +32,8 @@ Prints the given value to the screen. Subsequent invokations of `PRINT` will pri
 Prints the given value to the screen, followed by a newline.
 - `SET <symbol>: <expr>`
 Sets the given symbol to the given value. Note that the type of the variable and the type of `expr` must match.
+- `STOP`
+Halt execution of the program
 
 ## Conditional Statement
 

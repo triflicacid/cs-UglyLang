@@ -35,7 +35,11 @@ namespace UglyLang.Source.AST.Keyword
                 if (!value.IsTruthy()) break;
 
                 Signal signal = Body.Evaluate(context);
-                if (signal != Signal.NONE) return signal; // Is something wrong?
+                if (signal != Signal.NONE)
+                {
+                    if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
+                    return signal;
+                }
             }
 
             return Signal.NONE;

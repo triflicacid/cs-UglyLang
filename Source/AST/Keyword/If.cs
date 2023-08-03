@@ -25,10 +25,6 @@ namespace UglyLang.Source.AST.Keyword
             {
                 throw new NullReferenceException(); // Body should have been set
             }
-            if (Otherwise == null)
-            {
-                throw new NullReferenceException(); // Otherwise should have been set
-            }
 
             // Iterate through each condition, executing that block's body if truthy
             foreach (var item in Conditions)
@@ -40,7 +36,7 @@ namespace UglyLang.Source.AST.Keyword
                 if (value.IsTruthy()) return item.Body.Evaluate(context);
             }
 
-            return Otherwise.Evaluate(context);
+            return Otherwise == null ? Signal.NONE : Otherwise.Evaluate(context);
         }
     }
 

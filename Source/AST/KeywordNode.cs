@@ -46,12 +46,14 @@ namespace UglyLang.Source.AST
             { "END", new(false, false) },
             { "ELSE", new(false, false) },
             { "ELSEIF", new(false, true) },
+            { "EXIT", new(false, false) },
             { "IF", new(false, true) },
             { "INPUT", new(true, false) },
             { "LET", new(true, true) },
             { "PRINT", new(false, true) },
             { "PRINTLN", new(false, true) },
             { "SET", new(true, true) },
+            { "STOP", new(false, false) },
             { "WHILE", new(false, true) },
         };
     }
