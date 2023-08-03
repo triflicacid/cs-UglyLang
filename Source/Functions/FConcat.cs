@@ -13,14 +13,14 @@ namespace UglyLang.Source.Functions
     public class FConcat : Function
     {
 
-        private static readonly Values.ValueType[][] ArgumentType = new Values.ValueType[][]
+        private static readonly List<Values.ValueType[]> ArgumentType = new()
         {
             new Values.ValueType[] { Values.ValueType.ANY, Values.ValueType.ANY },
         };
 
         public FConcat() : base(ArgumentType, Values.ValueType.STRING) { }
 
-        public override Value Call(Context context, List<Value> arguments)
+        public override Value Call(Context context, int _, List<Value> arguments)
         {
             return new StringValue(StringValue.From(arguments[0]).Value + StringValue.From(arguments[1]).Value);
         }

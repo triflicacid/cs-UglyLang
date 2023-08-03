@@ -27,6 +27,7 @@ namespace UglyLang.Source.Values
                 "INT" => ValueType.INT,
                 "FLOAT" => ValueType.FLOAT,
                 "STRING" => ValueType.STRING,
+                "ANY" => ValueType.ANY,
                 _ => null,
             };
         }

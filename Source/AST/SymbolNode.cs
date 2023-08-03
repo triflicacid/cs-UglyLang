@@ -55,7 +55,7 @@ namespace UglyLang.Source.AST
 
                     // Call function
                     Value? returnedValue = func.Call(context, arguments);
-                    if (returnedValue == null)
+                    if (returnedValue == null || context.Error != null)
                     {
                         // Propagate error
                         if (context.Error != null)

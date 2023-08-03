@@ -44,3 +44,5 @@ Loop the current block while the condition is truthy.
 
 - `DEF <symbol>: <type> <<arg1: type1>, <arg2: type2>, ...>`
 Defines a new function which returns <type> with the given arguments each with the resepective type.
+
+Functions may be overloaded, given that their return types match. Built-in functions **cannot** be overloaded.

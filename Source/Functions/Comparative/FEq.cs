@@ -11,14 +11,14 @@ namespace UglyLang.Source.Functions.Comparative
     public class FEq : Function
     {
 
-        private static readonly Values.ValueType[][] ArgumentType = new Values.ValueType[][]
+        private static readonly List<Values.ValueType[]> ArgumentType = new()
         {
             new Values.ValueType[] { Values.ValueType.ANY, Values.ValueType.ANY },
         };
 
         public FEq() : base(ArgumentType, Values.ValueType.INT) { }
 
-        public override Value Call(Context context, List<Value> arguments)
+        public override Value Call(Context context, int _, List<Value> arguments)
         {
             Value a = arguments[0], b = arguments[1];
             bool eq;

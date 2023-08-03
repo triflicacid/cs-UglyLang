@@ -26,7 +26,7 @@ namespace UglyLang.Source.AST.Keyword
         {
             if (context.HasVariable(Name))
             {
-                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("\"{0}\" already exists.", Name));
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("\"{0}\" is already defined.", Name));
                 return Signal.ERROR;
             }
             else

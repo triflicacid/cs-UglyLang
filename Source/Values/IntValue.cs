@@ -42,6 +42,7 @@ namespace UglyLang.Source.Values
         {
             return type switch
             {
+                ValueType.ANY => new IntValue(Value),
                 ValueType.INT => new IntValue(Value),
                 ValueType.FLOAT => new FloatValue(Value),
                 ValueType.STRING => new StringValue(Value.ToString()),

@@ -1,0 +1,10 @@
+DEF PRINT: STRING <str: STRING>
+	PRINTLN: str
+END
+
+DEF PRINT: STRING <str: STRING, end: STRING>
+	PRINTLN: str " (" end ")"
+END
+
+DO: PRINT<"From a Function">
+DO: PRINT<"From a Function", "LOL">

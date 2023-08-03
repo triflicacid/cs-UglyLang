@@ -68,6 +68,169 @@ namespace UglyLang.Source
                     break;
                 }
 
+                // Is define keyword? This one needs special parsing.
+                if (keyword == "DEF")
+                {
+                    // Eat whitespace
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                    // Extract name
+                    int beforeColNumber = colNumber;
+                    while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber])) colNumber++;
+                    string functionName = line[beforeColNumber .. colNumber];
+
+                    if (!IsValidSymbol(functionName))
+                    {
+                        Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", functionName));
+                        break;
+                    }
+
+                    // Eat whitespace
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                    // Should be a colon
+                    if (colNumber == line.Length || line[colNumber] != ':')
+                    {
+                        string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ':', got {0}", got));
+                        break;
+                    }
+                    colNumber++;
+
+                    // Eat whitespace
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                    beforeColNumber = colNumber;
+
+                    // Return type
+                    while (colNumber < line.Length && !char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                    string returnTypeString = line[beforeColNumber..colNumber];
+                    Values.ValueType? returnType = Value.TypeFromString(returnTypeString);
+                    if (returnType == null)
+                    {
+                        Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", returnTypeString));
+                        break;
+                    }
+
+                    // Eat whitespace
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                    // Expect angled bracket
+                    if (colNumber == line.Length || line[colNumber] != '<')
+                    {
+                        string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected '<', got {0}", got));
+                        break;
+                    }
+                    colNumber++;
+
+                    // Eat whitespace
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                    if (colNumber == line.Length)
+                    {
+                        Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected '>' or symbol, got end of line");
+                        break;
+                    }
+
+                    // Expect "<name>: <type>"
+                    List<(string, Values.ValueType)> argumentPairs = new();
+                    while (true)
+                    {
+                        // Extract argument name
+                        beforeColNumber = colNumber;
+                        while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber])) colNumber++;
+                        string argName = line[beforeColNumber..colNumber];
+
+                        if (!IsValidSymbol(argName))
+                        {
+                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", argName));
+                            break;
+                        }
+
+                        // Check for duplicate names
+                        foreach ((string iArgName, _) in argumentPairs)
+                        {
+                            if (iArgName == argName)
+                            {
+                                Error = new(lineNumber, beforeColNumber, Error.Types.Name, string.Format("duplicate name '{0}' in argument list", argName));
+                                break;
+                            }
+                        }
+                        if (Error != null) break;
+
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                        // Expect colon
+                        if (colNumber == line.Length || line[colNumber] != ':')
+                        {
+                            string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ':', got {0}", got));
+                            break;
+                        }
+                        colNumber++;
+
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                        // Extract argument type
+                        beforeColNumber = colNumber;
+                        while (colNumber < line.Length && char.IsLetter(line[colNumber])) colNumber++;
+
+
+                        string argTypeString = line[beforeColNumber..colNumber];
+                        Values.ValueType? argType = Value.TypeFromString(argTypeString);
+
+                        if (argType == null)
+                        {
+                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", argType));
+                            break;
+                        }
+
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                        // Expect '<' or comma
+                        if (colNumber == line.Length || (line[colNumber] != '>' && line[colNumber] != ','))
+                        {
+                            string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ',' or '>', got {0}", got));
+                            break;
+                        }
+
+                        // Add argument to list
+                        argumentPairs.Add(new(argName, (Values.ValueType)argType));
+
+                        // Skip comma
+                        if (line[colNumber] == ',') colNumber++;
+
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                        if (colNumber == line.Length)
+                        {
+                            Error = new(lineNumber, colNumber, Error.Types.Syntax, "unexpected end of line");
+                            break;
+                        }
+
+                        // End of argument list?
+                        if (line[colNumber] == '>') break;
+                    }
+                    if (Error != null) break;
+
+                    // Create keyword node and add to tree structure
+                    DefKeywordNode node = new(functionName, argumentPairs, (Values.ValueType)returnType);
+                    trees.Peek().AddNode(node);
+
+                    // Nest and add a new tree
+                    trees.Push(new());
+
+                    continue;
+                }
+
+                // Fetch keyword information - this will tell us what to parse.
                 var keywordInfo = KeywordNode.KeywordDict[keyword];
                 string before = "", after = "";
 
@@ -248,6 +411,10 @@ namespace UglyLang.Source
                                 else if (latest is LoopKeywordNode loopKeyword)
                                 {
                                     loopKeyword.Body = previousTree;
+                                }
+                                else if (latest is DefKeywordNode defKeyword)
+                                {
+                                    defKeyword.Body = previousTree;
                                 }
                                 else
                                 {

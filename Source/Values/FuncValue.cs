@@ -10,39 +10,23 @@ namespace UglyLang.Source.Values
     /// <summary>
     /// Value representing a function
     /// </summary>
-    public abstract class FuncValue : Value
-    {
-        public FuncValue()
-        {
-            Type = ValueType.FUNCTION;
-        }
-
-        public abstract Value? Call(Context context, List<Value> arguments);
-
-        public override bool IsTruthy()
-        {
-            return true;
-        }
-    }
-
-    /// <summary>
-    /// Built-in function value
-    /// </summary>
-    public class BuiltinFuncValue : FuncValue
+    public class FuncValue : Value
     {
         public Function Func;
 
-        public BuiltinFuncValue(Function func)
+        public FuncValue(Function func)
         {
+            Type = ValueType.FUNCTION;
             Func = func;
         }
 
-        public override Value? Call(Context context, List<Value> arguments)
+        public Value? Call(Context context, List<Value> arguments)
         {
             List<ValueType> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
 
             // Check that arguments match up to expected
             bool match = false;
+            int index = 0;
             foreach (ValueType[] typeArray in Func.ArgumentTypes)
             {
                 if (typeArray.Length == receivedArgumentTypes.Count)
@@ -59,6 +43,8 @@ namespace UglyLang.Source.Values
 
                     if (!match) break;
                 }
+                if (match) break;
+                index++;
             }
 
             if (!match)
@@ -71,25 +57,24 @@ namespace UglyLang.Source.Values
                 return null;
             }
 
-            Value value = Func.Call(context, arguments);
+            Value? value = Func.Call(context, index, arguments);
 
             return value;
         }
 
-        public static BuiltinFuncValue From(Value value)
+        public override bool IsTruthy()
         {
-            throw new NotImplementedException();
+            return true;
+        }
+
+        public static Function From(Value value)
+        {
+            throw new NotSupportedException();
         }
 
         public override Value To(ValueType type)
         {
-            return type switch
-            {
-                ValueType.INT => new IntValue(0),
-                ValueType.FLOAT => new FloatValue(0),
-                ValueType.STRING => new StringValue("function"),
-                _ => throw new Exception("Unable to cast: unknown value type passed")
-            };
+            throw new NotSupportedException();
         }
     }
 }

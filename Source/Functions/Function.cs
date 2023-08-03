@@ -9,18 +9,18 @@ namespace UglyLang.Source.Functions
 {
     public abstract class Function
     {
-        public Values.ValueType[][] ArgumentTypes;
-        public Values.ValueType ReturnType;
+        public readonly List<Values.ValueType[]> ArgumentTypes;
+        public readonly Values.ValueType ReturnType;
 
-        public Function(Values.ValueType[][] argumentTypes, Values.ValueType returnType)
+        public Function(List<Values.ValueType[]> argumentTypes, Values.ValueType returnType)
         {
             ArgumentTypes = argumentTypes;
             ReturnType = returnType;
         }
 
         /// <summary>
-        /// Call the function. Note that the given argument list matches with ONE ArgumentTypes member (this is checked in FuncValue).
+        /// Call the function. Note that the given argument list matches with ONE ArgumentTypes member (this is checked in FuncValue. The stack frames and argument evaluation are handled in SymbolNode).
         /// </summary>
-        public abstract Value Call(Context context, List<Value> arguments);
+        public abstract Value? Call(Context context, int overloadIndex, List<Value> arguments);
     }
 }

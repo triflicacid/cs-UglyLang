@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,6 +37,7 @@ namespace UglyLang.Source.Values
         {
             return type switch
             {
+                ValueType.ANY => new FloatValue(Value),
                 ValueType.INT => new IntValue((long)Value),
                 ValueType.FLOAT => new FloatValue(Value),
                 ValueType.STRING => new StringValue(Value.ToString()),

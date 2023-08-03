@@ -42,6 +42,7 @@ namespace UglyLang.Source.AST
 
         public static readonly Dictionary<string, KeywordInfo> KeywordDict = new() {
             { "CAST", new(TriState.YES, TriState.YES) },
+            { "DEF", new(TriState.YES, TriState.NO) },
             { "DO", new(TriState.NO, TriState.YES) },
             { "END", new(TriState.NO, TriState.NO) },
             { "ELSE", new(TriState.NO, TriState.NO) },

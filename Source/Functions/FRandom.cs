@@ -14,7 +14,7 @@ namespace UglyLang.Source.Functions
     {
 
         private static readonly Random Generator = new();
-        private static readonly Values.ValueType[][] ArgumentType = new Values.ValueType[][]
+        private static readonly List<Values.ValueType[]> ArgumentType = new()
         {
             Array.Empty<Values.ValueType>(),
             new Values.ValueType[] { Values.ValueType.FLOAT },
@@ -23,7 +23,7 @@ namespace UglyLang.Source.Functions
 
         public FRandom() : base(ArgumentType, Values.ValueType.INT) { }
 
-        public override Value Call(Context context, List<Value> arguments)
+        public override Value Call(Context context, int _, List<Value> arguments)
         {
             double n;
             if (arguments.Count == 0) // Range: [0,1)

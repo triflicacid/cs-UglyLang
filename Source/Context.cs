@@ -183,35 +183,35 @@ namespace UglyLang.Source
         {
             var context = Stack[0];
             // General
-            context.SetSymbol("CONCAT", new BuiltinFuncValue(new FConcat()));
-            context.SetSymbol("ID", new BuiltinFuncValue(new FId()));
-            context.SetSymbol("RANDOM", new BuiltinFuncValue(new FRandom()));
-            context.SetSymbol("SLEEP", new BuiltinFuncValue(new FSleep()));
-            context.SetSymbol("TYPE", new BuiltinFuncValue(new FType()));
+            context.SetSymbol("CONCAT", new FuncValue(new FConcat()));
+            context.SetSymbol("ID", new FuncValue(new FId()));
+            context.SetSymbol("RANDOM", new FuncValue(new FRandom()));
+            context.SetSymbol("SLEEP", new FuncValue(new FSleep()));
+            context.SetSymbol("TYPE", new FuncValue(new FType()));
 
             // Comparative
-            context.SetSymbol("EQ", new BuiltinFuncValue(new Functions.Comparative.FEq()));
-            context.SetSymbol("GT", new BuiltinFuncValue(new Functions.Comparative.FGt()));
-            context.SetSymbol("GE", new BuiltinFuncValue(new Functions.Comparative.FGe()));
-            context.SetSymbol("LT", new BuiltinFuncValue(new Functions.Comparative.FLt()));
-            context.SetSymbol("LE", new BuiltinFuncValue(new Functions.Comparative.FLe()));
+            context.SetSymbol("EQ", new FuncValue(new Functions.Comparative.FEq()));
+            context.SetSymbol("GT", new FuncValue(new Functions.Comparative.FGt()));
+            context.SetSymbol("GE", new FuncValue(new Functions.Comparative.FGe()));
+            context.SetSymbol("LT", new FuncValue(new Functions.Comparative.FLt()));
+            context.SetSymbol("LE", new FuncValue(new Functions.Comparative.FLe()));
 
             // Logical
-            context.SetSymbol("AND", new BuiltinFuncValue(new Functions.Logical.FAnd()));
-            context.SetSymbol("NOT", new BuiltinFuncValue(new Functions.Logical.FNot()));
-            context.SetSymbol("OR", new BuiltinFuncValue(new Functions.Logical.FOr()));
-            context.SetSymbol("XOR", new BuiltinFuncValue(new Functions.Logical.FXOr()));
+            context.SetSymbol("AND", new FuncValue(new Functions.Logical.FAnd()));
+            context.SetSymbol("NOT", new FuncValue(new Functions.Logical.FNot()));
+            context.SetSymbol("OR", new FuncValue(new Functions.Logical.FOr()));
+            context.SetSymbol("XOR", new FuncValue(new Functions.Logical.FXOr()));
 
             // Mathematical
-            context.SetSymbol("ADD", new BuiltinFuncValue(new Functions.Maths.FAdd()));
-            context.SetSymbol("DIV", new BuiltinFuncValue(new Functions.Maths.FDiv()));
-            context.SetSymbol("EXP", new BuiltinFuncValue(new Functions.Maths.FExp()));
-            context.SetSymbol("MOD", new BuiltinFuncValue(new Functions.Maths.FMod()));
-            context.SetSymbol("MUL", new BuiltinFuncValue(new Functions.Maths.FMul()));
-            context.SetSymbol("NEG", new BuiltinFuncValue(new Functions.Maths.FNeg()));
-            context.SetSymbol("PRED", new BuiltinFuncValue(new Functions.Maths.FPred()));
-            context.SetSymbol("SUB", new BuiltinFuncValue(new Functions.Maths.FSub()));
-            context.SetSymbol("SUCC", new BuiltinFuncValue(new Functions.Maths.FSucc()));
+            context.SetSymbol("ADD", new FuncValue(new Functions.Maths.FAdd()));
+            context.SetSymbol("DIV", new FuncValue(new Functions.Maths.FDiv()));
+            context.SetSymbol("EXP", new FuncValue(new Functions.Maths.FExp()));
+            context.SetSymbol("MOD", new FuncValue(new Functions.Maths.FMod()));
+            context.SetSymbol("MUL", new FuncValue(new Functions.Maths.FMul()));
+            context.SetSymbol("NEG", new FuncValue(new Functions.Maths.FNeg()));
+            context.SetSymbol("PRED", new FuncValue(new Functions.Maths.FPred()));
+            context.SetSymbol("SUB", new FuncValue(new Functions.Maths.FSub()));
+            context.SetSymbol("SUCC", new FuncValue(new Functions.Maths.FSucc()));
         }
     }
 }
