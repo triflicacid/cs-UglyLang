@@ -237,6 +237,10 @@ namespace UglyLang.Source
                                 {
                                     whileKeyword.Body = previousTree;
                                 }
+                                else if (latest is LoopKeywordNode loopKeyword)
+                                {
+                                    loopKeyword.Body = previousTree;
+                                }
                                 else
                                 {
                                     // Should never be the case
@@ -280,6 +284,12 @@ namespace UglyLang.Source
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new LetKeywordNode(before, expr);
+                            break;
+                        }
+                    case "LOOP":
+                        {
+                            keywordNode = new LoopKeywordNode();
+                            createNewNest = true;
                             break;
                         }
                     case "PRINT":

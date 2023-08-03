@@ -1,0 +1,4 @@
+﻿LOOP
+PRINTLN: "I am looping"
+DO: SLEEP<1000>
+END

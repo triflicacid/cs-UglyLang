@@ -50,6 +50,7 @@ namespace UglyLang.Source.AST
             { "IF", new(false, true) },
             { "INPUT", new(true, false) },
             { "LET", new(true, true) },
+            { "LOOP", new(false, false) },
             { "PRINT", new(false, true) },
             { "PRINTLN", new(false, true) },
             { "SET", new(true, true) },
