@@ -184,6 +184,7 @@ namespace UglyLang.Source
             var context = Stack[0];
             // General
             context.SetSymbol("CONCAT", new BuiltinFuncValue(new FConcat()));
+            context.SetSymbol("ID", new BuiltinFuncValue(new FId()));
             context.SetSymbol("RANDOM", new BuiltinFuncValue(new FRandom()));
             context.SetSymbol("SLEEP", new BuiltinFuncValue(new FSleep()));
             context.SetSymbol("TYPE", new BuiltinFuncValue(new FType()));

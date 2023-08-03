@@ -42,5 +42,10 @@ namespace UglyLang.Source.Values
                 _ => throw new Exception("Unable to cast: unknown value type passed")
             };
         }
+
+        public StringValue Concat(string str)
+        {
+            return new StringValue(Value + str);
+        }
     }
 }

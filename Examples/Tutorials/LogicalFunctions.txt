@@ -1,6 +1,6 @@
 LET a: 0
 LET b: 1
-PRINTLN: CONCAT<"a AND b: ",AND<a,b>>
-PRINTLN: CONCAT<"NOT a  : ",NOT<a>>
-PRINTLN: CONCAT<"a OR b : ",OR<a,b>>
-PRINTLN: CONCAT<"a XOR b: ",XOR<a,b>>
+PRINTLN: "a AND b: " AND<a,b>
+PRINTLN: "NOT a  : " NOT<a>
+PRINTLN: "a OR b : " OR<a,b>
+PRINTLN: "a XOR b: " XOR<a,b>

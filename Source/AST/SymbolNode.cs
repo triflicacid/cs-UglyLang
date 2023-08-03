@@ -79,7 +79,7 @@ namespace UglyLang.Source.AST
                     value = variable;
                 }
 
-                return CastType == null ? value : value.To((Values.ValueType)CastType);
+                return value;
             }
             else
             {

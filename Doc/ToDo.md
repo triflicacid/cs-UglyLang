@@ -5,6 +5,5 @@
 
 The following document contains ideas for the language
 
-- Concatenation: currently expressions contains only one top-level items e.g. `name`. If multiple items should appear, they are concatenated.
+- Re-do the type system. Use an object structure to represent the abstract struture of types. This would allow more complex types, such as arrays.
 
-E.g, `"Hello " "world"` ==> `Hello world`

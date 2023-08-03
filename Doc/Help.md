@@ -1,14 +1,25 @@
 # Syntax
-Each line of the source file is considered to be a new statement. A line may either a comment if the line begins with `;`, or in the form:
+Each line of the source file is considered to be a new statement. A line may either begin with `;` in which case it is a comment and is skipped, or in the form:
 
-`<KEYWORD> [arg][: <value> [(<type>)]]`
+`<KEYWORD> [arg][: <expr>]`
 
-Depending on the keyword, neither, one or both of `arg` and `value` must be provided.
+Depending on the keyword, neither, one or both of `arg` and `expr` must be provided.
 - `arg` : generally a single symbol, will be specified otherwise.
-- `value` : generally an expression to be evaluated, will be specified otherwise.
-- `type` : if present, the type to cast the expression to *before* it is passed into the keyword
+- `expr` : generally an expression to be evaluated, will be specified otherwise.
 
 There is the general pattern that `arg` acts as the input symbol/the symbol to affect, and `value` is the output value/value to use. For example, `INPUT x` places user input into `x` whilst `PRINT: x` outputs the value of `x`.
+
+## Expressions
+
+An expression may contain one or more units, and terminated with an optional type. Illustrated:
+
+`<unit 1> <unit 2> ... <unit n> [<type>]`
+
+Each unit is one of:
+- A string literal, which is enclosed by quotation marks `" ... "`.
+- A symbol name. The symbol may be followed by angled brackets `< ... >`. If present, these are passed to the symbol as arguments to a function. The arguments are seperated by commas. If the symbol is function, it is called with provided arguments, or called with none if no arguments are provided.
+
+If there is a singular unit, this unit is evaluated and is the result of the expression. If there are multiple units, each unit will be evaluated, cast into a string, and concatenated together. Finally, if `type` is present, the entire result will be cast into the specified type.
 
 # Keywords
 
@@ -116,6 +127,8 @@ Returns a casted to type t.
 Note that this is different to the CAST keyword.
 - `CONCAT<a,b>`
 Convert a and b to strings and concatenate them.
+- `ID<a>`
+Returns the provided argument.
 - `RANDOM` / `RANDOM<max>` / `RANDOM<min,max>`
 Returns random number in the range: [0,1) / [0,max) / [min,max).
 - `SLEEP<t>`

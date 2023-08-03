@@ -23,7 +23,7 @@ namespace UglyLang.Source.AST
 
         public override Value Evaluate(Context context)
         {
-            return CastType == null ? Value : Value.To((Values.ValueType) CastType);
+            return Value;
         }
     }
 }

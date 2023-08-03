@@ -1,7 +1,7 @@
 LET a: 1
 LET b: 2
-PRINTLN: CONCAT<"a == b: ",EQ<a,b>>
-PRINTLN: CONCAT<"a >  b: ",GT<a,b>>
-PRINTLN: CONCAT<"a >= b: ",GE<a,b>>
-PRINTLN: CONCAT<"a <  b: ",LT<a,b>>
-PRINTLN: CONCAT<"a <= b: ",LE<a,b>>
+PRINTLN: "a == b: " EQ<a,b>
+PRINTLN: "a >  b: " GT<a,b>
+PRINTLN: "a >= b: " GE<a,b>
+PRINTLN: "a <  b: " LT<a,b>
+PRINTLN: "a <= b: " LE<a,b>

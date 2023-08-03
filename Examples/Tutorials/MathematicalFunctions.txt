@@ -1,9 +1,9 @@
 LET a: 2
 LET b: 3
-PRINTLN: CONCAT<"a + b: ",ADD<a,b>>
-PRINTLN: CONCAT<"a - b: ",SUB<a,b>>
-PRINTLN: CONCAT<"-a   : ",NEG<a>>
-PRINTLN: CONCAT<"a * b: ",MUL<a,b>>
-PRINTLN: CONCAT<"a / b: ",DIV<a,b>>
-PRINTLN: CONCAT<"a % b: ",MOD<a,b>>
-PRINTLN: CONCAT<"a ^ b: ",EXP<a,b>>
+PRINTLN: "a + b: " ADD<a,b>
+PRINTLN: "a - b: " SUB<a,b>
+PRINTLN: "   -a: " NEG<a>
+PRINTLN: "a * b: " MUL<a,b>
+PRINTLN: "a / b: " DIV<a,b>
+PRINTLN: "a % b: " MOD<a,b>
+PRINTLN: "a ^ b: " EXP<a,b>

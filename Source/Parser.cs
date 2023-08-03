@@ -12,6 +12,8 @@ namespace UglyLang.Source
 {
     public partial class Parser
     {
+        private static readonly char CommentChar = ';';
+
         public Error? Error = null;
         public ASTStructure? AST = null;
 
@@ -39,7 +41,7 @@ namespace UglyLang.Source
                 }
 
                 // Is a comment?
-                if (line[colNumber] == ';')
+                if (line[colNumber] == CommentChar)
                 {
                     continue;
                 }
@@ -68,7 +70,6 @@ namespace UglyLang.Source
 
                 var keywordInfo = KeywordNode.KeywordDict[keyword];
                 string before = "", after = "";
-
 
                 if (keywordInfo != null)
                 {
@@ -399,126 +400,130 @@ namespace UglyLang.Source
         }
 
         /// <summary>
-        /// Parse a string as an expresion. Return the expression node and the ending index. The expression must terminate with endChar (NULL means that the line must end)
+        /// Parse a string as an expresion. Return the expression node and the ending index. The expression must terminate with any character in endChar (NULL means that the line must end)
         /// </summary>
         private (ExprNode?, int) ParseExpression(string expr, int lineNumber = 0, int colNumber = 0, char?[]? endChar = null)
         {
-            (var node, int endColNumber) = _ParseExpression(expr, lineNumber, colNumber, endChar);
-            return (node == null ? null : new ExprNode(node), endColNumber);
-        }
-
-        private (ASTNode?, int) _ParseExpression(string expr, int lineNumber, int colNumber, char?[]? endChar)
-        {
             int col = 0;
+            ExprNode exprNode = new();
 
             // Eat whitespace
             while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
 
-            // Is end of the line?
-            if (col == expr.Length)
+            while (true)
             {
-                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
-                return (null, col);
-            }
-
-            ASTNode node;
-            int startPos = col;
-
-            // Is a string literal?
-            if (expr[col] == '"')
-            {
-                (string str, int end) = ExtractString(expr[col..]);
-
-                if (end == -1)
+                // Is end of the line?
+                if (col == expr.Length)
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unterminated string literal");
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
                     return (null, col);
                 }
 
-                col += end + 1;
-                node = new ValueNode(new StringValue(str));
-            }
+                ASTNode node;
+                int startPos = col;
 
-            // Is a number?
-            else if (char.IsDigit(expr[col]) || (expr[col] == '-' && col + 1 < expr.Length && char.IsDigit(expr[col + 1])))
-            {
-                string str = ExtractNumberFromString(expr[col..]);
-                col += str.Length;
-                double number = Convert.ToDouble(str);
-                Value value;
-
-                if (number == (long) number)
+                // Is a string literal?
+                if (expr[col] == '"')
                 {
-                    value = new IntValue((long) number);
-                }
-                else
-                {
-                    value = new FloatValue(number);
-                }
+                    (string str, int end) = ExtractString(expr[col..]);
 
-                node = new ValueNode(value);
-            }
-
-            // Is a symbol?
-            else if (LeadingSymbolCharRegex.IsMatch(expr[col].ToString()))
-            {
-                string symbol = ExtractSymbolFromString(expr[col..]);
-                col += symbol.Length;
-
-                SymbolNode symbolNode = new(symbol);
-
-                // Where any arguments provided?
-                if (col < expr.Length && expr[col] == '<')
-                {
-                    int argStartPos = col;
-                    symbolNode.CallArguments = new();
-                    col++;
-
-                    // Extract each argument, seperated by ','
-                    while (col < expr.Length)
+                    if (end == -1)
                     {
-                        (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
-
-                        if (argExpr == null)
-                        {
-                            return (null, col);
-                        }
-                        else
-                        {
-                            col += end;
-                            symbolNode.CallArguments.Add(argExpr);
-                            if (expr[col] == '>') break;
-                            col++;
-                        }
-                    }
-
-                    if (col == expr.Length)
-                    {
-                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
+                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unterminated string literal");
                         return (null, col);
                     }
-                    else if (expr[col] == '>')
+
+                    col += end + 1;
+                    node = new ValueNode(new StringValue(str));
+                }
+
+                // Is a number?
+                else if (char.IsDigit(expr[col]) || (expr[col] == '-' && col + 1 < expr.Length && char.IsDigit(expr[col + 1])))
+                {
+                    string str = ExtractNumberFromString(expr[col..]);
+                    col += str.Length;
+                    double number = Convert.ToDouble(str);
+                    Value value;
+
+                    if (number == (long)number)
                     {
-                        col++;
+                        value = new IntValue((long)number);
                     }
                     else
                     {
-                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", expr[col]));
-                        return (null, col);
+                        value = new FloatValue(number);
                     }
+
+                    node = new ValueNode(value);
                 }
 
-                node = symbolNode;
-            }
+                // Is a symbol?
+                else if (LeadingSymbolCharRegex.IsMatch(expr[col].ToString()))
+                {
+                    string symbol = ExtractSymbolFromString(expr[col..]);
+                    col += symbol.Length;
 
-            else
-            {
-                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("invalid syntax: '{0}'", expr[col]));
-                return (null, col);
-            }
+                    SymbolNode symbolNode = new(symbol);
 
-            // Eat whitespace
-            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+                    // Where any arguments provided?
+                    if (col < expr.Length && expr[col] == '<')
+                    {
+                        int argStartPos = col;
+                        symbolNode.CallArguments = new();
+                        col++;
+
+                        // Extract each argument, seperated by ','
+                        while (col < expr.Length)
+                        {
+                            (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
+
+                            if (argExpr == null)
+                            {
+                                return (null, col);
+                            }
+                            else
+                            {
+                                col += end;
+                                symbolNode.CallArguments.Add(argExpr);
+                                if (expr[col] == '>') break;
+                                col++;
+                            }
+                        }
+
+                        if (col == expr.Length)
+                        {
+                            Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
+                            return (null, col);
+                        }
+                        else if (expr[col] == '>')
+                        {
+                            col++;
+                        }
+                        else
+                        {
+                            Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", expr[col]));
+                            return (null, col);
+                        }
+                    }
+
+                    node = symbolNode;
+                }
+                else
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("invalid syntax: '{0}'", expr[col]));
+                    return (null, col);
+                }
+
+                // Eat whitespace
+                while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+
+                node.LineNumber = lineNumber;
+                node.ColumnNumber = colNumber + startPos;
+                exprNode.Children.Add(node);
+
+                // Stop if: Reached the end of the line? Comment? Met and ending character?
+                if (col == expr.Length || col < expr.Length && (expr[col] == CommentChar || (endChar != null && endChar.Contains(expr[col])))) break;
+            }
 
             // Type casting?
             if (col < expr.Length && expr[col] == '(')
@@ -530,7 +535,7 @@ namespace UglyLang.Source
                     return (null, col);
                 }
 
-                string str = expr[(col + 1) .. (col + end)];
+                string str = expr[(col + 1)..(col + end)];
                 Values.ValueType? type = Value.TypeFromString(str);
                 if (type == null)
                 {
@@ -538,17 +543,18 @@ namespace UglyLang.Source
                     return (null, col);
                 }
 
-                node.CastType = type;
+                exprNode.CastType = type;
                 col += end + 1;
             }
 
-            // Eat whitespace
-            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
-
-            // The line should end with `endChar`
+            // The input string should end with `endChar` or a comment
             if (col < expr.Length)
             {
-                if (endChar == null)
+                if (expr[col] == CommentChar)
+                {
+
+                }
+                else if (endChar == null)
                 {
                     Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col]));
                     return (null, col);
@@ -572,9 +578,7 @@ namespace UglyLang.Source
                 }
             }
 
-            node.LineNumber = lineNumber;
-            node.ColumnNumber = colNumber + startPos;
-            return (node, col);
+            return (exprNode, col);
         }
 
         /// <summary>

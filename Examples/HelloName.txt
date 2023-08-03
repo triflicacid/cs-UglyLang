@@ -2,5 +2,4 @@
 LET name: ""
 PRINTLN: "What is your name?"
 INPUT name
-PRINT: "Hello, "
-PRINTLN: name
+PRINTLN: "Hello, " name

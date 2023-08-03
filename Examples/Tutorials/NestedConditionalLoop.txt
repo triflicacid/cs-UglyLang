@@ -1,10 +1,10 @@
 LET n: 0
 LET m: 0
 LOOP: LT<n,5>
-	PRINTLN: CONCAT<"n=",n>
+	PRINTLN: "n=" n
 	SET m: 0
 	LOOP: LT<m,n>
-		PRINTLN: CONCAT<" m=",m>
+		PRINTLN: " m=" m
 		SET m: SUCC<m>
 	END
 	SET n: SUCC<n>

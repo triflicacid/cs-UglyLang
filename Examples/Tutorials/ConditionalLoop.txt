@@ -1,6 +1,6 @@
 LET n: 0
 LOOP: LT<n,5>
-	PRINTLN: CONCAT<"n=",n>
+	PRINTLN: "n=" n
 	SET n: SUCC<n>
 END
-PRINTLN: CONCAT<"final n=",n>
+PRINTLN: "final n=" n
