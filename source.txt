@@ -1,7 +1,0 @@
-IF: 1
-PRINTLN: "Yes"
-ELSEIF: 1
-PRINTLN: "Maybe"
-ELSE
-PRINTLN: "No"
-END

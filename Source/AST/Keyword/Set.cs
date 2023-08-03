@@ -14,17 +14,17 @@ namespace UglyLang.Source.AST.Keyword
     public class SetKeywordNode : KeywordNode
     {
         public readonly string Name;
-        public readonly ExprNode Value;
+        public readonly ExprNode Expr;
 
-        public SetKeywordNode(string name, ExprNode value) : base("SET")
+        public SetKeywordNode(string name, ExprNode expr) : base("SET")
         {
             Name = name;
-            Value = value;
+            Expr = expr;
         }
 
         public override Signal Action(Context context)
         {
-            Value evaldValue = Value.Evaluate(context);
+            Value evaldValue = Expr.Evaluate(context);
             if (context.Error != null) // Propagate error?
             {
                 return Signal.ERROR;
@@ -34,7 +34,12 @@ namespace UglyLang.Source.AST.Keyword
             if (context.HasVariable(Name))
             {
                 Value oldValue = context.GetVariable(Name);
-                if (oldValue.Type != evaldValue.Type)
+                if (Value.Match(oldValue.Type, evaldValue.Type))
+                {
+                    if (oldValue.Type != Values.ValueType.ANY)
+                        evaldValue = evaldValue.To(oldValue.Type);
+                }
+                else
                 {
                     context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot match {0} with {1} (in assignment to {2})", evaldValue.Type.ToString(), oldValue.Type.ToString(), Name));
                     return Signal.ERROR;

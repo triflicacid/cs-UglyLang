@@ -1,0 +1,6 @@
+LET n: 0
+WHILE: LT<n,5>
+PRINTLN: CONCAT<"n=",n>
+SET n: SUCC<n>
+END
+PRINTLN: CONCAT<"final n=",n>

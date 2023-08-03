@@ -30,7 +30,7 @@ namespace UglyLang.Source
                 string line = lines[lineNumber];
 
                 // Eat whitespace
-                while (colNumber < line.Length && line[colNumber] == ' ') colNumber++;
+                while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
 
                 // Is the line empty?
                 if (colNumber == line.Length)
@@ -75,7 +75,7 @@ namespace UglyLang.Source
                     if (keywordInfo.Before)
                     {
                         // Eat whitespace
-                        while (colNumber < line.Length && line[colNumber] == ' ') colNumber++;
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
 
                         // Extract symbol
                         int beforeColNumber = colNumber;
@@ -91,7 +91,7 @@ namespace UglyLang.Source
                     if (keywordInfo.After)
                     {
                         // Eat whitespace
-                        while (colNumber < line.Length && line[colNumber] == ' ') colNumber++;
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
 
                         // Colon?
                         if (colNumber >= line.Length)
@@ -103,7 +103,7 @@ namespace UglyLang.Source
                             colNumber++;
                             
                             // Eat whitespace
-                            while (colNumber < line.Length && line[colNumber] == ' ') colNumber++;
+                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
 
                             after = line[colNumber..];
                             colNumber = line.Length;
@@ -233,10 +233,14 @@ namespace UglyLang.Source
                                         Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
                                     }
                                 }
+                                else if (latest is WhileKeywordNode whileKeyword)
+                                {
+                                    whileKeyword.Body = previousTree;
+                                }
                                 else
                                 {
                                     // Should never be the case
-                                    throw new InvalidOperationException();
+                                    throw new InvalidOperationException(latest.ToString());
                                 }
                             }
 
@@ -288,6 +292,15 @@ namespace UglyLang.Source
                             if (expr == null) return; // Propagate error
 
                             keywordNode = new SetKeywordNode(before, expr);
+                            break;
+                        }
+                    case "WHILE":
+                        {
+                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
+                            if (expr == null) return; // Propagate error
+
+                            keywordNode = new WhileKeywordNode(expr);
+                            createNewNest = true;
                             break;
                         }
                     default:
@@ -367,7 +380,7 @@ namespace UglyLang.Source
             int col = 0;
 
             // Eat whitespace
-            while (col < expr.Length && expr[col] == ' ') col++;
+            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
 
             // Is end of the line?
             if (col == expr.Length)
@@ -473,7 +486,7 @@ namespace UglyLang.Source
             }
 
             // Eat whitespace
-            while (col < expr.Length && expr[col] == ' ') col++;
+            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
 
             // Type casting?
             if (col < expr.Length && expr[col] == '(')
@@ -498,7 +511,7 @@ namespace UglyLang.Source
             }
 
             // Eat whitespace
-            while (col < expr.Length && expr[col] == ' ') col++;
+            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
 
             // The line should end with `endChar`
             if (col < expr.Length)

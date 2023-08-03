@@ -52,6 +52,7 @@ namespace UglyLang.Source.AST
             { "PRINT", new(false, true) },
             { "PRINTLN", new(false, true) },
             { "SET", new(true, true) },
+            { "WHILE", new(false, true) },
         };
     }
 }

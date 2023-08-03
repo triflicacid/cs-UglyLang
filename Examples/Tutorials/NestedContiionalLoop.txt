@@ -1,0 +1,11 @@
+LET n: 0
+LET m: 0
+WHILE: LT<n,5>
+	PRINTLN: CONCAT<"n=",n>
+	SET m: 0
+	WHILE: LT<m,n>
+		PRINTLN: CONCAT<" m=",m>
+		SET m: SUCC<m>
+	END
+	SET n: SUCC<n>
+END
