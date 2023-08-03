@@ -7,12 +7,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Examples\Tutorials\InfiniteLoop.txt" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="Examples\Tutorials\InfiniteLoop.txt" />
-  </ItemGroup>
-
 </Project>

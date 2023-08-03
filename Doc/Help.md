@@ -44,16 +44,13 @@ Used after an IF keyword to introduce a new conditional. Block will be executed 
 - `ELSE`
 Used after an `IF`/`ELSEIF` keyword. Contents will be executed if none of the chained if/elseif blocks were executed.
 
-## Conditional Loop
-
-- `WHILE [<symbol>]: <expr>`
-Loop the current block while the condition is met.
-If the symbol is provided, this will be the loop counter. It will be defined in the outermost scope and must be numeric starting at 0 and incrementing each iteration.
-
-## Infinite Loop
+## Loop Statement
 
 - `LOOP`
-Repeat the code block indefintetly.
+Repeat the code block indefinitely.
+- `LOOP: <expr>`
+Loop the current block while the condition is truthy.
+~~If the symbol is provided, this will be the loop counter. It will be defined in the outermost scope and must be numeric starting at 0 and incrementing each iteration.~~
 
 ## Functions
 

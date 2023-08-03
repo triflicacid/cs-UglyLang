@@ -28,12 +28,12 @@ namespace UglyLang.Source.AST
         public class KeywordInfo
         {
             /// Does the keyword expect something immediatley after it?
-            public readonly bool Before;
+            public readonly TriState Before;
 
             /// Does the keyword expect a colon and something after it?
-            public readonly bool After;
+            public readonly TriState After;
 
-            public KeywordInfo(bool before, bool after)
+            public KeywordInfo(TriState before, TriState after)
             {
                 After = after;
                 Before = before;
@@ -41,21 +41,20 @@ namespace UglyLang.Source.AST
         }
 
         public static readonly Dictionary<string, KeywordInfo> KeywordDict = new() {
-            { "CAST", new(true, true) },
-            { "DO", new(false, true) },
-            { "END", new(false, false) },
-            { "ELSE", new(false, false) },
-            { "ELSEIF", new(false, true) },
-            { "EXIT", new(false, false) },
-            { "IF", new(false, true) },
-            { "INPUT", new(true, false) },
-            { "LET", new(true, true) },
-            { "LOOP", new(false, false) },
-            { "PRINT", new(false, true) },
-            { "PRINTLN", new(false, true) },
-            { "SET", new(true, true) },
-            { "STOP", new(false, false) },
-            { "WHILE", new(false, true) },
+            { "CAST", new(TriState.YES, TriState.YES) },
+            { "DO", new(TriState.NO, TriState.YES) },
+            { "END", new(TriState.NO, TriState.NO) },
+            { "ELSE", new(TriState.NO, TriState.NO) },
+            { "ELSEIF", new(TriState.NO, TriState.YES) },
+            { "EXIT", new(TriState.NO, TriState.NO) },
+            { "IF", new(TriState.NO, TriState.YES) },
+            { "INPUT", new(TriState.YES, TriState.NO) },
+            { "LET", new(TriState.YES, TriState.YES) },
+            { "LOOP", new(TriState.NO, TriState.OPTIONAL) },
+            { "PRINT", new(TriState.NO, TriState.YES) },
+            { "PRINTLN", new(TriState.NO, TriState.YES) },
+            { "SET", new(TriState.YES, TriState.YES) },
+            { "STOP", new(TriState.NO, TriState.NO) },
         };
     }
 }

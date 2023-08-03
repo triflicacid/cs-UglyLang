@@ -9,29 +9,56 @@ using UglyLang.Source.Values;
 namespace UglyLang.Source.AST.Keyword
 {
     /// <summary>
-    /// Execute the body continuously and indefintely
+    /// Execute the body. If there is a condition, loop while this is truthy, else loop conditionaly.
     /// </summary>
     public class LoopKeywordNode : KeywordNode
     {
+        public ExprNode? Condition;
         public ASTStructure? Body;
 
-        public LoopKeywordNode() : base("LOOP")
+        public LoopKeywordNode(ExprNode? condition = null) : base("LOOP")
         {
             Body = null;
+            Condition = condition;
         }
 
         public override Signal Action(Context context)
         {
             if (Body == null) throw new NullReferenceException(); // Should not be the case
 
-            while (true)
+            if (Condition == null)
             {
-                Signal signal = Body.Evaluate(context);
-                if (signal != Signal.NONE)
+                // Indefinite loop
+                while (true)
                 {
-                    if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
-                    return signal;
+                    Signal signal = Body.Evaluate(context);
+                    if (signal != Signal.NONE)
+                    {
+                        if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
+                        return signal;
+                    }
                 }
+            }
+            else
+            {
+                // Loop while the condition is truthy
+                while (true)
+                {
+                    Value value = Condition.Evaluate(context);
+                    if (context.Error != null) // Propagate error?
+                        return Signal.ERROR;
+
+                    if (!value.IsTruthy()) break;
+
+                    Signal signal = Body.Evaluate(context);
+                    if (signal != Signal.NONE)
+                    {
+                        if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
+                        return signal;
+                    }
+                }
+
+                return Signal.NONE;
             }
         }
     }

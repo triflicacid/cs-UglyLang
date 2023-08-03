@@ -72,31 +72,32 @@ namespace UglyLang.Source
 
                 if (keywordInfo != null)
                 {
-                    if (keywordInfo.Before)
-                    {
-                        // Eat whitespace
-                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                    // Eat whitespace
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
 
+                    if (keywordInfo.Before == TriState.YES || keywordInfo.Before == TriState.OPTIONAL)
+                    {
                         // Extract symbol
                         int beforeColNumber = colNumber;
                         while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber])) before += line[colNumber++];
 
-                        if (!IsValidSymbol(before))
+                        if (keywordInfo.Before == TriState.YES && !IsValidSymbol(before))
                         {
                             Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", before));
                             break;
                         }
                     }
 
-                    if (keywordInfo.After)
+                    if (keywordInfo.After == TriState.YES || keywordInfo.After == TriState.OPTIONAL)
                     {
-                        // Eat whitespace
-                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
-
                         // Colon?
                         if (colNumber >= line.Length)
                         {
-                            Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected colon ':', got end of line");
+                            if (keywordInfo.After == TriState.YES)
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected colon ':', got end of line");
+                                break;
+                            }
                         }
                         else if (line[colNumber] == ':')
                         {
@@ -107,14 +108,24 @@ namespace UglyLang.Source
 
                             after = line[colNumber..];
                             colNumber = line.Length;
+
+                            if (after.Length == 0)
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected expression, got end of line, after ':'");
+                                break;
+                            }
                         }
                         else
                         {
-                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected colon ':', got '{0}'", line[colNumber]));
-                            break;
+                            if (keywordInfo.After == TriState.YES)
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected colon ':', got '{0}'", line[colNumber]));
+                                break;
+                            }
                         }
                     }
                 }
+
                 if (Error != null) break;
 
                 // Must be at end of line
@@ -233,10 +244,6 @@ namespace UglyLang.Source
                                         Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
                                     }
                                 }
-                                else if (latest is WhileKeywordNode whileKeyword)
-                                {
-                                    whileKeyword.Body = previousTree;
-                                }
                                 else if (latest is LoopKeywordNode loopKeyword)
                                 {
                                     loopKeyword.Body = previousTree;
@@ -288,7 +295,14 @@ namespace UglyLang.Source
                         }
                     case "LOOP":
                         {
-                            keywordNode = new LoopKeywordNode();
+                            ExprNode? body = null;
+                            if (after.Length > 0)
+                            {
+                                (body, _) = ParseExpression(after, lineNumber, colNumber);
+                                if (body == null) return; // Propagate error
+                            }
+
+                            keywordNode = new LoopKeywordNode(body);
                             createNewNest = true;
                             break;
                         }
@@ -319,15 +333,6 @@ namespace UglyLang.Source
                     case "STOP":
                         {
                             keywordNode = new StopKeywordNode();
-                            break;
-                        }
-                    case "WHILE":
-                        {
-                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
-                            if (expr == null) return; // Propagate error
-
-                            keywordNode = new WhileKeywordNode(expr);
-                            createNewNest = true;
                             break;
                         }
                     default:
