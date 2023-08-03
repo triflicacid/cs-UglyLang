@@ -209,6 +209,7 @@ namespace UglyLang.Source
             context.SetSymbol("MOD", new BuiltinFuncValue(new Functions.Maths.FMod()));
             context.SetSymbol("MUL", new BuiltinFuncValue(new Functions.Maths.FMul()));
             context.SetSymbol("NEG", new BuiltinFuncValue(new Functions.Maths.FNeg()));
+            context.SetSymbol("PRED", new BuiltinFuncValue(new Functions.Maths.FPred()));
             context.SetSymbol("SUB", new BuiltinFuncValue(new Functions.Maths.FSub()));
             context.SetSymbol("SUCC", new BuiltinFuncValue(new Functions.Maths.FSucc()));
         }

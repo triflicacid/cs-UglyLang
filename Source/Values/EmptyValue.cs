@@ -28,7 +28,13 @@ namespace UglyLang.Source.Values
 
         public override Value To(ValueType type)
         {
-            throw new NotSupportedException();
+            return type switch
+            {
+                ValueType.INT => new IntValue(0),
+                ValueType.FLOAT => new FloatValue(0),
+                ValueType.STRING => new StringValue(""),
+                _ => throw new Exception("Unable to cast: unknown value type passed")
+            };
         }
     }
 }

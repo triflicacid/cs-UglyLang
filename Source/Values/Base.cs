@@ -24,7 +24,7 @@ namespace UglyLang.Source.Values
         {
             return str switch
             {
-                "INTEGER" => ValueType.INT,
+                "INT" => ValueType.INT,
                 "FLOAT" => ValueType.FLOAT,
                 "STRING" => ValueType.STRING,
                 _ => null,

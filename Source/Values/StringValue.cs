@@ -29,6 +29,7 @@ namespace UglyLang.Source.Values
             if (value is IntValue ivalue) return new(ivalue.Value.ToString());
             if (value is FloatValue fvalue) return new(fvalue.Value.ToString());
             if (value is StringValue svalue) return new(svalue.Value);
+            if (value is EmptyValue) return new("");
             throw new Exception("Unable to cast: unknown value type passed");
         }
 

@@ -521,8 +521,8 @@ namespace UglyLang.Source
                 node.ColumnNumber = colNumber + startPos;
                 exprNode.Children.Add(node);
 
-                // Stop if: Reached the end of the line? Comment? Met and ending character?
-                if (col == expr.Length || col < expr.Length && (expr[col] == CommentChar || (endChar != null && endChar.Contains(expr[col])))) break;
+                // Stop if: Reached the end of the line? Comment? Bracket? Met and ending character?
+                if (col == expr.Length || col < expr.Length && (expr[col] == '(' || expr[col] == CommentChar || (endChar != null && endChar.Contains(expr[col])))) break;
             }
 
             // Type casting?

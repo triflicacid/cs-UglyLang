@@ -1,0 +1,2 @@
+LET n: 0
+PRINTLN: PRED<n> " " n " " SUCC<n>
