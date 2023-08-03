@@ -1,0 +1,12 @@
+; Number guessing game
+LET n: 7
+LET x: 0
+LOOP
+	INPUT x
+	IF: EQ<n,x>
+		PRINTLN: "Correct!"
+		EXIT
+	ELSE
+		PRINTLN: "Not correct. Guess again."
+	END
+END

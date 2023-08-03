@@ -31,8 +31,14 @@ namespace UglyLang.Source.Values
             };
         }
 
+        /// <summary>
+        /// Cast this value to the given type, or error
+        /// </summary>
         public abstract Value To(ValueType type);
 
+        /// <summary>
+        /// Return whether or not this instance of the current type can be considered as truthy
+        /// </summary>
         public abstract bool IsTruthy();
 
         /// <summary>

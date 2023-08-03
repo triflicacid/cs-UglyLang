@@ -46,7 +46,7 @@ namespace UglyLang.Source.Functions.Comparative
                 eq = false;
             }
 
-            return new IntValue(eq ? 1 : 0);
+            return new IntValue(eq);
         }
     }
 }

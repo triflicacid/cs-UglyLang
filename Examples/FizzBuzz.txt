@@ -1,0 +1,16 @@
+LET n: 1
+LOOP
+	SET m3: EQ<MOD<n,3>,0>
+	SET m5: EQ<MOD<n,5>,0>
+	IF: AND<m3,m5>
+		PRINTLN: "FizzBuzz"
+	ELSEIF: m3
+		PRINTLN: "Fizz"
+	ELSEIF: m5
+		PRINTLN: "Buzz"
+	ELSE
+		PRINTLN: n
+	END
+	DO: SLEEP<250>
+	SET n: SUCC<n>
+END

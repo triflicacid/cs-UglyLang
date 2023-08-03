@@ -80,6 +80,16 @@ Returns a number, 0 or 1, depending on if a < b.
 - `LE<a,b>`
 Returns a number, 0 or 1, depending on if a <= b.
 
+## Logical Functions
+- `AND<a,b>`
+Returns true if a and b are both true.
+- `NOR<a>`
+Returns the logical inverse of a.
+- `OR<a,b>`
+Returns true if a or b are true.
+- `XOR<a,b>`
+Returns true if a or b are true, but not both.
+
 ## Mathmatical Functions
 
 - `ADD<a,b>`

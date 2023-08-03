@@ -182,25 +182,34 @@ namespace UglyLang.Source
         public void InitialiseBuiltinFunctions()
         {
             var context = Stack[0];
+            // General
             context.SetSymbol("CONCAT", new BuiltinFuncValue(new FConcat()));
             context.SetSymbol("RANDOM", new BuiltinFuncValue(new FRandom()));
             context.SetSymbol("SLEEP", new BuiltinFuncValue(new FSleep()));
-            context.SetSymbol("SUCC", new BuiltinFuncValue(new Functions.Maths.FSucc()));
             context.SetSymbol("TYPE", new BuiltinFuncValue(new FType()));
 
+            // Comparative
             context.SetSymbol("EQ", new BuiltinFuncValue(new Functions.Comparative.FEq()));
             context.SetSymbol("GT", new BuiltinFuncValue(new Functions.Comparative.FGt()));
             context.SetSymbol("GE", new BuiltinFuncValue(new Functions.Comparative.FGe()));
             context.SetSymbol("LT", new BuiltinFuncValue(new Functions.Comparative.FLt()));
             context.SetSymbol("LE", new BuiltinFuncValue(new Functions.Comparative.FLe()));
 
+            // Logical
+            context.SetSymbol("AND", new BuiltinFuncValue(new Functions.Logical.FAnd()));
+            context.SetSymbol("NOT", new BuiltinFuncValue(new Functions.Logical.FNot()));
+            context.SetSymbol("OR", new BuiltinFuncValue(new Functions.Logical.FOr()));
+            context.SetSymbol("XOR", new BuiltinFuncValue(new Functions.Logical.FXOr()));
+
+            // Mathematical
             context.SetSymbol("ADD", new BuiltinFuncValue(new Functions.Maths.FAdd()));
-            context.SetSymbol("SUB", new BuiltinFuncValue(new Functions.Maths.FSub()));
             context.SetSymbol("DIV", new BuiltinFuncValue(new Functions.Maths.FDiv()));
+            context.SetSymbol("EXP", new BuiltinFuncValue(new Functions.Maths.FExp()));
             context.SetSymbol("MOD", new BuiltinFuncValue(new Functions.Maths.FMod()));
             context.SetSymbol("MUL", new BuiltinFuncValue(new Functions.Maths.FMul()));
-            context.SetSymbol("EXP", new BuiltinFuncValue(new Functions.Maths.FExp()));
             context.SetSymbol("NEG", new BuiltinFuncValue(new Functions.Maths.FNeg()));
+            context.SetSymbol("SUB", new BuiltinFuncValue(new Functions.Maths.FSub()));
+            context.SetSymbol("SUCC", new BuiltinFuncValue(new Functions.Maths.FSucc()));
         }
     }
 }
