@@ -1,0 +1,14 @@
+DEF FAC: INT <n: INT>
+	LET x: n
+	LOOP: GT<n,1>
+		SET x: MUL<x,PRED<n>>
+		SET n: PRED<n>
+	END
+	FINISH: x
+END
+
+LET n: 0
+PRINTLN: "Enter a number: "
+INPUT n
+
+PRINTLN: n "! = " FAC<n>

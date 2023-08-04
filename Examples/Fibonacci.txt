@@ -1,0 +1,21 @@
+DEF FIB: INT <n: INT>
+	LET a: 0
+	LET b: 1
+	LET tmp: 0
+	LET i: 0
+
+	LOOP: LT<i,n>
+		SET tmp: a
+		SET a: ADD<a,b>
+		SET b: tmp
+		SET i: SUCC<i>
+	END
+
+	FINISH: a
+END
+
+LET n: 0
+PRINTLN: "Enter a number: "
+INPUT n
+
+PRINTLN: "The " n "th Fibonacci number is " FIB<n>
