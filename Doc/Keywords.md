@@ -8,8 +8,10 @@ Change the type of the given variable.
 Execute the expression.
 - `END`
 Marks the end of a loop/function.
-- `EXIT` / `EXIT: <expr>`
-Exits the current loop/function. The second form is used to return a value from a function.
+- `EXIT`
+Exits the current loop.
+- `FINISH` / `FINISH: <expr>`
+Exits the current function and rteurns the stated value, or none.
 - `INPUT <symbol>`
 Prompts the user for input, setting the symbol to the given value.
 - `LET <symbol>: <expr>`
@@ -40,9 +42,9 @@ Repeat the code block indefinitely.
 Loop the current block while the condition is truthy.
 ~~If the symbol is provided, this will be the loop counter. It will be defined in the outermost scope and must be numeric starting at 0 and incrementing each iteration.~~
 
-## Functions
+## Procedures/Functions
 
-- `DEF <symbol>: <type> <<arg1: type1>, <arg2: type2>, ...>`
-Defines a new function which returns <type> with the given arguments each with the resepective type.
+- `DEF <symbol>: [<type>] <<arg1: type1>, <arg2: type2>, ...>`
+Defines a new procedyre which accepts the stated arguments. If `type` is present, the function returns a value of that type, else a prcedyre is created which returns no value.
 
-Functions may be overloaded, given that their return types match. Built-in functions **cannot** be overloaded.
+Functions may be overloaded, given that their return types (or lack thereof) match. Built-in functions **cannot** be overloaded.

@@ -10,9 +10,9 @@ namespace UglyLang.Source.Functions
     public abstract class Function
     {
         public readonly List<Values.ValueType[]> ArgumentTypes;
-        public readonly Values.ValueType ReturnType;
+        public readonly Values.ValueType? ReturnType;
 
-        public Function(List<Values.ValueType[]> argumentTypes, Values.ValueType returnType)
+        public Function(List<Values.ValueType[]> argumentTypes, Values.ValueType? returnType)
         {
             ArgumentTypes = argumentTypes;
             ReturnType = returnType;

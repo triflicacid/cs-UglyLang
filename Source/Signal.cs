@@ -11,6 +11,7 @@ namespace UglyLang.Source
         NONE,
         ERROR,
         EXIT_LOOP,
+        EXIT_FUNC,
         EXIT_PROG,
     }
 }

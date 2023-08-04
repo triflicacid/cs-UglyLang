@@ -48,6 +48,7 @@ namespace UglyLang.Source.AST
             { "ELSE", new(TriState.NO, TriState.NO) },
             { "ELSEIF", new(TriState.NO, TriState.YES) },
             { "EXIT", new(TriState.NO, TriState.NO) },
+            { "FINISH", new(TriState.NO, TriState.OPTIONAL) },
             { "IF", new(TriState.NO, TriState.YES) },
             { "INPUT", new(TriState.YES, TriState.NO) },
             { "LET", new(TriState.YES, TriState.YES) },

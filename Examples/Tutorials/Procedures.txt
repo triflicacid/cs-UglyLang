@@ -1,8 +1,8 @@
-DEF PRINT: STRING <str: STRING>
+DEF PRINT: <str: STRING>
 	PRINTLN: str
 END
 
-DEF PRINT: STRING <str: STRING, end: STRING>
+DEF PRINT: <str: STRING, end: STRING>
 	PRINTLN: str " (" end ")"
 END
 

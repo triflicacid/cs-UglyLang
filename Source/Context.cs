@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using UglyLang.Source.Functions;
 using UglyLang.Source.Values;
@@ -25,6 +24,7 @@ namespace UglyLang.Source
             public readonly int ColNumber;
             public readonly Types Type;
             public readonly string Name;
+            public Value? FunctionReturnValue = null;
 
             public StackContext(int line, int col, Types type, string name)
             {
@@ -168,15 +168,32 @@ namespace UglyLang.Source
             return str;
         }
 
+        /// <summary>
+        /// Push a new stack context
+        /// </summary>
         public void PushStackContext(int line, int col, StackContext.Types type, string name)
         {
             Stack.Add(new(line, col, type, name));
         }
 
+        /// <summary>
+        /// Pop the latest stack context
+        /// </summary>
         public void PopStackContext()
         {
             if (Stack.Count < 2) throw new InvalidOperationException();
             Stack.RemoveAt(Stack.Count - 1);
+        }
+
+        public void SetFunctionReturnValue(Value value)
+        {
+            var context = Stack[Stack.Count - 1];
+            context.FunctionReturnValue = value;
+        }
+
+        public Value? GetFunctionReturnValue()
+        {
+            return Stack[Stack.Count - 1].FunctionReturnValue;
         }
 
         public void InitialiseBuiltinFunctions()

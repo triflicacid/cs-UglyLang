@@ -35,6 +35,7 @@ namespace UglyLang.Source.AST.Keyword
                     if (signal != Signal.NONE)
                     {
                         if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
+                        if (signal == Signal.EXIT_FUNC) return Signal.EXIT_FUNC; // Propagate signal
                         return signal;
                     }
                 }
@@ -54,6 +55,7 @@ namespace UglyLang.Source.AST.Keyword
                     if (signal != Signal.NONE)
                     {
                         if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
+                        if (signal == Signal.EXIT_FUNC) return Signal.EXIT_FUNC; // Propagate signal
                         return signal;
                     }
                 }

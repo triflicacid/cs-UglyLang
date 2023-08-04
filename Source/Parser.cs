@@ -103,14 +103,23 @@ namespace UglyLang.Source
                     beforeColNumber = colNumber;
 
                     // Return type
-                    while (colNumber < line.Length && !char.IsWhiteSpace(line[colNumber])) colNumber++;
-
-                    string returnTypeString = line[beforeColNumber..colNumber];
-                    Values.ValueType? returnType = Value.TypeFromString(returnTypeString);
-                    if (returnType == null)
+                    Values.ValueType? returnType;
+                    if (colNumber < line.Length && line[colNumber] == '<')
                     {
-                        Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", returnTypeString));
-                        break;
+                        returnType = null; // No return type
+                    }
+                    else
+                    {
+                        while (colNumber < line.Length && !char.IsWhiteSpace(line[colNumber]))
+                            colNumber++;
+
+                        string returnTypeString = line[beforeColNumber..colNumber];
+                        returnType = Value.TypeFromString(returnTypeString);
+                        if (returnType == null)
+                        {
+                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", returnTypeString));
+                            break;
+                        }
                     }
 
                     // Eat whitespace
@@ -134,94 +143,110 @@ namespace UglyLang.Source
                         break;
                     }
 
-                    // Expect "<name>: <type>"
                     List<(string, Values.ValueType)> argumentPairs = new();
-                    while (true)
+                    if (line[colNumber] == '>')
                     {
-                        // Extract argument name
-                        beforeColNumber = colNumber;
-                        while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber])) colNumber++;
-                        string argName = line[beforeColNumber..colNumber];
-
-                        if (!IsValidSymbol(argName))
+                        colNumber++;
+                    }
+                    else
+                    {
+                        // Expect "<name>: <type>"
+                        while (true)
                         {
-                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", argName));
-                            break;
-                        }
+                            // Extract argument name
+                            beforeColNumber = colNumber;
+                            while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber]))
+                                colNumber++;
+                            string argName = line[beforeColNumber..colNumber];
 
-                        // Check for duplicate names
-                        foreach ((string iArgName, _) in argumentPairs)
-                        {
-                            if (iArgName == argName)
+                            if (!IsValidSymbol(argName))
                             {
-                                Error = new(lineNumber, beforeColNumber, Error.Types.Name, string.Format("duplicate name '{0}' in argument list", argName));
+                                Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", argName));
                                 break;
                             }
+
+                            // Check for duplicate names
+                            foreach ((string iArgName, _) in argumentPairs)
+                            {
+                                if (iArgName == argName)
+                                {
+                                    Error = new(lineNumber, beforeColNumber, Error.Types.Name, string.Format("duplicate name '{0}' in argument list", argName));
+                                    break;
+                                }
+                            }
+                            if (Error != null)
+                                break;
+
+                            // Eat whitespace
+                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                                colNumber++;
+
+                            // Expect colon
+                            if (colNumber == line.Length || line[colNumber] != ':')
+                            {
+                                string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ':', got {0}", got));
+                                break;
+                            }
+                            colNumber++;
+
+                            // Eat whitespace
+                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                                colNumber++;
+
+                            // Extract argument type
+                            beforeColNumber = colNumber;
+                            while (colNumber < line.Length && char.IsLetter(line[colNumber]))
+                                colNumber++;
+
+                            string argTypeString = line[beforeColNumber..colNumber];
+                            Values.ValueType? argType = Value.TypeFromString(argTypeString);
+
+                            if (argType == null)
+                            {
+                                Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", argType));
+                                break;
+                            }
+
+                            // Eat whitespace
+                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                                colNumber++;
+
+                            // Expect '<' or comma
+                            if (colNumber == line.Length || (line[colNumber] != '>' && line[colNumber] != ','))
+                            {
+                                string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ',' or '>', got {0}", got));
+                                break;
+                            }
+
+                            // Add argument to list
+                            argumentPairs.Add(new(argName, (Values.ValueType)argType));
+
+                            // Skip comma
+                            if (line[colNumber] == ',')
+                                colNumber++;
+
+                            // Eat whitespace
+                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                                colNumber++;
+
+                            if (colNumber == line.Length)
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, "unexpected end of line");
+                                break;
+                            }
+
+                            // End of argument list?
+                            if (line[colNumber] == '>')
+                                break;
                         }
-                        if (Error != null) break;
-
-                        // Eat whitespace
-                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
-
-                        // Expect colon
-                        if (colNumber == line.Length || line[colNumber] != ':')
-                        {
-                            string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
-                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ':', got {0}", got));
+                        if (Error != null)
                             break;
-                        }
-                        colNumber++;
-
-                        // Eat whitespace
-                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
-
-                        // Extract argument type
-                        beforeColNumber = colNumber;
-                        while (colNumber < line.Length && char.IsLetter(line[colNumber])) colNumber++;
-
-
-                        string argTypeString = line[beforeColNumber..colNumber];
-                        Values.ValueType? argType = Value.TypeFromString(argTypeString);
-
-                        if (argType == null)
-                        {
-                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", argType));
-                            break;
-                        }
-
-                        // Eat whitespace
-                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
-
-                        // Expect '<' or comma
-                        if (colNumber == line.Length || (line[colNumber] != '>' && line[colNumber] != ','))
-                        {
-                            string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
-                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ',' or '>', got {0}", got));
-                            break;
-                        }
-
-                        // Add argument to list
-                        argumentPairs.Add(new(argName, (Values.ValueType)argType));
-
-                        // Skip comma
-                        if (line[colNumber] == ',') colNumber++;
-
-                        // Eat whitespace
-                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
-
-                        if (colNumber == line.Length)
-                        {
-                            Error = new(lineNumber, colNumber, Error.Types.Syntax, "unexpected end of line");
-                            break;
-                        }
-
-                        // End of argument list?
-                        if (line[colNumber] == '>') break;
                     }
-                    if (Error != null) break;
 
                     // Create keyword node and add to tree structure
-                    DefKeywordNode node = new(functionName, argumentPairs, (Values.ValueType)returnType);
+                    DefKeywordNode node = new(functionName, argumentPairs, returnType);
                     trees.Peek().AddNode(node);
 
                     // Nest and add a new tree
@@ -434,6 +459,26 @@ namespace UglyLang.Source
                             else
                             {
                                 keywordNode = new ExitKeywordNode();
+                            }
+                            break;
+                        }
+                    case "FINISH":
+                        {
+                            if (trees.Count < 2)
+                            {
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
+                            }
+                            else
+                            {
+                                ExprNode? expr = null;
+                                if (after.Length > 0)
+                                {
+                                    (expr, _) = ParseExpression(after, lineNumber, colNumber);
+                                    if (expr == null)
+                                        return; // Propagate error
+                                }
+
+                                keywordNode = new FinishKeywordNode(expr);
                             }
                             break;
                         }

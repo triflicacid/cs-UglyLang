@@ -17,7 +17,7 @@ namespace UglyLang.Source.Functions
         private readonly List<ASTStructure> Bodies = new();
         private readonly List<string[]> ArgumentNames = new();
 
-        public UserFunction(Values.ValueType returnType) : base(new(), returnType) { }
+        public UserFunction(Values.ValueType? returnType) : base(new(), returnType) { }
 
         /// <summary>
         /// Add a function overload
@@ -48,7 +48,33 @@ namespace UglyLang.Source.Functions
             // Evaluate function
             body.Evaluate(context);
 
-            return new EmptyValue().To(ReturnType);
+            // Get return value
+            Value? returnValue = context.GetFunctionReturnValue();
+            if (returnValue == null)
+            {
+                if (ReturnType == null)
+                {
+                    return new EmptyValue();
+                }
+                else
+                {
+                    context.Error = new(0, 0, Error.Types.Type, string.Format("expected return type of {0}, got (none)", ReturnType));
+                    return null;
+                }
+            }
+            else if (ReturnType == null)
+            {
+                context.Error = new(0, 0, Error.Types.Type, string.Format("expected return type of (none), got {0}", returnValue.Type));
+                return null;
+            }
+
+            if (!Value.Match((Values.ValueType)ReturnType, returnValue.Type))
+            {
+                context.Error = new(0, 0, Error.Types.Type, string.Format("cannot match returned type {0} with expected {1}", returnValue.Type, ReturnType));
+                return null;
+            }
+
+            return returnValue.To((Values.ValueType)ReturnType);
         }
     }
 }
