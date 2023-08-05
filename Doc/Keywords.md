@@ -36,11 +36,12 @@ Used after an `IF`/`ELSEIF` keyword. Contents will be executed if none of the ch
 
 ## Loop Statement
 
-- `LOOP`
+- `LOOP [<counter>]`
 Repeat the code block indefinitely.
-- `LOOP: <expr>`
+- `LOOP [<counter>]: <expr>`
 Loop the current block while the condition is truthy.
-~~If the symbol is provided, this will be the loop counter. It will be defined in the outermost scope and must be numeric starting at 0 and incrementing each iteration.~~
+
+For both: If the symbol is provided, this will be the loop counter. If already defined, it must be an int or float. It not, it will be defined as an int. It will be set to 0 initially and increment each iteration (after body execution).
 
 ## Procedures/Functions
 

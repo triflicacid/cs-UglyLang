@@ -15,53 +15,84 @@ namespace UglyLang.Source.AST.Keyword
     {
         public ExprNode? Condition;
         public ASTStructure? Body;
+        public string? Counter;
 
         public LoopKeywordNode(ExprNode? condition = null) : base("LOOP")
         {
             Body = null;
             Condition = condition;
+            Counter = null;
         }
 
         public override Signal Action(Context context)
         {
             if (Body == null) throw new NullReferenceException(); // Should not be the case
 
-            if (Condition == null)
+            // Define counter, or set existing variable to 0
+            bool counterIsFloat = false;
+            if (Counter != null)
             {
-                // Indefinite loop
-                while (true)
+                if (context.HasVariable(Counter))
                 {
-                    Signal signal = Body.Evaluate(context);
-                    if (signal != Signal.NONE)
+                    Value oldValue = context.GetVariable(Counter);
+                    if (oldValue is IntValue intValue)
                     {
-                        if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
-                        if (signal == Signal.EXIT_FUNC) return Signal.EXIT_FUNC; // Propagate signal
-                        return signal;
+                        intValue.Value = 0;
+                    }
+                    else if (oldValue is FloatValue floatValue)
+                    {
+                        floatValue.Value = 0;
+                        counterIsFloat = true;
+                    }
+                    else
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("expected counter to be INT or FLOAT, got {0}", oldValue.Type.ToString()));
+                        return Signal.ERROR;
                     }
                 }
+                else
+                {
+                    context.CreateVariable(Counter, new IntValue(0));
+                }
             }
-            else
+
+            while (true)
             {
-                // Loop while the condition is truthy
-                while (true)
+                // If the loop has a condition, only continue if the condition is truthy
+                if (Condition != null)
                 {
                     Value value = Condition.Evaluate(context);
                     if (context.Error != null) // Propagate error?
                         return Signal.ERROR;
 
-                    if (!value.IsTruthy()) break;
-
-                    Signal signal = Body.Evaluate(context);
-                    if (signal != Signal.NONE)
-                    {
-                        if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
-                        if (signal == Signal.EXIT_FUNC) return Signal.EXIT_FUNC; // Propagate signal
-                        return signal;
-                    }
+                    if (!value.IsTruthy())
+                        break;
                 }
 
-                return Signal.NONE;
+                // Evaluate the loop body and handle the resulting signal
+                Signal signal = Body.Evaluate(context);
+                if (signal != Signal.NONE)
+                {
+                    if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
+                    return signal;
+                }
+
+                // Increment the counter variable, if present
+                if (Counter != null)
+                {
+                    Value oldValue = context.GetVariable(Counter);
+                    if (counterIsFloat)
+                    {
+                        ((FloatValue)oldValue).Value++;
+                    }
+                    else
+                    {
+                        ((IntValue)oldValue).Value++;
+                    }
+                }
             }
+
+            return Signal.NONE;
         }
     }
 }

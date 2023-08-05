@@ -52,7 +52,7 @@ namespace UglyLang.Source.AST
             { "IF", new(TriState.NO, TriState.YES) },
             { "INPUT", new(TriState.YES, TriState.NO) },
             { "LET", new(TriState.YES, TriState.YES) },
-            { "LOOP", new(TriState.NO, TriState.OPTIONAL) },
+            { "LOOP", new(TriState.OPTIONAL, TriState.OPTIONAL) },
             { "PRINT", new(TriState.NO, TriState.YES) },
             { "PRINTLN", new(TriState.NO, TriState.YES) },
             { "SET", new(TriState.YES, TriState.YES) },

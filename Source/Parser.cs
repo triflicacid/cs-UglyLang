@@ -508,14 +508,23 @@ namespace UglyLang.Source
                         }
                     case "LOOP":
                         {
-                            ExprNode? body = null;
-                            if (after.Length > 0)
+                            LoopKeywordNode loopKeyword = new();
+
+                            // Is there a counter?
+                            if (before.Length > 0)
                             {
-                                (body, _) = ParseExpression(after, lineNumber, colNumber);
-                                if (body == null) return; // Propagate error
+                                loopKeyword.Counter = before;
                             }
 
-                            keywordNode = new LoopKeywordNode(body);
+                            // Is there a condition?
+                            if (after.Length > 0)
+                            {
+                                (ExprNode? expr, _) = ParseExpression(after, lineNumber, colNumber);
+                                if (expr == null) return; // Propagate error
+                                loopKeyword.Condition = expr;
+                            }
+
+                            keywordNode = loopKeyword;
                             createNewNest = true;
                             break;
                         }

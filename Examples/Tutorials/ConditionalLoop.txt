@@ -4,3 +4,9 @@ LOOP: LT<n,5>
 	SET n: SUCC<n>
 END
 PRINTLN: "final n=" n
+
+; Using a counter variable
+LOOP m: LT<m,5>
+	PRINTLN: "m=" m
+END
+PRINTLN: "final m=" n

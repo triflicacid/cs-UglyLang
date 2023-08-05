@@ -1,4 +1,4 @@
-LOOP
-PRINTLN: "I am looping"
+LOOP i
+PRINTLN: "I am looping: " i
 DO: SLEEP<1000>
 END
