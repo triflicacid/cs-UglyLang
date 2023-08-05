@@ -1,5 +1,4 @@
 # Bugs
-- `Value.To` - program crashes if there is a casting error, noticeably with `Convert.ToDouble`
 
 # Ideas
 

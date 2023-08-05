@@ -34,7 +34,7 @@ namespace UglyLang.Source.Values
         {
             if (value is IntValue ivalue) return new(ivalue.Value);
             if (value is FloatValue fvalue) return new((long)fvalue.Value);
-            if (value is StringValue svalue) return new((long)Convert.ToDouble(svalue.Value));
+            if (value is StringValue svalue) return new((long)StringToDouble(svalue.Value));
             throw new Exception("Unable to cast: unknown value type passed");
         }
 

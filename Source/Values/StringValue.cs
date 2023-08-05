@@ -38,8 +38,8 @@ namespace UglyLang.Source.Values
             return type switch
             {
                 ValueType.ANY => new StringValue(Value),
-                ValueType.INT => new IntValue((long)Convert.ToDouble(Value)),
-                ValueType.FLOAT => new FloatValue(Convert.ToDouble(Value)),
+                ValueType.INT => new IntValue((long)StringToDouble(Value)),
+                ValueType.FLOAT => new FloatValue(StringToDouble(Value)),
                 ValueType.STRING => new StringValue(Value),
                 _ => throw new Exception("Unable to cast: unknown value type passed")
             };

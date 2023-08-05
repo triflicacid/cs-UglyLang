@@ -52,5 +52,20 @@ namespace UglyLang.Source.Values
             if (type1 == ValueType.INT && type2 == ValueType.FLOAT) return true;
             return false;
         }
+
+        /// <summary>
+        /// Convert.ToDouble but fallback to 0 on error
+        /// </summary>
+        public static double StringToDouble(string str)
+        {
+            try
+            {
+                return Convert.ToDouble(str);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
     }
 }
