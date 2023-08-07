@@ -15,11 +15,11 @@ namespace UglyLang.Source.AST.Keyword
     public class DefKeywordNode : KeywordNode
     {
         public readonly string Name;
-        public readonly List<(string, Values.ValueType)> Arguments;
-        public readonly Values.ValueType? ReturnType; // If NULL, returns nothing
+        public readonly List<(string, Types.Type)> Arguments;
+        public readonly Types.Type? ReturnType; // If NULL, returns nothing
         public ASTStructure? Body;
 
-        public DefKeywordNode(string name, List<(string, Values.ValueType)> arguments, Values.ValueType? returnType) : base("DEF")
+        public DefKeywordNode(string name, List<(string, Types.Type)> arguments, Types.Type? returnType) : base("DEF")
         {
             Name = name;
             Arguments = arguments;
@@ -35,13 +35,13 @@ namespace UglyLang.Source.AST.Keyword
             UserFunction func;
             if (context.HasVariable(Name))
             {
-                Value variable = context.GetVariable(Name);
-                if (variable is FuncValue funcValue)
+                ISymbolValue variable = context.GetVariable(Name);
+                if (variable is Function funcValue)
                 {
-                    if (funcValue.Func is UserFunction userFunc)
+                    if (funcValue is UserFunction userFunc)
                     {
                         // Check if the return types match
-                        if ((userFunc.ReturnType == null && ReturnType == null) || (userFunc.ReturnType != null && ReturnType != null && Value.Match((Values.ValueType)userFunc.ReturnType, (Values.ValueType)ReturnType)))
+                        if ((userFunc.ReturnType == null && ReturnType == null) || (userFunc.ReturnType != null && ReturnType != null && userFunc.ReturnType.DoesMatch(ReturnType)))
                         {
                             // Has this overload been seen before?
                             bool match = false;
@@ -52,7 +52,7 @@ namespace UglyLang.Source.AST.Keyword
                                     match = true;
                                     for (int i = 0; i < typeArray.Length && match; i++)
                                     {
-                                        match = Value.Match(Arguments[i].Item2, typeArray[i]);
+                                        match = Arguments[i].Item2.DoesMatch(typeArray[i]);
                                     }
 
                                     if (!match)
@@ -91,7 +91,7 @@ namespace UglyLang.Source.AST.Keyword
             else
             {
                 func = new UserFunction(ReturnType);
-                context.CreateVariable(Name, new FuncValue(func));
+                context.CreateVariable(Name, func);
             }
 
             // Add overload

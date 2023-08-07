@@ -1,0 +1,5 @@
+; Program to greet someone by their name
+LET name: ""
+PRINTLN: "What is your name?"
+INPUT name
+PRINTLN: "Hello, " name

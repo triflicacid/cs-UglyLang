@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
+using UglyLang.Source.Functions;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST
@@ -29,10 +30,10 @@ namespace UglyLang.Source.AST
         {
             if (context.HasVariable(Symbol))
             {
-                Value variable = context.GetVariable(Symbol);
+                ISymbolValue variable = context.GetVariable(Symbol);
                 Value value;
 
-                if (variable is FuncValue func)
+                if (variable is Function func)
                 {
                     // Push new stack context
                     context.PushStackContext(LineNumber, ColumnNumber, Context.StackContext.Types.Function, Symbol);
@@ -74,9 +75,13 @@ namespace UglyLang.Source.AST
                     // Pop stack context
                     context.PopStackContext();
                 }
+                else if (variable is Value val)
+                {
+                    value = val;
+                }
                 else
                 {
-                    value = variable;
+                    throw new InvalidOperationException();
                 }
 
                 return value;

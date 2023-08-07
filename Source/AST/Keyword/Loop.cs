@@ -34,7 +34,7 @@ namespace UglyLang.Source.AST.Keyword
             {
                 if (context.HasVariable(Counter))
                 {
-                    Value oldValue = context.GetVariable(Counter);
+                    ISymbolValue oldValue = context.GetVariable(Counter);
                     if (oldValue is IntValue intValue)
                     {
                         intValue.Value = 0;
@@ -46,7 +46,7 @@ namespace UglyLang.Source.AST.Keyword
                     }
                     else
                     {
-                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("expected counter to be INT or FLOAT, got {0}", oldValue.Type.ToString()));
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("expected counter to be INT or FLOAT, got {0}", oldValue is Value val ? val.Type : "unknown"));
                         return Signal.ERROR;
                     }
                 }
@@ -80,7 +80,7 @@ namespace UglyLang.Source.AST.Keyword
                 // Increment the counter variable, if present
                 if (Counter != null)
                 {
-                    Value oldValue = context.GetVariable(Counter);
+                    Value oldValue = (Value) context.GetVariable(Counter);
                     if (counterIsFloat)
                     {
                         ((FloatValue)oldValue).Value++;

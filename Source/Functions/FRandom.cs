@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions
@@ -14,16 +15,16 @@ namespace UglyLang.Source.Functions
     {
 
         private static readonly Random Generator = new();
-        private static readonly List<Values.ValueType[]> ArgumentType = new()
+        private static readonly List<Types.Type[]> ArgumentType = new()
         {
-            Array.Empty<Values.ValueType>(),
-            new Values.ValueType[] { Values.ValueType.FLOAT },
-            new Values.ValueType[] { Values.ValueType.FLOAT, Values.ValueType.FLOAT },
+            Array.Empty<Types.Type>(),
+            new Types.Type[] { new FloatType() },
+            new Types.Type[] { new FloatType(), new FloatType()},
         };
 
-        public FRandom() : base(ArgumentType, Values.ValueType.INT) { }
+        public FRandom() : base(ArgumentType, new IntType()) { }
 
-        public override Value Call(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
             double n;
             if (arguments.Count == 0) // Range: [0,1)

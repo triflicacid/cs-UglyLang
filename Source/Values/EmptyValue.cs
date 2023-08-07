@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 
 namespace UglyLang.Source.Values
 {
@@ -13,7 +14,7 @@ namespace UglyLang.Source.Values
     {
         public EmptyValue()
         {
-            Type = ValueType.EMPTY;
+            Type = new None();
         }
 
         public static EmptyValue From(Value value)
@@ -26,15 +27,13 @@ namespace UglyLang.Source.Values
             return false;
         }
 
-        public override Value To(ValueType type)
+        public override Value To(Types.Type type)
         {
-            return type switch
-            {
-                ValueType.INT => new IntValue(0),
-                ValueType.FLOAT => new FloatValue(0),
-                ValueType.STRING => new StringValue(""),
-                _ => throw new Exception("Unable to cast: unknown value type passed")
-            };
+            if (type is Any or None) return this;
+            if (type is IntType) return IntValue.Default();
+            if (type is FloatType) return FloatValue.Default();
+            if (type is StringType) return StringValue.Default();
+            throw new InvalidOperationException(type.ToString());
         }
     }
 }

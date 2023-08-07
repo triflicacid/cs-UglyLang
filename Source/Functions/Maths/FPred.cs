@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Maths
@@ -13,14 +14,14 @@ namespace UglyLang.Source.Functions.Maths
     public class FPred: Function
     {
 
-        private static readonly List<Values.ValueType[]> ArgumentType = new()
+        private static readonly List<Types.Type[]> ArgumentType = new()
         {
-            new Values.ValueType[] { Values.ValueType.INT },
+            new Types.Type[] { new IntType() },
         };
 
-        public FPred() : base(ArgumentType, Values.ValueType.INT) { }
+        public FPred() : base(ArgumentType, new IntType()) { }
 
-        public override Value Call(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
             return new IntValue(((IntValue)arguments[0]).Value - 1);
         }

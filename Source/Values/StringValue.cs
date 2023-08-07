@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 
 namespace UglyLang.Source.Values
 {
@@ -16,7 +17,7 @@ namespace UglyLang.Source.Values
         public StringValue(string value = "")
         {
             Value = value;
-            Type = ValueType.STRING;
+            Type = new StringType();
         }
 
         public override bool IsTruthy()
@@ -30,24 +31,25 @@ namespace UglyLang.Source.Values
             if (value is FloatValue fvalue) return new(fvalue.Value.ToString());
             if (value is StringValue svalue) return new(svalue.Value);
             if (value is EmptyValue) return new("");
-            throw new Exception("Unable to cast: unknown value type passed");
+            throw new InvalidOperationException(value.Type.ToString());
         }
 
-        public override Value To(ValueType type)
+        public override Value To(Types.Type type)
         {
-            return type switch
-            {
-                ValueType.ANY => new StringValue(Value),
-                ValueType.INT => new IntValue((long)StringToDouble(Value)),
-                ValueType.FLOAT => new FloatValue(StringToDouble(Value)),
-                ValueType.STRING => new StringValue(Value),
-                _ => throw new Exception("Unable to cast: unknown value type passed")
-            };
+            if (type is Any or StringType) return new StringValue(Value);
+            if (type is IntType) return new IntValue((long)StringToDouble(Value));
+            if (type is FloatType) return new FloatValue(StringToDouble(Value));
+            throw new InvalidOperationException(type.ToString());
         }
 
         public StringValue Concat(string str)
         {
             return new StringValue(Value + str);
+        }
+
+        public static StringValue Default()
+        {
+            return new StringValue("");
         }
     }
 }

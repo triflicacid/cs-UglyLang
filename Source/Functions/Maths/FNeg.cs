@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Maths
@@ -11,14 +12,14 @@ namespace UglyLang.Source.Functions.Maths
     public class FNeg : Function
     {
 
-        private static readonly List<Values.ValueType[]> ArgumentType = new()
+        private static readonly List<Types.Type[]> ArgumentType = new()
         {
-            new Values.ValueType[] { Values.ValueType.FLOAT },
+            new Types.Type[] { new FloatType() },
         };
 
-        public FNeg() : base(ArgumentType, Values.ValueType.FLOAT) { }
+        public FNeg() : base(ArgumentType, new FloatType()) { }
 
-        public override Value Call(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
             return new FloatValue(-((FloatValue)arguments[0]).Value);
         }

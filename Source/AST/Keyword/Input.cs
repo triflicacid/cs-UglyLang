@@ -24,15 +24,29 @@ namespace UglyLang.Source.AST.Keyword
         {
             if (context.HasVariable(Symbol))
             {
-                Value oldValue = context.GetVariable(Symbol);
+                ISymbolValue oldSymbolValue = context.GetVariable(Symbol);
 
                 // Prompt user for input
                 string raw = Console.ReadLine() ?? "";
                 Value rawValue = new StringValue(raw);
 
-                // Cast to correct type
-                Value value = rawValue.To(oldValue.Type);
-                context.SetVariable(Symbol, value);
+                if (oldSymbolValue is Value oldValue)
+                {
+                    // Cast to correct type
+                    Value? value = rawValue.To(oldValue.Type);
+
+                    if (value == null)
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("error casting {0} to {1}", rawValue.Type, oldValue.Type));
+                        return Signal.ERROR;
+                    }
+
+                    context.SetVariable(Symbol, value);
+                }
+                else
+                {
+                    context.SetVariable(Symbol, rawValue);
+                }
 
                 return Signal.NONE;
             }

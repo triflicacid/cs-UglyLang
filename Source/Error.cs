@@ -14,6 +14,7 @@ namespace UglyLang.Source
             Syntax,  // The syntax is incorrect
             Name,    // Cannot find a name/variable
             Type,    // Incorrect/mismatching type(s)
+            Cast,    // Error whilst casting
         }
 
         public int LineNumber;

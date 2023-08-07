@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Logical
@@ -11,14 +12,14 @@ namespace UglyLang.Source.Functions.Logical
     public class FAnd : Function
     {
 
-        private static readonly List<Values.ValueType[]> ArgumentType = new()
+        private static readonly List<Types.Type[]> ArgumentType = new()
         {
-            new Values.ValueType[] { Values.ValueType.ANY, Values.ValueType.ANY },
+            new Types.Type[] { new Any(), new Any() },
         };
 
-        public FAnd() : base(ArgumentType, Values.ValueType.INT) { }
+        public FAnd() : base(ArgumentType, new IntType()) { }
 
-        public override Value Call(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
             Value a = arguments[0], b = arguments[1];
             return new IntValue(a.IsTruthy() && b.IsTruthy());

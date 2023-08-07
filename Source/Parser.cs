@@ -103,7 +103,7 @@ namespace UglyLang.Source
                     beforeColNumber = colNumber;
 
                     // Return type
-                    Values.ValueType? returnType;
+                    Types.Type? returnType;
                     if (colNumber < line.Length && line[colNumber] == '<')
                     {
                         returnType = null; // No return type
@@ -114,7 +114,7 @@ namespace UglyLang.Source
                             colNumber++;
 
                         string returnTypeString = line[beforeColNumber..colNumber];
-                        returnType = Value.TypeFromString(returnTypeString);
+                        returnType = Types.Type.FromString(returnTypeString);
                         if (returnType == null)
                         {
                             Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", returnTypeString));
@@ -143,7 +143,7 @@ namespace UglyLang.Source
                         break;
                     }
 
-                    List<(string, Values.ValueType)> argumentPairs = new();
+                    List<(string, Types.Type)> argumentPairs = new();
                     if (line[colNumber] == '>')
                     {
                         colNumber++;
@@ -200,7 +200,7 @@ namespace UglyLang.Source
                                 colNumber++;
 
                             string argTypeString = line[beforeColNumber..colNumber];
-                            Values.ValueType? argType = Value.TypeFromString(argTypeString);
+                            Types.Type? argType = Types.Type.FromString(argTypeString);
 
                             if (argType == null)
                             {
@@ -221,7 +221,7 @@ namespace UglyLang.Source
                             }
 
                             // Add argument to list
-                            argumentPairs.Add(new(argName, (Values.ValueType)argType));
+                            argumentPairs.Add(new(argName, (Types.Type)argType));
 
                             // Skip comma
                             if (line[colNumber] == ',')
@@ -332,14 +332,14 @@ namespace UglyLang.Source
                 {
                     case "CAST":
                         {
-                            Values.ValueType? type = Value.TypeFromString(after);
+                            Types.Type? type = Types.Type.FromString(after);
                             if (type == null)
                             {
                                 Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", after));
                             }
                             else
                             {
-                                keywordNode = new CastKeywordNode(before, (Values.ValueType) type);
+                                keywordNode = new CastKeywordNode(before, (Types.Type) type);
                             }
 
                             break;
@@ -757,7 +757,7 @@ namespace UglyLang.Source
                 }
 
                 string str = expr[(col + 1)..(col + end)];
-                Values.ValueType? type = Value.TypeFromString(str);
+                Types.Type? type = Types.Type.FromString(str);
                 if (type == null)
                 {
                     Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("{0} is not a valid type", str));

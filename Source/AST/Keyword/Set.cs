@@ -33,15 +33,31 @@ namespace UglyLang.Source.AST.Keyword
             // Make sure that the types line up
             if (context.HasVariable(Name))
             {
-                Value oldValue = context.GetVariable(Name);
-                if (Value.Match(oldValue.Type, evaldValue.Type))
+                ISymbolValue oldSymbolValue = context.GetVariable(Name);
+                if (oldSymbolValue is Value oldValue)
                 {
-                    if (oldValue.Type != Values.ValueType.ANY)
-                        evaldValue = evaldValue.To(oldValue.Type);
+                    if (oldValue.Type.DoesMatch(evaldValue.Type))
+                    {
+                        Value? newValue = evaldValue.To(oldValue.Type);
+                        if (newValue == null)
+                        {
+                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", Name, oldValue.Type));
+                            return Signal.ERROR;
+                        }
+                        else
+                        {
+                            evaldValue = newValue;
+                        }
+                    }
+                    else
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot match {0} with {1} (in assignment to {2})", evaldValue.Type.ToString(), oldValue.Type.ToString(), Name));
+                        return Signal.ERROR;
+                    }
                 }
                 else
                 {
-                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot match {0} with {1} (in assignment to {2})", evaldValue.Type.ToString(), oldValue.Type.ToString(), Name));
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot set symbol '{0}' to type {1}", Name, evaldValue.Type));
                     return Signal.ERROR;
                 }
             }

@@ -1,5 +1,4 @@
-LET n: 1
-LOOP
+LOOP n
 	SET m3: EQ<MOD<n,3>,0>
 	SET m5: EQ<MOD<n,5>,0>
 	IF: AND<m3,m5>
@@ -12,5 +11,4 @@ LOOP
 		PRINTLN: n
 	END
 	DO: SLEEP<250>
-	SET n: SUCC<n>
 END

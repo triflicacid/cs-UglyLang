@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST
@@ -14,7 +15,7 @@ namespace UglyLang.Source.AST
     public class ExprNode : ASTNode
     {
         public readonly List<ASTNode> Children;
-        public Values.ValueType? CastType = null;
+        public Types.Type? CastType = null;
 
         public ExprNode()
         {
@@ -37,7 +38,7 @@ namespace UglyLang.Source.AST
             else if (Children.Count == 1)
             {
                 Value value = Children[0].Evaluate(context);
-                return CastType == null ? value : value.To((Values.ValueType)CastType);
+                return CastType == null ? value : value.To(CastType) ?? value;
             }
             else
             {
@@ -46,10 +47,11 @@ namespace UglyLang.Source.AST
                 foreach (ASTNode child in Children)
                 {
                     value = child.Evaluate(context);
-                    str += ((StringValue)value.To(Values.ValueType.STRING)).Value;
+                    Value? newValue = value.To(new StringType());
+                    str += newValue == null ? "" : ((StringValue)newValue).Value;
                 }
                 value = new StringValue(str);
-                return CastType == null ? value : value.To((Values.ValueType)CastType);
+                return CastType == null ? value : value.To(CastType) ?? value;
             }
         }
     }

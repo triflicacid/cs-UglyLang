@@ -17,19 +17,19 @@ namespace UglyLang.Source.Functions
         private readonly List<ASTStructure> Bodies = new();
         private readonly List<string[]> ArgumentNames = new();
 
-        public UserFunction(Values.ValueType? returnType) : base(new(), returnType) { }
+        public UserFunction(Types.Type? returnType) : base(new(), returnType) { }
 
         /// <summary>
         /// Add a function overload
         /// </summary>
-        public void AddOverload(List<(string, Values.ValueType)> arguments, ASTStructure body)
+        public void AddOverload(List<(string, Types.Type)> arguments, ASTStructure body)
         {
             Bodies.Add(body);
             ArgumentNames.Add(arguments.Select(p => p.Item1).ToArray());
             ArgumentTypes.Add(arguments.Select(p => p.Item2).ToArray());
         }
 
-        public override Value? Call(Context context, int overloadIndex, List<Value> arguments)
+        protected override Value? CallOverload(Context context, int overloadIndex, List<Value> arguments)
         {
             if (arguments.Count != ArgumentNames[overloadIndex].Length)
             {
@@ -46,7 +46,8 @@ namespace UglyLang.Source.Functions
             }
 
             // Evaluate function
-            body.Evaluate(context);
+            Signal s = body.Evaluate(context);
+            if (s == Signal.ERROR) return null;
 
             // Get return value
             Value? returnValue = context.GetFunctionReturnValue();
@@ -68,13 +69,13 @@ namespace UglyLang.Source.Functions
                 return null;
             }
 
-            if (!Value.Match((Values.ValueType)ReturnType, returnValue.Type))
+            if (!ReturnType.DoesMatch(returnValue.Type))
             {
                 context.Error = new(0, 0, Error.Types.Type, string.Format("cannot match returned type {0} with expected {1}", returnValue.Type, ReturnType));
                 return null;
             }
 
-            return returnValue.To((Values.ValueType)ReturnType);
+            return returnValue.To((Types.Type)ReturnType);
         }
     }
 }

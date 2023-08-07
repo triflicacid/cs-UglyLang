@@ -19,7 +19,7 @@ namespace UglyLang.Source
                 Function
             }
 
-            private readonly Dictionary<string, Value> Symbols;
+            private readonly Dictionary<string, ISymbolValue> Symbols;
             public readonly int LineNumber;
             public readonly int ColNumber;
             public readonly Types Type;
@@ -42,13 +42,13 @@ namespace UglyLang.Source
                 return Symbols.ContainsKey(symbol);
             }
 
-            public Value GetSymbol(string symbol)
+            public ISymbolValue GetSymbol(string symbol)
             {
                 if (!HasSymbol(symbol)) throw new Exception(string.Format("Failed to get variable: name '{0}' could not be found", symbol));
                 return Symbols[symbol];
             }
 
-            public void SetSymbol(string symbol, Value value)
+            public void SetSymbol(string symbol, ISymbolValue value)
             {
                 if (HasSymbol(symbol))
                 {
@@ -100,7 +100,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Get the value of the given variable or throw an error. Looks from the topmost scope downwards.
         /// </summary>
-        public Value GetVariable(string name)
+        public ISymbolValue GetVariable(string name)
         {
             for (int i = Stack.Count - 1; i >= 0; i--)
             {
@@ -113,7 +113,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Get the value of the given variable. If the symbol cannot be found, return the default. Looks from the topmost scope downwards.
         /// </summary>
-        public Value GetVariableOrDefault(string name, Value fallback)
+        public ISymbolValue GetVariableOrDefault(string name, ISymbolValue fallback)
         {
             for (int i = Stack.Count - 1; i >= 0; i--)
             {
@@ -126,7 +126,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Set the value of the given symbol, or create a new one. Sets from the topmost scope down.
         /// </summary>
-        public void SetVariable(string name, Value value)
+        public void SetVariable(string name, ISymbolValue value)
         {
             for (int i = Stack.Count - 1; i >= 0; i--)
             {
@@ -143,9 +143,9 @@ namespace UglyLang.Source
         /// <summary>
         /// Creates a new symbol in the topmost scope and sets it
         /// </summary>
-        public void CreateVariable(string name, Value value)
+        public void CreateVariable(string name, ISymbolValue value)
         {
-            Stack[Stack.Count - 1].SetSymbol(name, value);
+            Stack[^1].SetSymbol(name, value);
         }
 
         public string GetErrorString()
@@ -187,48 +187,48 @@ namespace UglyLang.Source
 
         public void SetFunctionReturnValue(Value value)
         {
-            var context = Stack[Stack.Count - 1];
+            var context = Stack[^1];
             context.FunctionReturnValue = value;
         }
 
         public Value? GetFunctionReturnValue()
         {
-            return Stack[Stack.Count - 1].FunctionReturnValue;
+            return Stack[^1].FunctionReturnValue;
         }
 
         public void InitialiseBuiltinFunctions()
         {
             var context = Stack[0];
             // General
-            context.SetSymbol("CONCAT", new FuncValue(new FConcat()));
-            context.SetSymbol("ID", new FuncValue(new FId()));
-            context.SetSymbol("RANDOM", new FuncValue(new FRandom()));
-            context.SetSymbol("SLEEP", new FuncValue(new FSleep()));
-            context.SetSymbol("TYPE", new FuncValue(new FType()));
+            context.SetSymbol("CONCAT", new FConcat());
+            context.SetSymbol("ID", new FId());
+            context.SetSymbol("RANDOM", new FRandom());
+            context.SetSymbol("SLEEP", new FSleep());
+            context.SetSymbol("TYPE", new FType());
 
             // Comparative
-            context.SetSymbol("EQ", new FuncValue(new Functions.Comparative.FEq()));
-            context.SetSymbol("GT", new FuncValue(new Functions.Comparative.FGt()));
-            context.SetSymbol("GE", new FuncValue(new Functions.Comparative.FGe()));
-            context.SetSymbol("LT", new FuncValue(new Functions.Comparative.FLt()));
-            context.SetSymbol("LE", new FuncValue(new Functions.Comparative.FLe()));
+            context.SetSymbol("EQ", new Functions.Comparative.FEq());
+            context.SetSymbol("GT", new Functions.Comparative.FGt());
+            context.SetSymbol("GE", new Functions.Comparative.FGe());
+            context.SetSymbol("LT", new Functions.Comparative.FLt());
+            context.SetSymbol("LE", new Functions.Comparative.FLe());
 
             // Logical
-            context.SetSymbol("AND", new FuncValue(new Functions.Logical.FAnd()));
-            context.SetSymbol("NOT", new FuncValue(new Functions.Logical.FNot()));
-            context.SetSymbol("OR", new FuncValue(new Functions.Logical.FOr()));
-            context.SetSymbol("XOR", new FuncValue(new Functions.Logical.FXOr()));
+            context.SetSymbol("AND", new Functions.Logical.FAnd());
+            context.SetSymbol("NOT", new Functions.Logical.FNot());
+            context.SetSymbol("OR", new Functions.Logical.FOr());
+            context.SetSymbol("XOR", new Functions.Logical.FXOr());
 
             // Mathematical
-            context.SetSymbol("ADD", new FuncValue(new Functions.Maths.FAdd()));
-            context.SetSymbol("DIV", new FuncValue(new Functions.Maths.FDiv()));
-            context.SetSymbol("EXP", new FuncValue(new Functions.Maths.FExp()));
-            context.SetSymbol("MOD", new FuncValue(new Functions.Maths.FMod()));
-            context.SetSymbol("MUL", new FuncValue(new Functions.Maths.FMul()));
-            context.SetSymbol("NEG", new FuncValue(new Functions.Maths.FNeg()));
-            context.SetSymbol("PRED", new FuncValue(new Functions.Maths.FPred()));
-            context.SetSymbol("SUB", new FuncValue(new Functions.Maths.FSub()));
-            context.SetSymbol("SUCC", new FuncValue(new Functions.Maths.FSucc()));
+            context.SetSymbol("ADD", new Functions.Maths.FAdd());
+            context.SetSymbol("DIV", new Functions.Maths.FDiv());
+            context.SetSymbol("EXP", new Functions.Maths.FExp());
+            context.SetSymbol("MOD", new Functions.Maths.FMod());
+            context.SetSymbol("MUL", new Functions.Maths.FMul());
+            context.SetSymbol("NEG", new Functions.Maths.FNeg());
+            context.SetSymbol("PRED", new Functions.Maths.FPred());
+            context.SetSymbol("SUB", new Functions.Maths.FSub());
+            context.SetSymbol("SUCC", new Functions.Maths.FSucc());
         }
     }
 }

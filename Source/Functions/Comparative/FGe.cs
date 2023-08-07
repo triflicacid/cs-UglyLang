@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Comparative
@@ -11,14 +12,14 @@ namespace UglyLang.Source.Functions.Comparative
     public class FGe : Function
     {
 
-        private static readonly List<Values.ValueType[]> ArgumentType = new()
+        private static readonly List<Types.Type[]> ArgumentType = new()
         {
-            new Values.ValueType[] { Values.ValueType.FLOAT, Values.ValueType.FLOAT },
+            new Types.Type[] { new FloatType(), new FloatType() },
         };
 
-        public FGe() : base(ArgumentType, Values.ValueType.INT) { }
+        public FGe() : base(ArgumentType, new IntType()) { }
 
-        public override Value Call(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
             return new IntValue(((FloatValue)arguments[0]).Value >= ((FloatValue)arguments[1]).Value);
         }

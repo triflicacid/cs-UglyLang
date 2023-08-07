@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Types;
 
 namespace UglyLang.Source.Values
 {
@@ -16,13 +17,13 @@ namespace UglyLang.Source.Values
         public IntValue(long value = 0)
         {
             Value = value;
-            Type = ValueType.INT;
+            Type = new IntType();
         }
 
         public IntValue(bool value)
         {
             Value = value ? 1 : 0;
-            Type = ValueType.INT;
+            Type = new IntType();
         }
 
         public override bool IsTruthy()
@@ -35,19 +36,20 @@ namespace UglyLang.Source.Values
             if (value is IntValue ivalue) return new(ivalue.Value);
             if (value is FloatValue fvalue) return new((long)fvalue.Value);
             if (value is StringValue svalue) return new((long)StringToDouble(svalue.Value));
-            throw new Exception("Unable to cast: unknown value type passed");
+            throw new InvalidOperationException(value.Type.ToString());
         }
 
-        public override Value To(ValueType type)
+        public override Value To(Types.Type type)
         {
-            return type switch
-            {
-                ValueType.ANY => new IntValue(Value),
-                ValueType.INT => new IntValue(Value),
-                ValueType.FLOAT => new FloatValue(Value),
-                ValueType.STRING => new StringValue(Value.ToString()),
-                _ => throw new Exception("Unable to cast: unknown value type passed")
-            };
+            if (type is Any or IntType) return new IntValue(Value);
+            if (type is FloatType) return new FloatValue(Value);
+            if (type is StringType) return new StringValue(Value.ToString());
+            throw new InvalidOperationException(type.ToString());
+        }
+
+        public static IntValue Default()
+        {
+            return new IntValue(0);
         }
     }
 }

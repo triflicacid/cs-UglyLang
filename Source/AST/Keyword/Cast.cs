@@ -14,9 +14,9 @@ namespace UglyLang.Source.AST.Keyword
     public class CastKeywordNode : KeywordNode
     {
         public readonly string Symbol;
-        public new readonly Values.ValueType CastType;
+        public new readonly Types.Type CastType;
 
-        public CastKeywordNode(string symbol, Values.ValueType type) : base("CAST")
+        public CastKeywordNode(string symbol, Types.Type type) : base("CAST")
         {
             Symbol = symbol;
             CastType = type;
@@ -26,10 +26,26 @@ namespace UglyLang.Source.AST.Keyword
         {
             if (context.HasVariable(Symbol))
             {
-                Value value = context.GetVariable(Symbol);
-                Value newValue = value.To(CastType);
-                context.SetVariable(Symbol, newValue);
-                return Signal.NONE;
+                ISymbolValue sValue = context.GetVariable(Symbol);
+                if (sValue is Value value)
+                {
+                    Value? newValue = value.To(CastType);
+                    if (newValue == null)
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", Symbol, CastType));
+                        return Signal.ERROR;
+                    }
+                    else
+                    {
+                        context.SetVariable(Symbol, newValue);
+                        return Signal.NONE;
+                    }
+                }
+                else
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot cast symbol '{0}'", Symbol));
+                    return Signal.ERROR;
+                }
             }
             else
             {
