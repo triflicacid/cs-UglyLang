@@ -16,10 +16,10 @@ namespace UglyLang.Source.AST.Keyword
     {
         public readonly string Name;
         public readonly List<(string, Types.Type)> Arguments;
-        public readonly Types.Type? ReturnType; // If NULL, returns nothing
+        public readonly Types.Type ReturnType; // If NULL, returns nothing
         public ASTStructure? Body;
 
-        public DefKeywordNode(string name, List<(string, Types.Type)> arguments, Types.Type? returnType) : base("DEF")
+        public DefKeywordNode(string name, List<(string, Types.Type)> arguments, Types.Type returnType) : base("DEF")
         {
             Name = name;
             Arguments = arguments;

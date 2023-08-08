@@ -14,7 +14,8 @@ namespace UglyLang.Source.AST
     /// </summary>
     public class SymbolNode : ASTNode
     {
-        public string Symbol;
+        public readonly string Symbol;
+        public readonly List<string> Components;
 
         /// If not null then the symbol is a reference to a function (or should be)
         public List<ExprNode>? CallArguments;
@@ -23,17 +24,41 @@ namespace UglyLang.Source.AST
         {
             Type = ASTNodeType.SYMBOL;
             Symbol = symbol;
+            Components = symbol.Split('.').ToList();
             CallArguments = null;
         }
 
         public override Value Evaluate(Context context)
         {
-            if (context.HasVariable(Symbol))
+            if (context.HasVariable(Components[0]))
             {
-                ISymbolValue variable = context.GetVariable(Symbol);
+                ISymbolValue variable = context.GetVariable(Components[0]);
+
+                // Lookup all components
+                for (int i = 1; i < Components.Count; i++)
+                {
+                    if (variable is Value varValue)
+                    {
+                        if (varValue.HasProperty(Components[i]))
+                        {
+                            variable = varValue.GetProperty(Components[i]);
+                        }
+                        else
+                        {
+                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot get property {0} of type {1}", Components[i], varValue.Type));
+                            return new EmptyValue();
+                        }
+                    }
+                    else
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot get property {0}", Components[i]));
+                        return new EmptyValue();
+                    }
+                }
+
                 Value value;
 
-                if (variable is Function func)
+                if (variable is ICallable func)
                 {
                     // Push new stack context
                     context.PushStackContext(LineNumber, ColumnNumber, Context.StackContext.Types.Function, Symbol);
@@ -77,6 +102,12 @@ namespace UglyLang.Source.AST
                 }
                 else if (variable is Value val)
                 {
+                    if (CallArguments != null && CallArguments.Count != 0)
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Syntax, string.Format("value of type {0} is not callable", val.Type));
+                        return new EmptyValue();
+                    }
+
                     value = val;
                 }
                 else

@@ -17,7 +17,7 @@ namespace UglyLang.Source.Functions
         private readonly List<ASTStructure> Bodies = new();
         private readonly List<string[]> ArgumentNames = new();
 
-        public UserFunction(Types.Type? returnType) : base(new(), returnType) { }
+        public UserFunction(Types.Type returnType) : base(new(), returnType) { }
 
         /// <summary>
         /// Add a function overload
@@ -53,19 +53,7 @@ namespace UglyLang.Source.Functions
             Value? returnValue = context.GetFunctionReturnValue();
             if (returnValue == null)
             {
-                if (ReturnType == null)
-                {
-                    return new EmptyValue();
-                }
-                else
-                {
-                    context.Error = new(0, 0, Error.Types.Type, string.Format("expected return type of {0}, got (none)", ReturnType));
-                    return null;
-                }
-            }
-            else if (ReturnType == null)
-            {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("expected return type of (none), got {0}", returnValue.Type));
+                if (context.Error != null) throw new NullReferenceException(); // If the function returned null, we expect there to have been an error.
                 return null;
             }
 
@@ -75,7 +63,14 @@ namespace UglyLang.Source.Functions
                 return null;
             }
 
-            return returnValue.To((Types.Type)ReturnType);
+            Value? casted = returnValue.To(ReturnType);
+            if (casted == null)
+            {
+                context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", returnValue.Type, ReturnType));
+                return null;
+            }
+
+            return casted;
         }
     }
 }

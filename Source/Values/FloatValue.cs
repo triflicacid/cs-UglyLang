@@ -46,5 +46,10 @@ namespace UglyLang.Source.Values
         {
             return new FloatValue(0);
         }
+
+        public override bool Equals(Value value)
+        {
+            return (value is FloatValue f && f.Value == Value) || (value is IntValue i && i.Value == Value);
+        }
     }
 }

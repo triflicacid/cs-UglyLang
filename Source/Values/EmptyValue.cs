@@ -14,7 +14,7 @@ namespace UglyLang.Source.Values
     {
         public EmptyValue()
         {
-            Type = new None();
+            Type = new EmptyType();
         }
 
         public static EmptyValue From(Value value)
@@ -29,11 +29,16 @@ namespace UglyLang.Source.Values
 
         public override Value To(Types.Type type)
         {
-            if (type is Any or None) return this;
+            if (type is Any or EmptyType) return this;
             if (type is IntType) return IntValue.Default();
             if (type is FloatType) return FloatValue.Default();
             if (type is StringType) return StringValue.Default();
             throw new InvalidOperationException(type.ToString());
+        }
+
+        public override bool Equals(Value value)
+        {
+            return value is EmptyValue;
         }
     }
 }

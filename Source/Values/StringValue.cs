@@ -31,7 +31,7 @@ namespace UglyLang.Source.Values
             if (value is FloatValue fvalue) return new(fvalue.Value.ToString());
             if (value is StringValue svalue) return new(svalue.Value);
             if (value is EmptyValue) return new("");
-            throw new InvalidOperationException(value.Type.ToString());
+            return (StringValue) value.To(new StringType());
         }
 
         public override Value To(Types.Type type)
@@ -42,9 +42,9 @@ namespace UglyLang.Source.Values
             throw new InvalidOperationException(type.ToString());
         }
 
-        public StringValue Concat(string str)
+        public override bool Equals(Value value)
         {
-            return new StringValue(Value + str);
+            return value is StringValue s && Value == s.Value;
         }
 
         public static StringValue Default()

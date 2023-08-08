@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Functions;
 using UglyLang.Source.Types;
 
 namespace UglyLang.Source.Values
@@ -29,6 +30,34 @@ namespace UglyLang.Source.Values
         /// </summary>
         public abstract bool IsTruthy();
 
+        public bool HasProperty(string name)
+        {
+            return Type.Properties.ContainsKey(name) || HasPropertyExtra(name);
+        }
+
+        protected virtual bool HasPropertyExtra(string name)
+        {
+            return false;
+        }
+
+        public ISymbolValue GetProperty(string name)
+        {
+            if (!HasProperty(name)) throw new InvalidOperationException(name);
+
+            ISymbolValue value = Type.Properties.ContainsKey(name) ? Type.Properties[name] : (ISymbolValue) GetPropertyExtra(name);
+            if (value is Function func)
+            {
+                value = new FunctionContext(func, this);
+            }
+
+            return value;
+        }
+
+        protected virtual ISymbolValue? GetPropertyExtra(string name)
+        {
+            return null;
+        }
+
         /// <summary>
         /// Convert.ToDouble but fallback to 0 on error
         /// </summary>
@@ -43,5 +72,7 @@ namespace UglyLang.Source.Values
                 return 0;
             }
         }
+
+        public abstract bool Equals(Value value);
     }
 }

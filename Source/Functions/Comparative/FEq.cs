@@ -22,30 +22,7 @@ namespace UglyLang.Source.Functions.Comparative
 
         protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
-            Value a = arguments[0], b = arguments[1];
-            bool eq;
-            if (a == b) eq = true;
-            else if (a.Type.Equals(b.Type))
-            {
-                if (a.Type is IntType) eq = ((IntValue)a).Value == ((IntValue)b).Value;
-                else if (a.Type is FloatType) eq = ((FloatValue)a).Value == ((FloatValue)b).Value;
-                else if (a.Type is StringType) eq = ((StringValue)a).Value == ((StringValue)b).Value;
-                else eq = false;
-            }
-            else if (a.Type is IntType && b.Type is FloatType)
-            {
-                eq = ((IntValue)a).Value == ((FloatValue)b).Value;
-            }
-            else if (a.Type is FloatType && b.Type is IntType)
-            {
-                eq = ((FloatValue)a).Value == ((IntValue)b).Value;
-            }
-            else
-            {
-                eq = false;
-            }
-
-            return new IntValue(eq);
+            return new IntValue(arguments[0].Equals(arguments[1]));
         }
     }
 }

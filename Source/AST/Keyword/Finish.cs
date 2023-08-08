@@ -22,7 +22,11 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context)
         {
-            if (ReturnOnExit != null)
+            if (ReturnOnExit == null)
+            {
+                context.SetFunctionReturnValue(new EmptyValue());
+            }
+            else
             {
                 Value value = ReturnOnExit.Evaluate(context);
                 if (context.Error != null) return Signal.ERROR;

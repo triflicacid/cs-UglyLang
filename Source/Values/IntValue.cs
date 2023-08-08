@@ -47,6 +47,11 @@ namespace UglyLang.Source.Values
             throw new InvalidOperationException(type.ToString());
         }
 
+        public override bool Equals(Value value)
+        {
+            return (value is FloatValue f && f.Value == Value) || (value is IntValue i && i.Value == Value);
+        }
+
         public static IntValue Default()
         {
             return new IntValue(0);

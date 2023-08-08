@@ -19,11 +19,11 @@ namespace UglyLang.Source.Functions
             new Types.Type[] { new Any() },
         };
 
-        public FType() : base(ArgumentType, new StringType()) { }
+        public FType() : base(ArgumentType, new TypeType()) { }
 
         protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
-            return new StringValue(arguments[0].Type.ToString());
+            return new TypeValue(arguments[0].Type);
         }
     }
 }

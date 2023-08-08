@@ -6,25 +6,23 @@ using System.Threading.Tasks;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
-namespace UglyLang.Source.Functions
+namespace UglyLang.Source.Functions.List
 {
     /// <summary>
-    /// Sleep the current thread for some milliseconds
+    /// Function to find the index of an item in the list
     /// </summary>
-    public class FSleep : Function
+    public class FIndexOf : Function
     {
-
         private static readonly List<Types.Type[]> ArgumentType = new()
         {
-            new Types.Type[] { new IntType() },
+            new Types.Type[] { new ListType(new TypeParameter("a")), new TypeParameter("a") },
         };
 
-        public FSleep() : base(ArgumentType, new EmptyType()) { }
+        public FIndexOf() : base(ArgumentType, new IntType()) { }
 
         protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
-            Thread.Sleep((int)((IntValue)arguments[0]).Value);
-            return new EmptyValue();
+            return new IntValue(((ListValue)arguments[0]).IndexOf(arguments[1]));
         }
     }
 }

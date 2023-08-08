@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source
@@ -103,10 +104,10 @@ namespace UglyLang.Source
                     beforeColNumber = colNumber;
 
                     // Return type
-                    Types.Type? returnType;
+                    Types.Type returnType;
                     if (colNumber < line.Length && line[colNumber] == '<')
                     {
-                        returnType = null; // No return type
+                        returnType = new EmptyType(); // No return type
                     }
                     else
                     {
@@ -114,11 +115,15 @@ namespace UglyLang.Source
                             colNumber++;
 
                         string returnTypeString = line[beforeColNumber..colNumber];
-                        returnType = Types.Type.FromString(returnTypeString);
-                        if (returnType == null)
+                        var returnTypeN = Types.Type.FromString(returnTypeString);
+                        if (returnTypeN == null)
                         {
                             Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", returnTypeString));
                             break;
+                        }
+                        else
+                        {
+                            returnType = returnTypeN;
                         }
                     }
 
@@ -196,15 +201,15 @@ namespace UglyLang.Source
 
                             // Extract argument type
                             beforeColNumber = colNumber;
-                            while (colNumber < line.Length && char.IsLetter(line[colNumber]))
+                            while (colNumber < line.Length && !(char.IsWhiteSpace(line[colNumber]) || line[colNumber] == '>' || line[colNumber] == ','))
                                 colNumber++;
 
                             string argTypeString = line[beforeColNumber..colNumber];
-                            Types.Type? argType = Types.Type.FromString(argTypeString);
+                            Types.Type? argType = Types.Type.FromString(argTypeString, true);
 
                             if (argType == null)
                             {
-                                Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", argType));
+                                Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", argTypeString));
                                 break;
                             }
 
@@ -598,15 +603,15 @@ namespace UglyLang.Source
             return SymbolRegex.IsMatch(symbol);
         }
 
-        private static readonly Regex SymbolRegex = new("^[A-Za-z_\\$][A-Za-z_\\$0-9]*$");
+        private static readonly Regex SymbolRegex = new("^[A-Za-z_\\$][A-Za-z_\\$0-9\\.]*$");
         private static readonly Regex LeadingSymbolCharRegex = new("[A-Za-z_\\$]");
-        private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9]*)");
+        private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9\\.]*)");
         private static readonly Regex NumberRegex = new("^(?<number>-?(0|[1-9]\\d*)(\\.\\d+)?)");
 
         /// <summary>
         /// Extract the leading symbol from the given string
         /// </summary>
-        private string ExtractSymbolFromString(string str)
+        private static string ExtractSymbolFromString(string str)
         {
             Match match = LeadingSymbolRegex.Match(str);
             return match.Groups["symbol"].Value;
@@ -615,7 +620,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Extract a number from a string
         /// </summary>
-        private string ExtractNumberFromString(string str) {
+        private static string ExtractNumberFromString(string str) {
             Match match = NumberRegex.Match(str);
             return match.Groups["number"].Value;
         }
@@ -678,61 +683,140 @@ namespace UglyLang.Source
                     node = new ValueNode(value);
                 }
 
-                // Is a symbol?
-                else if (LeadingSymbolCharRegex.IsMatch(expr[col].ToString()))
+                // Extract the next word and proceed from there
+                else
                 {
+                    // Extract symbol, then extract all until whitespace
                     string symbol = ExtractSymbolFromString(expr[col..]);
-                    col += symbol.Length;
+                    startPos = col;
+                    while (col < expr.Length && !char.IsWhiteSpace(expr[col])) col++;
+                    string str = expr[startPos..col];
 
-                    SymbolNode symbolNode = new(symbol);
-
-                    // Where any arguments provided?
-                    if (col < expr.Length && expr[col] == '<')
+                    // Is it a type?
+                    var type = Types.Type.FromString(str);
+                    if (type != null)
                     {
-                        int argStartPos = col;
-                        symbolNode.CallArguments = new();
-                        col++;
-
-                        // Extract each argument, seperated by ','
-                        while (col < expr.Length)
+                        // Can the type be constructed?
+                        if (!type.CanConstruct())
                         {
-                            (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
+                            Error = new(lineNumber, colNumber + startPos, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
+                            return (null, col);
+                        }
 
-                            if (argExpr == null)
+                        // Eat whitespace
+                        while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+
+                        TypeConstructNode typeNode = new(type);
+
+                        // Are any arguments provided?
+                        if (col != expr.Length && expr[col] == '{')
+                        {
+                            col++;
+                            startPos = col;
+
+                            // Eat whitespace
+                            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+
+                            // End?
+                            if (col < expr.Length && expr[col] == '}')
                             {
-                                return (null, col);
+                                col++;
                             }
                             else
                             {
-                                col += end;
-                                symbolNode.CallArguments.Add(argExpr);
-                                if (expr[col] == '>') break;
-                                col++;
+                                // Extract each argument, seperated by ','
+                                while (col < expr.Length)
+                                {
+                                    (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '}', null });
+
+                                    if (argExpr == null)
+                                    {
+                                        return (null, col);
+                                    }
+                                    else
+                                    {
+                                        col += end;
+                                        typeNode.Arguments.Add(argExpr);
+                                        if (expr[col] == '}') break;
+                                        col++;
+                                    }
+                                }
+
+                                if (col == expr.Length)
+                                {
+                                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '}', got end of line");
+                                    return (null, col);
+                                }
+                                else if (expr[col] == '}')
+                                {
+                                    col++;
+                                }
+                                else
+                                {
+                                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}', got {0}", expr[col]));
+                                    return (null, col);
+                                }
                             }
                         }
 
-                        if (col == expr.Length)
-                        {
-                            Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
-                            return (null, col);
-                        }
-                        else if (expr[col] == '>')
-                        {
-                            col++;
-                        }
-                        else
-                        {
-                            Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", expr[col]));
-                            return (null, col);
-                        }
+                        node = typeNode;
                     }
 
-                    node = symbolNode;
-                }
-                else
-                {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("invalid syntax: '{0}'", expr[col]));
-                    return (null, col);
+                    // Is it a symbol?
+                    else if (IsValidSymbol(symbol))
+                    {
+                        col = startPos + symbol.Length;
+                        SymbolNode symbolNode = new(symbol);
+
+                        // Were any arguments provided?
+                        if (col < expr.Length && expr[col] == '<')
+                        {
+                            int argStartPos = col;
+                            symbolNode.CallArguments = new();
+                            col++;
+
+                            // Extract each argument, seperated by ','
+                            while (col < expr.Length)
+                            {
+                                (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
+
+                                if (argExpr == null)
+                                {
+                                    return (null, col);
+                                }
+                                else
+                                {
+                                    col += end;
+                                    symbolNode.CallArguments.Add(argExpr);
+                                    if (expr[col] == '>') break;
+                                    col++;
+                                }
+                            }
+
+                            if (col == expr.Length)
+                            {
+                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
+                                return (null, col);
+                            }
+                            else if (expr[col] == '>')
+                            {
+                                col++;
+                            }
+                            else
+                            {
+                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", expr[col]));
+                                return (null, col);
+                            }
+                        }
+
+                        node = symbolNode;
+                    }
+
+                    else
+                    {
+                        Error = new(lineNumber, colNumber + startPos, Error.Types.Syntax, string.Format("invalid syntax: '{0}'", expr[startPos]));
+                        return (null, col);
+                    }
                 }
 
                 // Eat whitespace
@@ -767,6 +851,9 @@ namespace UglyLang.Source
                 exprNode.CastType = type;
                 col += end + 1;
             }
+
+            // Eat whitespace
+            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
 
             // The input string should end with `endChar` or a comment
             if (col < expr.Length)

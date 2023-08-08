@@ -7,23 +7,23 @@ using System.Threading.Tasks;
 namespace UglyLang.Source.Types
 {
     /// <summary>
-    /// A loose type wrapper representing any type
+    /// A loose type wrapper representing an absence
     /// </summary>
-    public class Any : Type
+    public class EmptyType : Type
     {
         public override bool Equals(Type other)
         {
-            return other is Any;
+            return other is EmptyType;
         }
 
         public override bool DoesMatch(Type other, TypeParameterCollection coll)
         {
-            return true;
+            return false;
         }
 
         public override string ToString()
         {
-            return "ANY";
+            return "EMPTY";
         }
 
         public override bool IsParameterised()

@@ -6,25 +6,23 @@ using System.Threading.Tasks;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
-namespace UglyLang.Source.Functions
+namespace UglyLang.Source.Functions.List
 {
     /// <summary>
-    /// Sleep the current thread for some milliseconds
+    /// Function to return the length of a list
     /// </summary>
-    public class FSleep : Function
+    public class FLength : Function
     {
-
         private static readonly List<Types.Type[]> ArgumentType = new()
         {
-            new Types.Type[] { new IntType() },
+            new Types.Type[] { new ListType(new TypeParameter("a")) },
         };
 
-        public FSleep() : base(ArgumentType, new EmptyType()) { }
+        public FLength() : base(ArgumentType, new IntType()) { }
 
         protected override Value CallOverload(Context context, int _, List<Value> arguments)
         {
-            Thread.Sleep((int)((IntValue)arguments[0]).Value);
-            return new EmptyValue();
+            return new IntValue(((ListValue)arguments[0]).Value.Count);
         }
     }
 }
