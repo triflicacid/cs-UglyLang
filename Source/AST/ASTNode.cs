@@ -36,5 +36,7 @@ namespace UglyLang.Source.AST
         VALUE,
         SYMBOL,
         EXPR,
+        TYPE,
+        TYPE_CONSTRUCT,
     }
 }

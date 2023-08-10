@@ -15,6 +15,7 @@ namespace UglyLang.Source
     {
         private static readonly char CommentChar = ';';
         private static readonly char BlockCommentChar = ':';
+        private static readonly char TypeLiteralChar = '@';
 
         public Error? Error = null;
         public ASTStructure? AST = null;
@@ -620,6 +621,7 @@ namespace UglyLang.Source
         private static readonly Regex LeadingSymbolCharRegex = new("[A-Za-z_\\$]");
         private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9\\.]*)");
         private static readonly Regex NumberRegex = new("^(?<number>-?(0|[1-9]\\d*)(\\.\\d+)?)");
+        private static readonly Regex StopParsingCharRegex = new("[\\s<>{}]");
 
         /// <summary>
         /// Extract the leading symbol from the given string
@@ -696,13 +698,32 @@ namespace UglyLang.Source
                     node = new ValueNode(value);
                 }
 
+                // Is type literal
+                else if (expr[col] == TypeLiteralChar)
+                {
+                    col++;
+
+                    if (col == expr.Length)
+                    {
+                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
+                        return (null, col);
+                    }
+
+                    startPos = col;
+                    while (col < expr.Length && !StopParsingCharRegex.IsMatch(expr[col].ToString()))
+                        col++;
+
+                    string s = expr[startPos..col];
+                    node = new TypeNode(new(s));
+                }
+
                 // Extract the next word and proceed from there
                 else
                 {
                     // Extract symbol, then extract all until whitespace
                     string symbol = ExtractSymbolFromString(expr[col..]);
                     startPos = col;
-                    while (col < expr.Length && !(char.IsWhiteSpace(expr[col]) || expr[col] == '{' || expr[col] == '<')) col++;
+                    while (col < expr.Length && !StopParsingCharRegex.IsMatch(expr[col].ToString())) col++;
                     string str = expr[startPos..col];
 
                     // Eat whitespace

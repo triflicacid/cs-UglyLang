@@ -39,6 +39,7 @@ Common types have a baked-in construction syntax.
 - `INT`. Numeric literals lacking a decimal point, or where the decimal portion is zero, construct an `INT` instance. For example, `13` or `-1.0`.
 - `FLOAT`. Numeric literals with a non-zero decimal portion construct a `FLOAT` instance. For example, `3.14` or `-2.7`.
 - `STRING`. Sequences of characters enclosed in quotation marks construct a `STRING` instance. For example `"Hello, world"` or `""`. Note that escape characters are **not** supported.
+- `TYPE`. Types may be constructed using braces, but to reference a type itself one uses `@` followed by the type name. For example, `@INT`. Note, that type literals **cannot** be parameterised, but it can reference parameters already bound in the context.
 
 # Type Parameters
 Symbols may be used to represent types. For example,
