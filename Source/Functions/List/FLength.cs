@@ -20,9 +20,11 @@ namespace UglyLang.Source.Functions.List
 
         public FLength() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new IntValue(((ListValue)arguments[0]).Value.Count);
+            IntValue value = new(((ListValue)arguments[0]).Value.Count);
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

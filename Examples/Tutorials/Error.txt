@@ -1,0 +1,8 @@
+LET n: 0
+INPUT n
+
+IF: EQ<n,0>
+	PRINTLN: "Good job"
+ELSE
+	ERROR: "expected zero, got " n
+END

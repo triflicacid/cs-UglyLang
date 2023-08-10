@@ -19,9 +19,11 @@ namespace UglyLang.Source.Functions.Comparative
 
         public FGe() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new IntValue(((FloatValue)arguments[0]).Value >= ((FloatValue)arguments[1]).Value);
+            IntValue value = new (((FloatValue)arguments[0]).Value >= ((FloatValue)arguments[1]).Value);
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

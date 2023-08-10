@@ -20,9 +20,11 @@ namespace UglyLang.Source.Functions.List
 
         public FContains() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new IntValue(((ListValue)arguments[0]).Contains(arguments[1]));
+            IntValue value = new(((ListValue)arguments[0]).Contains(arguments[1]));
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

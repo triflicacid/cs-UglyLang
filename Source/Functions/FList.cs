@@ -20,10 +20,11 @@ namespace UglyLang.Source.Functions
 
         public FList() : base(Arguments, ResolvedType.List(new Any())) { }
 
-        protected override Value? CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             Types.Type type = ((TypeValue)arguments[0]).Value;
-            return new ListValue(type);
+            context.SetFunctionReturnValue(new ListValue(type));
+            return Signal.NONE;
         }
     }
 }

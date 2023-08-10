@@ -80,12 +80,10 @@ namespace UglyLang.Source.AST
                         }
                     }
 
-                    // Call function
-                    Value? returnedValue = func.Call(context, arguments);
-
-                    if (returnedValue == null || context.Error != null)
+                    // Call function with given arguments
+                    Signal signal = func.Call(context, arguments);
+                    if (signal == Signal.ERROR)
                     {
-                        // Propagate error
                         if (context.Error != null)
                         {
                             context.Error.LineNumber = LineNumber;
@@ -94,10 +92,9 @@ namespace UglyLang.Source.AST
 
                         return null;
                     }
-                    else
-                    {
-                        value = returnedValue;
-                    }
+
+                    // Fetch return value
+                    value = context.GetFunctionReturnValue() ?? new EmptyValue();
 
                     // Pop stack context
                     context.PopStackContext();

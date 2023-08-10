@@ -455,6 +455,19 @@ namespace UglyLang.Source
 
                             break;
                         }
+                    case "ERROR":
+                        {
+                            ExprNode? expr = null;
+
+                            if (after.Length != 0)
+                            {
+                                (expr, _) = ParseExpression(after, lineNumber, colNumber);
+                                if (expr == null) return; // Propagate error
+                            }
+
+                            keywordNode = new ErrorKeywordNode(expr);
+                            break;
+                        }
                     case "EXIT":
                         {
                             if (trees.Count < 2)

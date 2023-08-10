@@ -21,9 +21,11 @@ namespace UglyLang.Source.Functions
 
         public FConcat() : base(Arguments, ResolvedType.String) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new StringValue(StringValue.From(arguments[0]).Value + StringValue.From(arguments[1]).Value);
+            StringValue value = new(StringValue.From(arguments[0]).Value + StringValue.From(arguments[1]).Value);
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

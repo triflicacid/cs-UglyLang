@@ -20,7 +20,7 @@ namespace UglyLang.Source.Functions
 
         public FNew() : base(Arguments, ResolvedType.Any) { }
 
-        protected override Value? CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             Types.Type type = ((TypeValue)arguments[0]).Value;
 
@@ -28,7 +28,7 @@ namespace UglyLang.Source.Functions
             if (!type.CanConstruct())
             {
                 context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
-                return null;
+                return Signal.NONE;
             }
 
             Value? value = type.ConstructNoArgs(context);
@@ -36,8 +36,12 @@ namespace UglyLang.Source.Functions
             {
                 context.Error = new(0, 0, Error.Types.Type, string.Format("type constructor {0} requires arguments", type));
             }
+            else
+            {
+                context.SetFunctionReturnValue(value);
+            }
 
-            return value;
+            return Signal.NONE;
         }
     }
 }

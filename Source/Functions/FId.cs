@@ -17,9 +17,10 @@ namespace UglyLang.Source.Functions
 
         public FId() : base(Arguments, ResolvedType.Param("a")) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return arguments[0];
+            context.SetFunctionReturnValue(arguments[0]);
+            return Signal.NONE;
         }
     }
 }

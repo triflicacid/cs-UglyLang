@@ -19,9 +19,10 @@ namespace UglyLang.Source.Functions.Logical
 
         public FNot() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new IntValue(!arguments[0].IsTruthy());
+            context.SetFunctionReturnValue(new IntValue(!arguments[0].IsTruthy()));
+            return Signal.NONE;
         }
     }
 }

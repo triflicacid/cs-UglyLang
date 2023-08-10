@@ -21,10 +21,10 @@ namespace UglyLang.Source.Functions
 
         public FSleep() : base(Arguments, ResolvedType.Empty) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             Thread.Sleep((int)((IntValue)arguments[0]).Value);
-            return new EmptyValue();
+            return Signal.NONE;
         }
     }
 }

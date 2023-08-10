@@ -22,7 +22,7 @@ namespace UglyLang.Source.Functions.List
 
         public FAdd() : base(Arguments, ResolvedType.Empty) { }
 
-        protected override Value CallOverload(Context context, int index, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int index, List<Value> arguments, TypeParameterCollection c)
         {
             ListValue list = (ListValue)arguments[0];
 
@@ -36,8 +36,8 @@ namespace UglyLang.Source.Functions.List
                 // Add to the end
                 list.Value.Add(arguments[1]);
             }
-            
-            return new EmptyValue();
+
+            return Signal.NONE;
         }
     }
 }

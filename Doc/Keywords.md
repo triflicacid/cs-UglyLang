@@ -8,6 +8,8 @@ Change the type of the given variable.
 Execute the expression.
 - `END`
 Marks the end of a loop/function.
+- `ERROR` / `ERROR: <expr>`
+Raises an error with either a default message, or with a message equal to the evaluated expression.
 - `EXIT`
 Exits the current loop.
 - `FINISH` / `FINISH: <expr>`

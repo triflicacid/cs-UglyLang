@@ -21,9 +21,11 @@ namespace UglyLang.Source.Functions.Maths
 
         public FPred() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new IntValue(((IntValue)arguments[0]).Value - 1);
+            IntValue value = new(((IntValue)arguments[0]).Value - 1);
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

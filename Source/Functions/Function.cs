@@ -13,7 +13,7 @@ namespace UglyLang.Source.Functions
         /// <summary>
         /// Call the given function with said arguments. Redirect call to CallOverload once the correct overload has been found.
         /// </summary>
-        public Value? Call(Context context, List<Value> arguments);
+        public Signal Call(Context context, List<Value> arguments);
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ namespace UglyLang.Source.Functions
             Context = context;
         }
 
-        public Value? Call(Context context, List<Value> arguments)
+        public Signal Call(Context context, List<Value> arguments)
         {
             List<Value> newArguments = new(arguments);
             newArguments.Insert(0, Context);
@@ -49,7 +49,7 @@ namespace UglyLang.Source.Functions
             ReturnType = returnType;
         }
 
-        public Value? Call(Context context, List<Value> arguments)
+        public Signal Call(Context context, List<Value> arguments)
         {
             List<Types.Type> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
             TypeParameterCollection typeParameters = new();
@@ -71,7 +71,7 @@ namespace UglyLang.Source.Functions
                         if (aType == null)
                         {
                             context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", typeArray[i].Value));
-                            return null;
+                            return Signal.ERROR;
                         }
 
                         resolvedTypeArray[i] = aType;
@@ -93,7 +93,7 @@ namespace UglyLang.Source.Functions
                                         if (!oType.Equals(pType)) // BAD
                                         {
                                             context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0} in argument {1}: expected {2}, got {3}", p, i + 1, oType, pType));
-                                            return null;
+                                            return Signal.ERROR;
                                         }
                                     }
                                     else
@@ -109,7 +109,7 @@ namespace UglyLang.Source.Functions
                                 if (casted == null)
                                 {
                                     context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arguments[i].Type, aType));
-                                    return null;
+                                    return Signal.ERROR;
                                 }
                                 else
                                 {
@@ -134,7 +134,7 @@ namespace UglyLang.Source.Functions
                 error += Environment.NewLine + "  Expected: " + string.Join(" | ", resolvedArgumentTypes.Select(a => "<" + string.Join(", ", a.Select(b => b.ToString())) + ">"));
 
                 context.Error = new(0, 0, Error.Types.Type, error);
-                return null;
+                return Signal.ERROR;
             }
 
             // Register type parameters to the stack
@@ -147,14 +147,12 @@ namespace UglyLang.Source.Functions
             }
 
             // Invoke the respective overload
-            Value? value = CallOverload(context, index, arguments, typeParameters);
-
-            return value;
+            return CallOverload(context, index, arguments, typeParameters);
         }
 
         /// <summary>
-        /// Call the function. Note that the given argument list matches with ONE ArgumentTypes member (this is checked in FuncValue. The stack frames and argument evaluation are handled in SymbolNode).
+        /// Call the function. Note that the given argument list matches with ONE ArgumentTypes member (this is checked in FuncValue. The stack frames and argument evaluation are handled in SymbolNode). Return a Signal indicating the status. The return result is available via context.GetFunctionReturnValue().
         /// </summary>
-        protected abstract Value? CallOverload(Context context, int overloadIndex, List<Value> arguments, TypeParameterCollection typeParameters);
+        protected abstract Signal CallOverload(Context context, int overloadIndex, List<Value> arguments, TypeParameterCollection typeParameters);
     }
 }

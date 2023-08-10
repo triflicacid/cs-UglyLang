@@ -15,6 +15,7 @@ namespace UglyLang.Source
             Name,    // Cannot find a name/variable
             Type,    // Incorrect/mismatching type(s)
             Cast,    // Error whilst casting
+            Raised,  // Used when the ERROR keyword is invoked
         }
 
         public int LineNumber;

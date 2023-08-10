@@ -19,10 +19,12 @@ namespace UglyLang.Source.Functions.Logical
 
         public FOr() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             Value a = arguments[0], b = arguments[1];
-            return new IntValue(a.IsTruthy() || b.IsTruthy());
+            IntValue value = new(a.IsTruthy() || b.IsTruthy());
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

@@ -19,10 +19,12 @@ namespace UglyLang.Source.Functions.Logical
 
         public FXOr() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             bool a = arguments[0].IsTruthy(), b = arguments[1].IsTruthy();
-            return new IntValue((a && !b) || (!a && b));
+            IntValue value = new((a && !b) || (!a && b));
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

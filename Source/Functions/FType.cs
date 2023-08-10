@@ -21,9 +21,11 @@ namespace UglyLang.Source.Functions
 
         public FType() : base(Arguments, ResolvedType.Type) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new TypeValue(arguments[0].Type);
+            TypeValue value = new(arguments[0].Type);
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

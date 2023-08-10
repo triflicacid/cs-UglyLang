@@ -8,8 +8,6 @@ The following section contains ideas for the language.
 
 - Lists: dynamic get/set such that the properties can be calculated at runtime. Propose creating methods so that the `.<index>` way is kept as constant indexes only.
 
-- Functions: add the ability to raise errors inside functions. Create a function/keyword to allow the user to raise errors themselves.
-
 - Add type literals. At the moment, types can only be referenced in constructors when followed by `{ ... }`. Propose that when a `@` is encountered the following word is interpreted as a type and returns a `TYPE` instance. This would allow: `LIST<TP
 YPE<0>> --> LIST<@INT>`.
 

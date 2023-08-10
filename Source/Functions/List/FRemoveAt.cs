@@ -20,10 +20,12 @@ namespace UglyLang.Source.Functions.List
 
         public FRemoveAt() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             ListValue list = (ListValue)arguments[0];
-            return new IntValue(list.RemoveAt((int) ((IntValue)arguments[1]).Value));
+            IntValue value = new(list.RemoveAt((int) ((IntValue)arguments[1]).Value));
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

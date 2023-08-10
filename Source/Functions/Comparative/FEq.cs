@@ -19,9 +19,11 @@ namespace UglyLang.Source.Functions.Comparative
 
         public FEq() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new IntValue(arguments[0].Equals(arguments[1]));
+            IntValue value = new(arguments[0].Equals(arguments[1]));
+            context.SetFunctionReturnValue(value);
+            return Signal.NONE;
         }
     }
 }

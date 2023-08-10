@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions
 
         public FRandom() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             double n;
             if (arguments.Count == 0) // Range: [0,1)
@@ -47,7 +47,8 @@ namespace UglyLang.Source.Functions
                 throw new InvalidOperationException();
             }
 
-            return new FloatValue(n);
+            context.SetFunctionReturnValue(new FloatValue(n));
+            return Signal.NONE;
         }
     }
 }
