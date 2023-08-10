@@ -61,8 +61,8 @@ namespace UglyLang.Source.AST.Keyword
                 // If the loop has a condition, only continue if the condition is truthy
                 if (Condition != null)
                 {
-                    Value value = Condition.Evaluate(context);
-                    if (context.Error != null) // Propagate error?
+                    Value? value = Condition.Evaluate(context);
+                    if (value == null) // Propagate error?
                         return Signal.ERROR;
 
                     if (!value.IsTruthy())

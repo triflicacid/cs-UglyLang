@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Xml.Linq;
 using UglyLang.Source.Functions;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source
@@ -20,13 +21,14 @@ namespace UglyLang.Source
             }
 
             private readonly Dictionary<string, ISymbolValue> Symbols;
+            public readonly TypeParameterCollection TypeParams;
             public readonly int LineNumber;
             public readonly int ColNumber;
             public readonly Types Type;
             public readonly string Name;
             public Value? FunctionReturnValue = null;
 
-            public StackContext(int line, int col, Types type, string name)
+            public StackContext(int line, int col, Types type, string name, TypeParameterCollection? tParams = null)
             {
                 Symbols = new() {
                     { "_Context", new StringValue(name) }
@@ -35,6 +37,7 @@ namespace UglyLang.Source
                 ColNumber = col;
                 Type = type;
                 Name = name;
+                TypeParams = tParams ?? new();
             }
 
             public bool HasSymbol(string symbol)
@@ -171,9 +174,9 @@ namespace UglyLang.Source
         /// <summary>
         /// Push a new stack context
         /// </summary>
-        public void PushStackContext(int line, int col, StackContext.Types type, string name)
+        public void PushStackContext(int line, int col, StackContext.Types type, string name, TypeParameterCollection? typeParams = null)
         {
-            Stack.Add(new(line, col, type, name));
+            Stack.Add(new(line, col, type, name, typeParams));
         }
 
         /// <summary>
@@ -196,12 +199,38 @@ namespace UglyLang.Source
             return Stack[^1].FunctionReturnValue;
         }
 
+        /// <summary>
+        /// Merge the given collection with the latest collection on the stack
+        /// </summary>
+        public void MergeTypeParams(TypeParameterCollection c)
+        {
+            Stack[^1].TypeParams.MergeWith(c);
+        }
+
+        /// <summary>
+        /// From the current scope down, get any bound type parameters
+        /// </summary>
+        public TypeParameterCollection GetBoundTypeParams()
+        {
+            TypeParameterCollection c = new();
+            foreach (StackContext context in Stack)
+            {
+                foreach (string name in context.TypeParams.GetParamerNames())
+                {
+                    c.SetParameter(name, context.TypeParams.GetParameter(name));
+                }
+            }
+            return c;
+        }
+
         public void InitialiseBuiltinFunctions()
         {
             var context = Stack[0];
             // General
             context.SetSymbol("CONCAT", new FConcat());
             context.SetSymbol("ID", new FId());
+            context.SetSymbol("LIST", new FList());
+            context.SetSymbol("NEW", new FNew());
             context.SetSymbol("RANDOM", new FRandom());
             context.SetSymbol("SLEEP", new FSleep());
             context.SetSymbol("TYPE", new FType());

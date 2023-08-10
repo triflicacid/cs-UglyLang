@@ -14,10 +14,9 @@ namespace UglyLang.Source.Values
     {
         public readonly Types.Type Value;
 
-        public TypeValue(Types.Type type)
+        public TypeValue(Types.Type type) : base(new TypeType())
         {
             Value = type;
-            Type = new TypeType();
         }
 
         public override bool IsTruthy()
@@ -30,11 +29,11 @@ namespace UglyLang.Source.Values
             throw new InvalidOperationException(value.Type.ToString());
         }
 
-        public override Value To(Types.Type type)
+        public override Value? To(Types.Type type)
         {
-            if (type is Any) return new TypeValue(Value);
+            if (type is Any or TypeType) return new TypeValue(Value);
             if (type is StringType) return new StringValue(Value.ToString());
-            throw new InvalidOperationException(type.ToString());
+            return null;
         }
 
         public override bool Equals(Value value)

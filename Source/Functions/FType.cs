@@ -14,14 +14,14 @@ namespace UglyLang.Source.Functions
     public class FType : Function
     {
 
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new Any() },
+            new UnresolvedType[] { ResolvedType.Any },
         };
 
-        public FType() : base(ArgumentType, new TypeType()) { }
+        public FType() : base(Arguments, ResolvedType.Type) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return new TypeValue(arguments[0].Type);
         }

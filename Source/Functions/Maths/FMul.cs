@@ -12,14 +12,14 @@ namespace UglyLang.Source.Functions.Maths
     public class FMul : Function
     {
 
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new FloatType(), new FloatType() },
+            new UnresolvedType[] { ResolvedType.Float, ResolvedType.Float },
         };
 
-        public FMul() : base(ArgumentType, new FloatType()) { }
+        public FMul() : base(Arguments, ResolvedType.Float) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return new FloatValue(((FloatValue)arguments[0]).Value * ((FloatValue)arguments[1]).Value);
         }

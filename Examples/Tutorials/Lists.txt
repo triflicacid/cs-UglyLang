@@ -1,0 +1,19 @@
+DEF Show: <list: a[]>
+	PRINTLN: a "[" list.Length "] " list
+END
+
+LET seq: INT[] { 1, 2 }
+DO: Show<seq>
+PRINTLN: "length: " seq.Length
+PRINTLN: "member type: " seq.MemberType
+DO: seq.Add<3>
+DO: seq.Add<3,0>
+DO: Show<seq>
+PRINTLN: seq.IndexOf<2>
+PRINTLN: seq.Remove<3>
+DO: Show<seq>
+SET seq.0: -1
+DO: Show<seq>
+PRINTLN: seq.0
+DO: seq.RemoveAt<1>
+DO: Show<seq>

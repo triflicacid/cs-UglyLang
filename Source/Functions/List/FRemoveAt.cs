@@ -9,20 +9,21 @@ using UglyLang.Source.Values;
 namespace UglyLang.Source.Functions.List
 {
     /// <summary>
-    /// Function to add an item to the list
+    /// Function to remove an item at the given index from the list
     /// </summary>
-    public class FContains : Function
+    public class FRemoveAt : Function
     {
         private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new UnresolvedType[] { ResolvedType.List(new TypeParameter("a")), ResolvedType.Param("a") },
+            new UnresolvedType[] { ResolvedType.List(new TypeParameter("a")), ResolvedType.Int },
         };
 
-        public FContains() : base(Arguments, ResolvedType.Int) { }
+        public FRemoveAt() : base(Arguments, ResolvedType.Int) { }
 
         protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
-            return new IntValue(((ListValue)arguments[0]).Contains(arguments[1]));
+            ListValue list = (ListValue)arguments[0];
+            return new IntValue(list.RemoveAt((int) ((IntValue)arguments[1]).Value));
         }
     }
 }

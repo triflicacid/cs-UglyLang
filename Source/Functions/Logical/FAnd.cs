@@ -12,14 +12,14 @@ namespace UglyLang.Source.Functions.Logical
     public class FAnd : Function
     {
 
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new Any(), new Any() },
+            new UnresolvedType[] { ResolvedType.Any, ResolvedType.Any },
         };
 
-        public FAnd() : base(ArgumentType, new IntType()) { }
+        public FAnd() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             Value a = arguments[0], b = arguments[1];
             return new IntValue(a.IsTruthy() && b.IsTruthy());

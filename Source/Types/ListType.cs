@@ -14,17 +14,21 @@ namespace UglyLang.Source.Types
     /// </summary>
     public class ListType : Type
     {
+        public static readonly Dictionary<string, Property> Properties = Property.CreateDictionary(new Property[]
+        {
+            new Property("Add", new FAdd()),
+            new Property("Contains", new FContains()),
+            new Property("IndexOf", new FIndexOf()),
+            new Property("Length", new FLength()),
+            new Property("Remove", new FRemove()),
+            new Property("RemoveAt", new FRemoveAt())
+        });
+
         public readonly Type Member;
 
         public ListType(Type member)
         {
             Member = member;
-
-            Properties.Add("ADD", new FAdd());
-            Properties.Add("CONTAINS", new FContains());
-            Properties.Add("INDEXOF", new FIndexOf());
-            Properties.Add("LENGTH", new FLength());
-            Properties.Add("REMOVE", new FRemove());
         }
 
         public override bool Equals(Type other)
@@ -58,6 +62,11 @@ namespace UglyLang.Source.Types
             return new();
         }
 
+        public override Type ResolveParametersAgainst(TypeParameterCollection col)
+        {
+            return new ListType(Member.ResolveParametersAgainst(col));
+        }
+
         public override bool CanConstruct()
         {
             return true;
@@ -85,6 +94,11 @@ namespace UglyLang.Source.Types
             }
 
             return list;
+        }
+
+        public override Dictionary<string, Property> GetProperties()
+        {
+            return Properties;
         }
     }
 }

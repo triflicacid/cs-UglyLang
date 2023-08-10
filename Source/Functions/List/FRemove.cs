@@ -9,18 +9,18 @@ using UglyLang.Source.Values;
 namespace UglyLang.Source.Functions.List
 {
     /// <summary>
-    /// Function to remove any itm from a list
+    /// Function to remove any item from a list
     /// </summary>
     public class FRemove : Function
     {
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new ListType(new TypeParameter("a")), new TypeParameter("a") },
+            new UnresolvedType[] { ResolvedType.List(new TypeParameter("a")), ResolvedType.Param("a") }
         };
 
-        public FRemove() : base(ArgumentType, new IntType()) { }
+        public FRemove() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             ListValue list = (ListValue)arguments[0];
             return new IntValue(list.Remove(arguments[1]));

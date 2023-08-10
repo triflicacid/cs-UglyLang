@@ -12,14 +12,14 @@ namespace UglyLang.Source.Functions.Logical
     public class FNot : Function
     {
 
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new Any() },
+            new UnresolvedType[] { ResolvedType.Any },
         };
 
-        public FNot() : base(ArgumentType, new IntType()) { }
+        public FNot() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return new IntValue(!arguments[0].IsTruthy());
         }

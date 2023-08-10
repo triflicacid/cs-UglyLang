@@ -9,8 +9,6 @@ namespace UglyLang.Source.Types
 {
     public abstract class Type
     {
-        public Dictionary<string, ISymbolValue> Properties = new();
-
         public abstract bool Equals(Type other);
 
         public bool DoesMatch(Type other)
@@ -41,6 +39,11 @@ namespace UglyLang.Source.Types
         public abstract TypeParameterCollection MatchParametersAgainst(Type t);
 
         /// <summary>
+        /// Same as MatchParametersAgainst, but resolves any type parameters in the collection.
+        /// </summary>
+        public abstract Type ResolveParametersAgainst(TypeParameterCollection col);
+
+        /// <summary>
         /// Can this type be constructed?
         /// </summary>
         public virtual bool CanConstruct()
@@ -67,20 +70,60 @@ namespace UglyLang.Source.Types
         }
 
         /// <summary>
-        /// Construct type from a string. Return NULL if there is a failure.
+        /// Return properties attached to this type. By default, this is empty.
         /// </summary>
-        public static Type? FromString(string s, bool allowParams = false)
+        public virtual Dictionary<string, Property> GetProperties()
         {
-            if (s == IntType.AsString()) return new IntType();
-            if (s == FloatType.AsString()) return new FloatType();
-            if (s == StringType.AsString()) return new StringType();
-            if (s.Length > 2 && s[^1] == ']' && s[^2] == '[')
+            return new();
+        }
+    }
+
+    public class Property
+    {
+        private string _Name;
+        private ISymbolValue _Value;
+        public bool IsReadonly = false;
+
+        public Property(string name, ISymbolValue value, bool isReadonly = false)
+        {
+            _Name = name;
+            _Value = value;
+            IsReadonly = isReadonly;
+        }
+
+        public string GetName()
+        {
+            return _Name;
+        }
+
+        public ISymbolValue GetValue()
+        {
+            return _Value;
+        }
+
+        /// <summary>
+        /// Set the value of said property. Return boolean success. Note, that we do not check if the types are compatibe; this is to be done elsewhere.
+        /// </summary>
+        public bool SetValue(ISymbolValue value)
+        {
+            if (IsReadonly)
             {
-                Type? member = FromString(s[..^2], allowParams);
-                return member == null ? null : new ListType(member); 
+                return false;
             }
-            if (allowParams && Parser.IsValidSymbol(s)) return new TypeParameter(s);
-            return null;
+
+            _Value = value;
+            return true;
+        }
+
+        public static Dictionary<string, Property> CreateDictionary(Property[] properties)
+        {
+            Dictionary<string, Property> dict = new();
+            foreach (Property property in properties)
+            {
+                dict.Add(property.GetName(), property);
+            }
+
+            return dict;
         }
     }
 }

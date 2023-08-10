@@ -9,11 +9,12 @@ namespace UglyLang.Source.Values
 {
     public class ListValue : Value
     {
+        public static readonly string MemberTypeProperty = "MemberType";
+
         public List<Value> Value;
 
-        public ListValue(Types.Type MemberType)
+        public ListValue(Types.Type MemberType) : base(new ListType(MemberType))
         {
-            Type = new ListType(MemberType);
             Value = new();
         }
 
@@ -24,7 +25,20 @@ namespace UglyLang.Source.Values
 
         public override Value? To(Types.Type type)
         {
-            if (type is StringType) return new StringValue("{" + string.Join(",", Value.Select(v => ((StringValue)v.To(type)).Value)) + "}");
+            if (type is ListType list && Type.Equals(list)) return this;
+            if (type is StringType)
+            {
+                List<string> Members = new();
+                foreach (Value member in Value)
+                {
+                    Value? s = member.To(type);
+                    if (s == null) throw new InvalidOperationException(string.Format("Error converting {0} to STRING - this cast should be implemented", member.Type));
+                    Members.Add(((StringValue)s).Value);
+                }
+
+                return new StringValue("{" + string.Join(",", Members) + "}");
+            }
+
             return null;
         }
 
@@ -77,26 +91,48 @@ namespace UglyLang.Source.Values
             return removed;
         }
 
-        protected override bool HasPropertyExtra(string name)
+        public bool RemoveAt(int index)
         {
-            return name.All(c => char.IsDigit(c));
+            if (index >= 0 && index < Value.Count)
+            {
+                Value.RemoveAt(index);
+                return true;
+            }
+
+            return false;
         }
 
-        protected override ISymbolValue? GetPropertyExtra(string name)
+        protected override bool HasPropertyExtra(string name)
         {
-            if (double.TryParse(name, out double n))
+            if (name == MemberTypeProperty) return true;
+            if (double.TryParse(name, out double n) && n >= 0 && n < Value.Count)
             {
-                if (n >= 0 && n < Value.Count)
-                {
-                    return Value[(int) n];
-                }
-                else
-                {
-                    return new EmptyValue();
-                }
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override Property? GetPropertyExtra(string name)
+        {
+            if (name == MemberTypeProperty) return new Property(MemberTypeProperty, new TypeValue(((ListType)Type).Member), true);
+            if (double.TryParse(name, out double n) && n >= 0 && n < Value.Count)
+            {
+                return new Property(name, Value[(int)n]);
             }
 
             return null;
+        }
+
+        protected override bool SetPropertyExtra(string name, ISymbolValue value)
+        {
+            if (double.TryParse(name, out double n) && n >= 0 && n < Value.Count)
+            {
+                Value[(int)n] = (Value)value; // Casting is already taken care of
+                return true;
+            }
+
+            return false;
         }
     }
 }

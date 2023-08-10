@@ -31,8 +31,8 @@ namespace UglyLang.Source.AST.Keyword
             {
                 if (item.Body == null) throw new NullReferenceException();
 
-                Value value = item.Condition.Evaluate(context);
-                if (context.Error != null) return Signal.ERROR; // Propagate error
+                Value? value = item.Condition.Evaluate(context);
+                if (value == null) return Signal.ERROR; // Propagate error
                 if (value.IsTruthy()) return item.Body.Evaluate(context);
             }
 

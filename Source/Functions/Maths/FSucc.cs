@@ -14,14 +14,14 @@ namespace UglyLang.Source.Functions.Maths
     public class FSucc : Function
     {
 
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new IntType() },
+            new UnresolvedType[] { ResolvedType.Int },
         };
 
-        public FSucc() : base(ArgumentType, new IntType()) { }
+        public FSucc() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return new IntValue(((IntValue)arguments[0]).Value + 1);
         }

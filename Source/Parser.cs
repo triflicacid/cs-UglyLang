@@ -104,10 +104,10 @@ namespace UglyLang.Source
                     beforeColNumber = colNumber;
 
                     // Return type
-                    Types.Type returnType;
+                    UnresolvedType returnType;
                     if (colNumber < line.Length && line[colNumber] == '<')
                     {
-                        returnType = new EmptyType(); // No return type
+                        returnType = new ResolvedType(new EmptyType()); // No return type
                     }
                     else
                     {
@@ -115,16 +115,7 @@ namespace UglyLang.Source
                             colNumber++;
 
                         string returnTypeString = line[beforeColNumber..colNumber];
-                        var returnTypeN = Types.Type.FromString(returnTypeString);
-                        if (returnTypeN == null)
-                        {
-                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", returnTypeString));
-                            break;
-                        }
-                        else
-                        {
-                            returnType = returnTypeN;
-                        }
+                        returnType = new UnresolvedType(returnTypeString);
                     }
 
                     // Eat whitespace
@@ -148,7 +139,7 @@ namespace UglyLang.Source
                         break;
                     }
 
-                    List<(string, Types.Type)> argumentPairs = new();
+                    List<(string, UnresolvedType)> argumentPairs = new();
                     if (line[colNumber] == '>')
                     {
                         colNumber++;
@@ -205,13 +196,7 @@ namespace UglyLang.Source
                                 colNumber++;
 
                             string argTypeString = line[beforeColNumber..colNumber];
-                            Types.Type? argType = Types.Type.FromString(argTypeString, true);
-
-                            if (argType == null)
-                            {
-                                Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", argTypeString));
-                                break;
-                            }
+                            UnresolvedType argType = new(argTypeString);
 
                             // Eat whitespace
                             while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
@@ -226,7 +211,7 @@ namespace UglyLang.Source
                             }
 
                             // Add argument to list
-                            argumentPairs.Add(new(argName, (Types.Type)argType));
+                            argumentPairs.Add(new(argName, argType));
 
                             // Skip comma
                             if (line[colNumber] == ',')
@@ -273,12 +258,21 @@ namespace UglyLang.Source
                     {
                         // Extract symbol
                         int beforeColNumber = colNumber;
-                        while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber])) before += line[colNumber++];
+                        while (colNumber < line.Length && !(char.IsWhiteSpace(line[colNumber]) || line[colNumber] == ':')) before += line[colNumber++];
 
-                        if (keywordInfo.Before == TriState.YES && !IsValidSymbol(before))
+                        if (keywordInfo.Before == TriState.YES)
                         {
-                            Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", before));
-                            break;
+                            if (before.Length == 0)
+                            {
+                                string got = colNumber == line.Length ? "end of line" : ":";
+                                Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("expected symbol, got {0}", got));
+                                break;
+                            }
+                            else if (!IsValidSymbol(before))
+                            {
+                                Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", before));
+                                break;
+                            }
                         }
                     }
 
@@ -337,16 +331,7 @@ namespace UglyLang.Source
                 {
                     case "CAST":
                         {
-                            Types.Type? type = Types.Type.FromString(after);
-                            if (type == null)
-                            {
-                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("{0} is not a valid type", after));
-                            }
-                            else
-                            {
-                                keywordNode = new CastKeywordNode(before, (Types.Type) type);
-                            }
-
+                            keywordNode = new CastKeywordNode(before, new UnresolvedType(after));
                             break;
                         }
                     case "DO":
@@ -689,73 +674,61 @@ namespace UglyLang.Source
                     // Extract symbol, then extract all until whitespace
                     string symbol = ExtractSymbolFromString(expr[col..]);
                     startPos = col;
-                    while (col < expr.Length && !char.IsWhiteSpace(expr[col])) col++;
+                    while (col < expr.Length && !(char.IsWhiteSpace(expr[col]) || expr[col] == '{' || expr[col] == '<')) col++;
                     string str = expr[startPos..col];
 
-                    // Is it a type?
-                    var type = Types.Type.FromString(str);
-                    if (type != null)
+                    // Eat whitespace
+                    while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+
+                    // If there is a brace, it is a type constructor, else it is a symbol
+                    if (col < expr.Length && expr[col] == '{')
                     {
-                        // Can the type be constructed?
-                        if (!type.CanConstruct())
-                        {
-                            Error = new(lineNumber, colNumber + startPos, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
-                            return (null, col);
-                        }
+                        TypeConstructNode typeNode = new(new(str));
+
+                        col++;
+                        startPos = col;
 
                         // Eat whitespace
                         while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
 
-                        TypeConstructNode typeNode = new(type);
-
-                        // Are any arguments provided?
-                        if (col != expr.Length && expr[col] == '{')
+                        // End?
+                        if (col < expr.Length && expr[col] == '}')
                         {
                             col++;
-                            startPos = col;
+                        }
+                        else
+                        {
+                            // Extract each argument, seperated by ','
+                            while (col < expr.Length)
+                            {
+                                (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '}', null });
 
-                            // Eat whitespace
-                            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+                                if (argExpr == null)
+                                {
+                                    return (null, col);
+                                }
+                                else
+                                {
+                                    col += end;
+                                    typeNode.Arguments.Add(argExpr);
+                                    if (expr[col] == '}') break;
+                                    col++;
+                                }
+                            }
 
-                            // End?
-                            if (col < expr.Length && expr[col] == '}')
+                            if (col == expr.Length)
+                            {
+                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '}', got end of line");
+                                return (null, col);
+                            }
+                            else if (expr[col] == '}')
                             {
                                 col++;
                             }
                             else
                             {
-                                // Extract each argument, seperated by ','
-                                while (col < expr.Length)
-                                {
-                                    (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '}', null });
-
-                                    if (argExpr == null)
-                                    {
-                                        return (null, col);
-                                    }
-                                    else
-                                    {
-                                        col += end;
-                                        typeNode.Arguments.Add(argExpr);
-                                        if (expr[col] == '}') break;
-                                        col++;
-                                    }
-                                }
-
-                                if (col == expr.Length)
-                                {
-                                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '}', got end of line");
-                                    return (null, col);
-                                }
-                                else if (expr[col] == '}')
-                                {
-                                    col++;
-                                }
-                                else
-                                {
-                                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}', got {0}", expr[col]));
-                                    return (null, col);
-                                }
+                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}', got {0}", expr[col]));
+                                return (null, col);
                             }
                         }
 
@@ -841,13 +814,7 @@ namespace UglyLang.Source
                 }
 
                 string str = expr[(col + 1)..(col + end)];
-                Types.Type? type = Types.Type.FromString(str);
-                if (type == null)
-                {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("{0} is not a valid type", str));
-                    return (null, col);
-                }
-
+                UnresolvedType type = new(str);
                 exprNode.CastType = type;
                 col += end + 1;
             }

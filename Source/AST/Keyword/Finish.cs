@@ -28,8 +28,8 @@ namespace UglyLang.Source.AST.Keyword
             }
             else
             {
-                Value value = ReturnOnExit.Evaluate(context);
-                if (context.Error != null) return Signal.ERROR;
+                Value? value = ReturnOnExit.Evaluate(context);
+                if (value == null) return Signal.ERROR;
 
                 context.SetFunctionReturnValue(value);
             }

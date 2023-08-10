@@ -20,6 +20,13 @@ namespace UglyLang.Source.Values
     {
         public Types.Type Type;
 
+        public Value(Types.Type type)
+        {
+            Type = type;
+        }
+
+
+
         /// <summary>
         /// Cast this value to the given type, or return null.
         /// </summary>
@@ -32,7 +39,7 @@ namespace UglyLang.Source.Values
 
         public bool HasProperty(string name)
         {
-            return Type.Properties.ContainsKey(name) || HasPropertyExtra(name);
+            return Type.GetProperties().ContainsKey(name) || HasPropertyExtra(name);
         }
 
         protected virtual bool HasPropertyExtra(string name)
@@ -40,22 +47,47 @@ namespace UglyLang.Source.Values
             return false;
         }
 
-        public ISymbolValue GetProperty(string name)
+        public Property GetProperty(string name)
         {
             if (!HasProperty(name)) throw new InvalidOperationException(name);
 
-            ISymbolValue value = Type.Properties.ContainsKey(name) ? Type.Properties[name] : (ISymbolValue) GetPropertyExtra(name);
+            Property? prop = Type.GetProperties().ContainsKey(name) ? Type.GetProperties()[name] : GetPropertyExtra(name);
+            if (prop == null) throw new InvalidOperationException();
+            if (!prop.IsReadonly && prop.GetValue() is Function func)
+            {
+                prop.SetValue(new FunctionContext(func, this));
+            }
+
+            return prop;
+        }
+
+        protected virtual Property? GetPropertyExtra(string name)
+        {
+            return null;
+        }
+
+        public bool SetProperty(string name, ISymbolValue value)
+        {
+            // Insert into a function context?
             if (value is Function func)
             {
                 value = new FunctionContext(func, this);
             }
 
-            return value;
+            var properties = Type.GetProperties();
+            if (properties.ContainsKey(name))
+            {
+                return properties[name].SetValue(value);
+            }
+            else
+            {
+                return SetPropertyExtra(name, value);
+            }
         }
 
-        protected virtual ISymbolValue? GetPropertyExtra(string name)
+        protected virtual bool SetPropertyExtra(string name, ISymbolValue value)
         {
-            return null;
+            return false;
         }
 
         /// <summary>

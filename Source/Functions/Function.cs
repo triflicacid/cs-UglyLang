@@ -40,10 +40,10 @@ namespace UglyLang.Source.Functions
 
     public abstract class Function : ICallable, ISymbolValue
     {
-        public readonly List<Types.Type[]> ArgumentTypes;
-        public readonly Types.Type ReturnType;
+        public readonly List<UnresolvedType[]> ArgumentTypes;
+        public readonly UnresolvedType ReturnType;
 
-        public Function(List<Types.Type[]> argumentTypes, Types.Type returnType)
+        public Function(List<UnresolvedType[]> argumentTypes, UnresolvedType returnType)
         {
             ArgumentTypes = argumentTypes;
             ReturnType = returnType;
@@ -53,23 +53,34 @@ namespace UglyLang.Source.Functions
         {
             List<Types.Type> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
             TypeParameterCollection typeParameters = new();
+            List<Types.Type[]> resolvedArgumentTypes = new();
 
             // Check that arguments match up to expected
             bool match = false;
             int index = 0;
-            foreach (Types.Type[] typeArray in ArgumentTypes)
+            foreach (UnresolvedType[] typeArray in ArgumentTypes)
             {
                 if (typeArray.Length == receivedArgumentTypes.Count)
                 {
+                    Types.Type[] resolvedTypeArray = new Types.Type[typeArray.Length];
                     match = true;
                     for (int i = 0; i < typeArray.Length && match; i++)
                     {
-                        match = typeArray[i].DoesMatch(receivedArgumentTypes[i]);
+                        // Attemt to resolve into a type
+                        Types.Type? aType = typeArray[i].Resolve(context);
+                        if (aType == null)
+                        {
+                            context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", typeArray[i].Value));
+                            return null;
+                        }
+
+                        resolvedTypeArray[i] = aType;
+                        match = aType.DoesMatch(receivedArgumentTypes[i]);
                         if (match)
                         {
-                            if (typeArray[i].IsParameterised())
+                            if (aType.IsParameterised())
                             {
-                                TypeParameterCollection result = typeArray[i].MatchParametersAgainst(receivedArgumentTypes[i]);
+                                TypeParameterCollection result = aType.MatchParametersAgainst(receivedArgumentTypes[i]);
 
                                 // Results MUST match up with typeParameters
                                 foreach (string p in result.GetParamerNames())
@@ -78,10 +89,10 @@ namespace UglyLang.Source.Functions
 
                                     if (typeParameters.HasParameter(p))
                                     {
-                                        Types.Type type = typeParameters.GetParameter(p);
-                                        if (!type.Equals(pType)) // BAD
+                                        Types.Type oType = typeParameters.GetParameter(p);
+                                        if (!oType.Equals(pType)) // BAD
                                         {
-                                            context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0} in argument {1}: expected {2}, got {3}", p, i + 1, type, pType));
+                                            context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0} in argument {1}: expected {2}, got {3}", p, i + 1, oType, pType));
                                             return null;
                                         }
                                     }
@@ -94,10 +105,10 @@ namespace UglyLang.Source.Functions
                             }
                             else
                             {
-                                var casted = arguments[i].To(typeArray[i]);
+                                var casted = arguments[i].To(aType);
                                 if (casted == null)
                                 {
-                                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arguments[i].Type, typeArray[i]));
+                                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arguments[i].Type, aType));
                                     return null;
                                 }
                                 else
@@ -107,6 +118,8 @@ namespace UglyLang.Source.Functions
                             }
                         }
                     }
+
+                    resolvedArgumentTypes.Add(resolvedTypeArray);
 
                     if (!match) break;
                 }
@@ -118,19 +131,23 @@ namespace UglyLang.Source.Functions
             {
                 string error = "cannot match argument types against a signature.";
                 error += Environment.NewLine + "  Received: <" + string.Join(", ", receivedArgumentTypes.Select(a => a.ToString()).ToArray()) + ">";
-                error += Environment.NewLine + "  Expected: " + string.Join(" | ", ArgumentTypes.Select(a => "<" + string.Join(", ", a.Select(b => b.ToString())) + ">"));
+                error += Environment.NewLine + "  Expected: " + string.Join(" | ", resolvedArgumentTypes.Select(a => "<" + string.Join(", ", a.Select(b => b.ToString())) + ">"));
 
                 context.Error = new(0, 0, Error.Types.Type, error);
                 return null;
             }
 
-            // Set type parameters as variables
+            // Register type parameters to the stack
+            context.MergeTypeParams(typeParameters);
+
+            // Set type parameters as variables, so they can be referenced as types
             foreach (string p in typeParameters.GetParamerNames())
             {
                 context.CreateVariable(p, new TypeValue(typeParameters.GetParameter(p)));
             }
 
-            Value? value = CallOverload(context, index, arguments);
+            // Invoke the respective overload
+            Value? value = CallOverload(context, index, arguments, typeParameters);
 
             return value;
         }
@@ -138,6 +155,6 @@ namespace UglyLang.Source.Functions
         /// <summary>
         /// Call the function. Note that the given argument list matches with ONE ArgumentTypes member (this is checked in FuncValue. The stack frames and argument evaluation are handled in SymbolNode).
         /// </summary>
-        protected abstract Value? CallOverload(Context context, int overloadIndex, List<Value> arguments);
+        protected abstract Value? CallOverload(Context context, int overloadIndex, List<Value> arguments, TypeParameterCollection typeParameters);
     }
 }

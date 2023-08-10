@@ -13,14 +13,14 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FLength : Function
     {
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new ListType(new TypeParameter("a")) },
+            new UnresolvedType[] { ResolvedType.List(new TypeParameter("a")) },
         };
 
-        public FLength() : base(ArgumentType, new IntType()) { }
+        public FLength() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return new IntValue(((ListValue)arguments[0]).Value.Count);
         }

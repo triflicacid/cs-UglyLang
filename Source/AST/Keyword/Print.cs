@@ -24,8 +24,8 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context)
         {
-            Value value = Expr.Evaluate(context);
-            if (context.Error != null) // Propagate error?
+            Value? value = Expr.Evaluate(context);
+            if (value == null) // Propagate error?
                 return Signal.ERROR;
 
             string str = StringValue.From(value).Value;

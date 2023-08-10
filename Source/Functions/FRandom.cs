@@ -15,16 +15,16 @@ namespace UglyLang.Source.Functions
     {
 
         private static readonly Random Generator = new();
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            Array.Empty<Types.Type>(),
-            new Types.Type[] { new FloatType() },
-            new Types.Type[] { new FloatType(), new FloatType()},
+            Array.Empty<UnresolvedType>(),
+            new UnresolvedType[] { ResolvedType.Float },
+            new UnresolvedType[] { ResolvedType.Float, ResolvedType.Float},
         };
 
-        public FRandom() : base(ArgumentType, new IntType()) { }
+        public FRandom() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             double n;
             if (arguments.Count == 0) // Range: [0,1)

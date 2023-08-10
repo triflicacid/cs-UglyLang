@@ -12,14 +12,14 @@ namespace UglyLang.Source.Functions.Maths
     public class FNeg : Function
     {
 
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new FloatType() },
+            new UnresolvedType[] { ResolvedType.Float },
         };
 
-        public FNeg() : base(ArgumentType, new FloatType()) { }
+        public FNeg() : base(Arguments, ResolvedType.Float) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return new FloatValue(-((FloatValue)arguments[0]).Value);
         }

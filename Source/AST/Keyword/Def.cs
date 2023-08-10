@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
 using UglyLang.Source.Functions;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST.Keyword
@@ -15,11 +16,11 @@ namespace UglyLang.Source.AST.Keyword
     public class DefKeywordNode : KeywordNode
     {
         public readonly string Name;
-        public readonly List<(string, Types.Type)> Arguments;
-        public readonly Types.Type ReturnType; // If NULL, returns nothing
+        public readonly List<(string, UnresolvedType)> Arguments;
+        public readonly UnresolvedType ReturnType; // If NULL, returns nothing
         public ASTStructure? Body;
 
-        public DefKeywordNode(string name, List<(string, Types.Type)> arguments, Types.Type returnType) : base("DEF")
+        public DefKeywordNode(string name, List<(string, UnresolvedType)> arguments, UnresolvedType returnType) : base("DEF")
         {
             Name = name;
             Arguments = arguments;
@@ -40,41 +41,7 @@ namespace UglyLang.Source.AST.Keyword
                 {
                     if (funcValue is UserFunction userFunc)
                     {
-                        // Check if the return types match
-                        if ((userFunc.ReturnType == null && ReturnType == null) || (userFunc.ReturnType != null && ReturnType != null && userFunc.ReturnType.DoesMatch(ReturnType)))
-                        {
-                            // Has this overload been seen before?
-                            bool match = false;
-                            foreach (var typeArray in userFunc.ArgumentTypes)
-                            {
-                                if (typeArray.Length == Arguments.Count)
-                                {
-                                    match = true;
-                                    for (int i = 0; i < typeArray.Length && match; i++)
-                                    {
-                                        match = Arguments[i].Item2.DoesMatch(typeArray[i]);
-                                    }
-
-                                    if (!match)
-                                        break;
-                                }
-                                if (match)
-                                    break;
-                            }
-
-                            if (match)
-                            {
-                                context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("{0} overload <{1}> -> {2} already exists", Name, string.Join(",", Arguments.Select(p => p.Item2.ToString())), ReturnType.ToString()));
-                                return Signal.ERROR;
-                            }
-
-                            func = userFunc;
-                        }
-                        else
-                        {
-                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot match type {0} with {1}", ReturnType == null ? "(none)" : ReturnType, userFunc.ReturnType == null ? "(none)" : userFunc.ReturnType));
-                            return Signal.ERROR;
-                        }
+                        func = userFunc;
                     }
                     else
                     {

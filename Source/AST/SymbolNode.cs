@@ -28,7 +28,7 @@ namespace UglyLang.Source.AST
             CallArguments = null;
         }
 
-        public override Value Evaluate(Context context)
+        public override Value? Evaluate(Context context)
         {
             if (context.HasVariable(Components[0]))
             {
@@ -41,18 +41,18 @@ namespace UglyLang.Source.AST
                     {
                         if (varValue.HasProperty(Components[i]))
                         {
-                            variable = varValue.GetProperty(Components[i]);
+                            variable = varValue.GetProperty(Components[i]).GetValue();
                         }
                         else
                         {
                             context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot get property {0} of type {1}", Components[i], varValue.Type));
-                            return new EmptyValue();
+                            return null;
                         }
                     }
                     else
                     {
                         context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot get property {0}", Components[i]));
-                        return new EmptyValue();
+                        return null;
                     }
                 }
 
@@ -69,10 +69,11 @@ namespace UglyLang.Source.AST
                     {
                         foreach (ExprNode expr in CallArguments)
                         {
-                            Value arg = expr.Evaluate(context);
+                            Value? arg = expr.Evaluate(context);
+                            if (arg == null) return null;
                             if (context.Error != null)
                             {
-                                return new EmptyValue(); // Propagate error
+                                return null; // Propagate error
                             }
 
                             arguments.Add(arg);
@@ -81,6 +82,7 @@ namespace UglyLang.Source.AST
 
                     // Call function
                     Value? returnedValue = func.Call(context, arguments);
+
                     if (returnedValue == null || context.Error != null)
                     {
                         // Propagate error
@@ -90,7 +92,7 @@ namespace UglyLang.Source.AST
                             context.Error.ColumnNumber = ColumnNumber;
                         }
 
-                        return new EmptyValue();
+                        return null;
                     }
                     else
                     {
@@ -105,7 +107,7 @@ namespace UglyLang.Source.AST
                     if (CallArguments != null && CallArguments.Count != 0)
                     {
                         context.Error = new(LineNumber, ColumnNumber, Error.Types.Syntax, string.Format("value of type {0} is not callable", val.Type));
-                        return new EmptyValue();
+                        return null;
                     }
 
                     value = val;
@@ -120,7 +122,7 @@ namespace UglyLang.Source.AST
             else
             {
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, Symbol);
-                return new EmptyValue();
+                return null;
             }
         }
     }

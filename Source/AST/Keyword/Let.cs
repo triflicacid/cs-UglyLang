@@ -31,8 +31,8 @@ namespace UglyLang.Source.AST.Keyword
             }
             else
             {
-                Value evaldValue = Value.Evaluate(context);
-                if (context.Error != null) // Propagate error?
+                Value? evaldValue = Value.Evaluate(context);
+                if (evaldValue == null) // Propagate error?
                 {
                     return Signal.ERROR;
                 }

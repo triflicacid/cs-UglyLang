@@ -12,15 +12,14 @@ namespace UglyLang.Source.Functions.Comparative
 {
     public class FEq : Function
     {
-
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new Any(), new Any() },
+            new UnresolvedType[] { ResolvedType.Any, ResolvedType.Any },
         };
 
-        public FEq() : base(ArgumentType, new IntType()) { }
+        public FEq() : base(Arguments, ResolvedType.Int) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return new IntValue(arguments[0].Equals(arguments[1]));
         }

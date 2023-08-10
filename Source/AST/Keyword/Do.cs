@@ -22,11 +22,7 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context)
         {
-            Value value = Expr.Evaluate(context);
-            if (context.Error != null) // Propagate error?
-                return Signal.ERROR;
-            
-            return Signal.NONE;
+            return Expr.Evaluate(context) == null ? Signal.ERROR : Signal.NONE;
         }
     }
 }

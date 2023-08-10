@@ -14,14 +14,14 @@ namespace UglyLang.Source.Functions
     public class FSleep : Function
     {
 
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new IntType() },
+            new UnresolvedType[] { ResolvedType.Int },
         };
 
-        public FSleep() : base(ArgumentType, new EmptyType()) { }
+        public FSleep() : base(Arguments, ResolvedType.Empty) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             Thread.Sleep((int)((IntValue)arguments[0]).Value);
             return new EmptyValue();

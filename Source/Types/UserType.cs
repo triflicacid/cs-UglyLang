@@ -3,22 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
 {
-    /// <summary>
-    /// A type which identifies a type
-    /// </summary>
-    public class TypeType : Type
+    public class UserType : Type, ISymbolValue
     {
+        public readonly string Name;
+
+        public UserType(string name)
+        {
+            Name = name;
+        }
+
         public override bool DoesMatch(Type other, TypeParameterCollection coll)
         {
-            return other is TypeParameter or TypeType;
+            return other is TypeParameter || Equals(other); // User types should only have once instance
         }
 
         public override bool Equals(Type other)
         {
-            return other is TypeType;
+            return other is UserType t && t == this; // User types should only have once instance
         }
 
         public override List<TypeParameter> GetTypeParameters()
@@ -33,17 +38,12 @@ namespace UglyLang.Source.Types
 
         public override TypeParameterCollection MatchParametersAgainst(Type t)
         {
-            return new();
+            throw new();
         }
 
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
             return this;
-        }
-
-        public override string ToString()
-        {
-            return "TYPE";
         }
     }
 }

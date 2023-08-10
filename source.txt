@@ -1,9 +1,0 @@
-LET seq: INT[] { 1, 2 }
-PRINTLN: seq
-DO: seq.ADD<3>
-DO: seq.ADD<3,0>
-PRINTLN: seq
-PRINTLN: seq.INDEXOF<2>
-DO: seq.REMOVE<3>
-PRINTLN: seq
-PRINTLN: seq.0

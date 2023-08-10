@@ -10,14 +10,14 @@ namespace UglyLang.Source.Functions
 {
     public class FId : Function
     {
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new Any() },
+            new UnresolvedType[] { ResolvedType.Param("a") },
         };
 
-        public FId() : base(ArgumentType, new Any()) { }
+        public FId() : base(Arguments, ResolvedType.Param("a")) { }
 
-        protected override Value CallOverload(Context context, int _, List<Value> arguments)
+        protected override Value CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
             return arguments[0];
         }

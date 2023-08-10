@@ -46,6 +46,11 @@ namespace UglyLang.Source.Types
             col.SetParameter(Symbol, t);
             return col;
         }
+
+        public override Type ResolveParametersAgainst(TypeParameterCollection col)
+        {
+            return col.HasParameter(Symbol) ? col.GetParameter(Symbol) : this;
+        }
     }
 
     public class TypeParameterCollection

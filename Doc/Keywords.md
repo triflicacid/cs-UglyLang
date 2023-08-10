@@ -45,7 +45,4 @@ For both: If the symbol is provided, this will be the loop counter. If already d
 
 ## Procedures/Functions
 
-- `DEF <symbol>: [<type>] <<arg1: type1>, <arg2: type2>, ...>`
-Defines a new procedyre which accepts the stated arguments. If `type` is present, the function returns a value of that type, else a prcedyre is created which returns no value.
-
-Functions may be overloaded, given that their return types (or lack thereof) match. Built-in functions **cannot** be overloaded.
+Functions can be defined using the `DEF` keyword. See `Functions.md`.

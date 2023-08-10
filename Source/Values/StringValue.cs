@@ -14,10 +14,9 @@ namespace UglyLang.Source.Values
     {
         public string Value;
 
-        public StringValue(string value = "")
+        public StringValue(string value = "") : base(new StringType())
         {
             Value = value;
-            Type = new StringType();
         }
 
         public override bool IsTruthy()
@@ -31,15 +30,16 @@ namespace UglyLang.Source.Values
             if (value is FloatValue fvalue) return new(fvalue.Value.ToString());
             if (value is StringValue svalue) return new(svalue.Value);
             if (value is EmptyValue) return new("");
-            return (StringValue) value.To(new StringType());
+            Value? v = value.To(new StringType());
+            return v == null ? throw new InvalidOperationException() : (StringValue)v;
         }
 
-        public override Value To(Types.Type type)
+        public override Value? To(Types.Type type)
         {
             if (type is Any or StringType) return new StringValue(Value);
             if (type is IntType) return new IntValue((long)StringToDouble(Value));
             if (type is FloatType) return new FloatValue(StringToDouble(Value));
-            throw new InvalidOperationException(type.ToString());
+            return null;
         }
 
         public override bool Equals(Value value)

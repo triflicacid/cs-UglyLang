@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST.Keyword
@@ -14,9 +15,9 @@ namespace UglyLang.Source.AST.Keyword
     public class CastKeywordNode : KeywordNode
     {
         public readonly string Symbol;
-        public new readonly Types.Type CastType;
+        public readonly UnresolvedType CastType;
 
-        public CastKeywordNode(string symbol, Types.Type type) : base("CAST")
+        public CastKeywordNode(string symbol, UnresolvedType type) : base("CAST")
         {
             Symbol = symbol;
             CastType = type;
@@ -26,13 +27,20 @@ namespace UglyLang.Source.AST.Keyword
         {
             if (context.HasVariable(Symbol))
             {
+                Types.Type? type = CastType.Resolve(context);
+                if (type == null)
+                {
+                    context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", CastType));
+                    return Signal.ERROR;
+                }
+
                 ISymbolValue sValue = context.GetVariable(Symbol);
                 if (sValue is Value value)
                 {
-                    Value? newValue = value.To(CastType);
+                    Value? newValue = value.To(type);
                     if (newValue == null)
                     {
-                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", Symbol, CastType));
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", Symbol, type));
                         return Signal.ERROR;
                     }
                     else

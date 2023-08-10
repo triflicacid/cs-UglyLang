@@ -29,6 +29,11 @@ namespace UglyLang.Source.Types
         {
             return new();
         }
+
+        public override Type ResolveParametersAgainst(TypeParameterCollection col)
+        {
+            return this;
+        }
     }
 
     public class IntType : PrimitiveType

@@ -14,15 +14,15 @@ namespace UglyLang.Source.Functions.List
     public class FAdd : Function
     {
         private static readonly TypeParameter TypeParam = new("a"); // For convenience of repetition below
-        private static readonly List<Types.Type[]> ArgumentType = new()
+        private static readonly List<UnresolvedType[]> Arguments = new()
         {
-            new Types.Type[] { new ListType(TypeParam), TypeParam },
-            new Types.Type[] { new ListType(TypeParam), TypeParam, new IntType() },
+            new UnresolvedType[] { ResolvedType.List(TypeParam), new ResolvedType(TypeParam) },
+            new UnresolvedType[] { ResolvedType.List(TypeParam), new ResolvedType(TypeParam), ResolvedType.Int },
         };
 
-        public FAdd() : base(ArgumentType, new EmptyType()) { }
+        public FAdd() : base(Arguments, ResolvedType.Empty) { }
 
-        protected override Value CallOverload(Context context, int index, List<Value> arguments)
+        protected override Value CallOverload(Context context, int index, List<Value> arguments, TypeParameterCollection c)
         {
             ListValue list = (ListValue)arguments[0];
 

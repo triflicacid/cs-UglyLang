@@ -1,3 +1,15 @@
+# User-Defined Functions
+
+Functions may be defined with the following syntax:
+
+```DEF <symbol>: [<type>] <<arg1: type1>, <arg2: type2>, ...>```
+
+This will create a symbol `symbol` in the topmost scope and bind it to the defined function.
+
+If the return type is present, the function **must** return an instance of said type using the `FINISH` keyword. The type may be omitted, in which case the function returns an instance of `EMPTY`.
+
+Functions are called by referencing their name. If the function accepts arguments they must be present in the defined order inside angular brackets, otherwise they are called with no arguments.
+
 # Built-In Functions
 
 ## Comparative Functions
@@ -60,6 +72,10 @@ Note that this is different to the CAST keyword.~~
 Convert a and b to strings and concatenate them.
 - `ID<a>` signature `<a> -> a`
 Returns the provided argument.
+- `LIST<a>` signature `LIST<TYPE> -> ANY[]`
+Creates a new list instance containing type a.
+- `NEW<a>` signature `<TYPE> -> ANY`
+Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
 - `RANDOM` / `RANDOM<max>` / `RANDOM<min,max>` signatures `(<> | <FLOAT> | <FLOAT,FLOAT>) -> FLOAT`
 Returns random number in the range: [0,1) / [0,max) / [min,max).
 - `SLEEP<t>` signature `<FLOAT> -> EMPTY`

@@ -15,10 +15,9 @@ namespace UglyLang.Source.Values
     {
         public double Value;
 
-        public FloatValue(double value = 0)
+        public FloatValue(double value = 0) : base(new FloatType())
         {
             Value = value;
-            Type = new FloatType();
         }
 
         public override bool IsTruthy()
@@ -34,12 +33,12 @@ namespace UglyLang.Source.Values
             throw new InvalidOperationException(value.Type.ToString());
         }
 
-        public override Value To(Types.Type type)
+        public override Value? To(Types.Type type)
         {
             if (type is Any or FloatType) return new FloatValue(Value);
             if (type is IntType) return new IntValue((long) Value);
             if (type is StringType) return new StringValue(Value.ToString());
-            throw new InvalidOperationException(type.ToString());
+            return null;
         }
 
         public static FloatValue Default()
