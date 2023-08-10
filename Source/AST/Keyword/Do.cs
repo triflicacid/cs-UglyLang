@@ -15,7 +15,7 @@ namespace UglyLang.Source.AST.Keyword
     {
         public readonly ExprNode Expr;
 
-        public DoKeywordNode(ExprNode expr) : base("DO")
+        public DoKeywordNode(ExprNode expr)
         {
             Expr = expr;
         }

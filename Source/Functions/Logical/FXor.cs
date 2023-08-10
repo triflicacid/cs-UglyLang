@@ -9,7 +9,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Logical
 {
-    public class FXOr : Function
+    public class FXOr : Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -18,6 +18,11 @@ namespace UglyLang.Source.Functions.Logical
         };
 
         public FXOr() : base(Arguments, ResolvedType.Int) { }
+
+        public string GetDefinedName()
+        {
+            return "XOR";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

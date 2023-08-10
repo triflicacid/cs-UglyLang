@@ -11,7 +11,7 @@ namespace UglyLang.Source.Functions
     /// <summary>
     /// Function to construct a new type *without any arguments*
     /// </summary>
-    public class FNew : Function
+    public class FNew : Function, IDefinedGlobally
     {
         private static readonly List<UnresolvedType[]> Arguments = new()
         {
@@ -19,6 +19,11 @@ namespace UglyLang.Source.Functions
         };
 
         public FNew() : base(Arguments, ResolvedType.Any) { }
+
+        public string GetDefinedName()
+        {
+            return "NEW";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

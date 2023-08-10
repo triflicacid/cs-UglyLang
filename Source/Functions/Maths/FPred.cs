@@ -11,7 +11,7 @@ namespace UglyLang.Source.Functions.Maths
     /// <summary>
     /// Return the successor of the given integer
     /// </summary>
-    public class FPred: Function
+    public class FPred: Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -20,6 +20,11 @@ namespace UglyLang.Source.Functions.Maths
         };
 
         public FPred() : base(Arguments, ResolvedType.Int) { }
+
+        public string GetDefinedName()
+        {
+            return "PRED";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

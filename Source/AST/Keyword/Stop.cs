@@ -13,9 +13,6 @@ namespace UglyLang.Source.AST.Keyword
     /// </summary>
     public class StopKeywordNode : KeywordNode
     {
-        public StopKeywordNode() : base("STOP")
-        { }
-
         public override Signal Action(Context context)
         {
             return Signal.EXIT_PROG;

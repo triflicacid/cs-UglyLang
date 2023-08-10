@@ -10,7 +10,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Comparative
 {
-    public class FEq : Function
+    public class FEq : Function, IDefinedGlobally
     {
         private static readonly List<UnresolvedType[]> Arguments = new()
         {
@@ -18,6 +18,11 @@ namespace UglyLang.Source.Functions.Comparative
         };
 
         public FEq() : base(Arguments, ResolvedType.Int) { }
+
+        public string GetDefinedName()
+        {
+            return "EQ";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

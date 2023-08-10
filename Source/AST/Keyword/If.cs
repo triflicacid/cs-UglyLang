@@ -17,8 +17,6 @@ namespace UglyLang.Source.AST.Keyword
         public ASTStructure? Otherwise = null;
         public bool MetElseKeyword = false;
 
-        public IfKeywordNode() : base("IF") { }
-
         public override Signal Action(Context context)
         {
             if (Conditions.Count == 0)

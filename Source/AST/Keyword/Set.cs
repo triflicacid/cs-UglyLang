@@ -18,7 +18,7 @@ namespace UglyLang.Source.AST.Keyword
         public readonly List<string> Components;
         public readonly ExprNode Expr;
 
-        public SetKeywordNode(string name, ExprNode expr) : base("SET")
+        public SetKeywordNode(string name, ExprNode expr)
         {
             Name = name;
             Components = name.Split('.').ToList();

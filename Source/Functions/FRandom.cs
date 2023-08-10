@@ -11,7 +11,7 @@ namespace UglyLang.Source.Functions
     /// <summary>
     /// Returns a random floating number in a range, depending on the parameters passed.
     /// </summary>
-    public class FRandom : Function
+    public class FRandom : Function, IDefinedGlobally
     {
 
         private static readonly Random Generator = new();
@@ -23,6 +23,11 @@ namespace UglyLang.Source.Functions
         };
 
         public FRandom() : base(Arguments, ResolvedType.Int) { }
+
+        public string GetDefinedName()
+        {
+            return "RANDOM";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

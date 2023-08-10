@@ -9,7 +9,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Maths
 {
-    public class FMul : Function
+    public class FMul : Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -18,6 +18,11 @@ namespace UglyLang.Source.Functions.Maths
         };
 
         public FMul() : base(Arguments, ResolvedType.Float) { }
+
+        public string GetDefinedName()
+        {
+            return "MUL";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

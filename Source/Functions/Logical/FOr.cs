@@ -9,7 +9,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Logical
 {
-    public class FOr : Function
+    public class FOr : Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -18,6 +18,11 @@ namespace UglyLang.Source.Functions.Logical
         };
 
         public FOr() : base(Arguments, ResolvedType.Int) { }
+
+        public string GetDefinedName()
+        {
+            return "OR";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

@@ -16,7 +16,7 @@ namespace UglyLang.Source.AST.Keyword
         public readonly ExprNode Expr;
         public bool Newline;
 
-        public PrintKeywordNode(ExprNode expr, bool newline = false) : base("PRINT")
+        public PrintKeywordNode(ExprNode expr, bool newline = false)
         {
             Expr = expr;
             Newline = newline;

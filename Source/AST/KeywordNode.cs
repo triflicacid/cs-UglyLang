@@ -12,17 +12,14 @@ namespace UglyLang.Source.AST
     /// </summary>
     public abstract class KeywordNode : ASTNode
     {
-        public readonly string Keyword;
-
-        public KeywordNode(string kw)
+        public KeywordNode()
         {
             Type = ASTNodeType.KEYWORD;
-            Keyword = kw;
         }
 
         public override Value Evaluate(Context context)
         {
-            throw new NotImplementedException("Should not call Evaluate on this node");
+            throw new NotImplementedException();
         }
 
         public class KeywordInfo

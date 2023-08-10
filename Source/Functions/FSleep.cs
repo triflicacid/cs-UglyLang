@@ -11,7 +11,7 @@ namespace UglyLang.Source.Functions
     /// <summary>
     /// Sleep the current thread for some milliseconds
     /// </summary>
-    public class FSleep : Function
+    public class FSleep : Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -20,6 +20,11 @@ namespace UglyLang.Source.Functions
         };
 
         public FSleep() : base(Arguments, ResolvedType.Empty) { }
+
+        public string GetDefinedName()
+        {
+            return "SLEEP";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

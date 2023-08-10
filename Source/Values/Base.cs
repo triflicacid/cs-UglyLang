@@ -12,9 +12,7 @@ namespace UglyLang.Source.Values
     /// Identifies an object as potentially being assigned to a symbol
     /// </summary>
     public interface ISymbolValue
-    {
-
-    }
+    { }
 
     public abstract class Value : ISymbolValue
     {

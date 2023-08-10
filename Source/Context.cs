@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
-using System.Xml.Linq;
-using UglyLang.Source.Functions;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source
 {
+    public interface IDefinedGlobally : ISymbolValue
+    {
+        public string GetDefinedName();
+    }
+
     public class Context
     {
         public class StackContext
@@ -223,41 +226,17 @@ namespace UglyLang.Source
             return c;
         }
 
-        public void InitialiseBuiltinFunctions()
+        public void InitialiseGlobals()
         {
-            var context = Stack[0];
-            // General
-            context.SetSymbol("CONCAT", new FConcat());
-            context.SetSymbol("ID", new FId());
-            context.SetSymbol("LIST", new FList());
-            context.SetSymbol("NEW", new FNew());
-            context.SetSymbol("RANDOM", new FRandom());
-            context.SetSymbol("SLEEP", new FSleep());
-            context.SetSymbol("TYPE", new FType());
-
-            // Comparative
-            context.SetSymbol("EQ", new Functions.Comparative.FEq());
-            context.SetSymbol("GT", new Functions.Comparative.FGt());
-            context.SetSymbol("GE", new Functions.Comparative.FGe());
-            context.SetSymbol("LT", new Functions.Comparative.FLt());
-            context.SetSymbol("LE", new Functions.Comparative.FLe());
-
-            // Logical
-            context.SetSymbol("AND", new Functions.Logical.FAnd());
-            context.SetSymbol("NOT", new Functions.Logical.FNot());
-            context.SetSymbol("OR", new Functions.Logical.FOr());
-            context.SetSymbol("XOR", new Functions.Logical.FXOr());
-
-            // Mathematical
-            context.SetSymbol("ADD", new Functions.Maths.FAdd());
-            context.SetSymbol("DIV", new Functions.Maths.FDiv());
-            context.SetSymbol("EXP", new Functions.Maths.FExp());
-            context.SetSymbol("MOD", new Functions.Maths.FMod());
-            context.SetSymbol("MUL", new Functions.Maths.FMul());
-            context.SetSymbol("NEG", new Functions.Maths.FNeg());
-            context.SetSymbol("PRED", new Functions.Maths.FPred());
-            context.SetSymbol("SUB", new Functions.Maths.FSub());
-            context.SetSymbol("SUCC", new Functions.Maths.FSucc());
+            // Add all globally defined functions
+            var type = typeof(IDefinedGlobally);
+            foreach (IDefinedGlobally x in AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => type.IsAssignableFrom(p) && !p.IsInterface)
+                .Select(o => (IDefinedGlobally)Activator.CreateInstance(o)))
+            {
+                CreateVariable(x.GetDefinedName(), x);
+            }
         }
     }
 }

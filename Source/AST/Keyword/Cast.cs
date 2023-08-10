@@ -17,7 +17,7 @@ namespace UglyLang.Source.AST.Keyword
         public readonly string Symbol;
         public readonly UnresolvedType CastType;
 
-        public CastKeywordNode(string symbol, UnresolvedType type) : base("CAST")
+        public CastKeywordNode(string symbol, UnresolvedType type)
         {
             Symbol = symbol;
             CastType = type;

@@ -9,7 +9,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Maths
 {
-    public class FSub : Function
+    public class FSub : Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -18,6 +18,11 @@ namespace UglyLang.Source.Functions.Maths
         };
 
         public FSub() : base(Arguments, ResolvedType.Float) { }
+
+        public string GetDefinedName()
+        {
+            return "SUB";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

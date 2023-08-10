@@ -11,7 +11,7 @@ namespace UglyLang.Source.Functions
     /// <summary>
     /// Function to create a list of said type
     /// </summary>
-    public class FList : Function
+    public class FList : Function, IDefinedGlobally
     {
         private static readonly List<UnresolvedType[]> Arguments = new()
         {
@@ -19,6 +19,11 @@ namespace UglyLang.Source.Functions
         };
 
         public FList() : base(Arguments, ResolvedType.List(new Any())) { }
+
+        public string GetDefinedName()
+        {
+            return "LIST";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

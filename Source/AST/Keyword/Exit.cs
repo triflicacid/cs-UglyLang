@@ -13,7 +13,7 @@ namespace UglyLang.Source.AST.Keyword
     /// </summary>
     public class ExitKeywordNode : KeywordNode
     {
-        public ExitKeywordNode() : base("EXIT")
+        public ExitKeywordNode()
         { }
 
         public override Signal Action(Context context)

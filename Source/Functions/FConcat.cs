@@ -11,15 +11,19 @@ namespace UglyLang.Source.Functions
     /// <summary>
     /// Concatenates two items as strings
     /// </summary>
-    public class FConcat : Function
+    public class FConcat : Function, IDefinedGlobally
     {
-
         private static readonly List<UnresolvedType[]> Arguments = new()
         {
             new UnresolvedType[] { ResolvedType.Any, ResolvedType.Any },
         };
 
         public FConcat() : base(Arguments, ResolvedType.String) { }
+
+        public string GetDefinedName()
+        {
+            return "CONCAT";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

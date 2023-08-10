@@ -15,7 +15,7 @@ namespace UglyLang.Source.AST.Keyword
     {
         public ExprNode? ReturnOnExit;
 
-        public FinishKeywordNode(ExprNode? expr = null) : base("FINISH")
+        public FinishKeywordNode(ExprNode? expr = null)
         {
             ReturnOnExit = expr;
         }

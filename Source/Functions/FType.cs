@@ -11,7 +11,7 @@ namespace UglyLang.Source.Functions
     /// <summary>
     /// Returns the type of the argument as a string
     /// </summary>
-    public class FType : Function
+    public class FType : Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -20,6 +20,11 @@ namespace UglyLang.Source.Functions
         };
 
         public FType() : base(Arguments, ResolvedType.Type) { }
+
+        public string GetDefinedName()
+        {
+            return "TYPE";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

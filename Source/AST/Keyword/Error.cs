@@ -16,7 +16,7 @@ namespace UglyLang.Source.AST.Keyword
     {
         public readonly ExprNode? Expr;
 
-        public ErrorKeywordNode(ExprNode? expr = null) : base("ERROR")
+        public ErrorKeywordNode(ExprNode? expr = null)
         {
             Expr = expr;
         }

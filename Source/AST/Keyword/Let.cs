@@ -16,7 +16,7 @@ namespace UglyLang.Source.AST.Keyword
         public readonly string Name;
         public readonly ExprNode Value;
 
-        public LetKeywordNode(string name, ExprNode value) : base("LET")
+        public LetKeywordNode(string name, ExprNode value)
         {
             Name = name;
             Value = value;

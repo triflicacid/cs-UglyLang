@@ -17,7 +17,7 @@ namespace UglyLang.Source.AST.Keyword
         public ASTStructure? Body;
         public string? Counter;
 
-        public LoopKeywordNode(ExprNode? condition = null) : base("LOOP")
+        public LoopKeywordNode(ExprNode? condition = null)
         {
             Body = null;
             Condition = condition;

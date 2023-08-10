@@ -9,7 +9,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Maths
 {
-    public class FNeg : Function
+    public class FNeg : Function, IDefinedGlobally
     {
 
         private static readonly List<UnresolvedType[]> Arguments = new()
@@ -18,6 +18,11 @@ namespace UglyLang.Source.Functions.Maths
         };
 
         public FNeg() : base(Arguments, ResolvedType.Float) { }
+
+        public string GetDefinedName()
+        {
+            return "NEG";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {

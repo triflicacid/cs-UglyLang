@@ -20,7 +20,7 @@ namespace UglyLang.Source.AST.Keyword
         public readonly UnresolvedType ReturnType; // If NULL, returns nothing
         public ASTStructure? Body;
 
-        public DefKeywordNode(string name, List<(string, UnresolvedType)> arguments, UnresolvedType returnType) : base("DEF")
+        public DefKeywordNode(string name, List<(string, UnresolvedType)> arguments, UnresolvedType returnType)
         {
             Name = name;
             Arguments = arguments;

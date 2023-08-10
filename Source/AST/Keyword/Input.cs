@@ -15,7 +15,7 @@ namespace UglyLang.Source.AST.Keyword
     {
         public readonly string Symbol;
 
-        public InputKeywordNode(string symbol) : base("INPUT")
+        public InputKeywordNode(string symbol)
         {
             Symbol = symbol;
         }

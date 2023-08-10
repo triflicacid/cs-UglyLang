@@ -8,7 +8,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions
 {
-    public class FId : Function
+    public class FId : Function, IDefinedGlobally
     {
         private static readonly List<UnresolvedType[]> Arguments = new()
         {
@@ -16,6 +16,11 @@ namespace UglyLang.Source.Functions
         };
 
         public FId() : base(Arguments, ResolvedType.Param("a")) { }
+
+        public string GetDefinedName()
+        {
+            return "ID";
+        }
 
         protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
         {
