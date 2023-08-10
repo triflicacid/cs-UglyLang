@@ -14,18 +14,20 @@ namespace UglyLang.Source
     public partial class Parser
     {
         private static readonly char CommentChar = ';';
+        private static readonly char BlockCommentChar = ':';
 
         public Error? Error = null;
         public ASTStructure? AST = null;
 
         public void Parse(string program)
         {
-            this.AST = null;
+            AST = null;
             Error = null;
 
             // Nested structure
             Stack<ASTStructure> trees = new();
             trees.Push(new());
+            bool inComment = false;
 
             string[] lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             for (int lineNumber = 0, colNumber = 0; lineNumber < lines.Length; lineNumber++, colNumber = 0)
@@ -43,6 +45,19 @@ namespace UglyLang.Source
 
                 // Is a comment?
                 if (line[colNumber] == CommentChar)
+                {
+                    if (colNumber + 1 < line.Length && line[colNumber + 1] == BlockCommentChar)
+                    {
+                        inComment = true;
+                    }
+                    continue;
+                }
+                else if (line[colNumber] == BlockCommentChar && colNumber + 1 < line.Length && line[colNumber + 1] == CommentChar)
+                {
+                    inComment = false;
+                    continue;
+                }
+                else if (inComment)
                 {
                     continue;
                 }

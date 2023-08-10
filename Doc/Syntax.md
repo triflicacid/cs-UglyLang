@@ -1,5 +1,5 @@
 # Syntax
-Each line of the source file is considered to be a new statement. A line may either begin with `;` in which case it is a comment and is skipped, or in the form:
+Each line of the source file is considered to be a new statement. A line is typically in the form:
 
 `<KEYWORD> [arg][: <expr>]`
 
@@ -8,6 +8,8 @@ Depending on the keyword, neither, one or both of `arg` and `expr` must be provi
 - `expr` : generally an expression to be evaluated, will be specified otherwise.
 
 There is the general pattern that `arg` acts as the input symbol/the symbol to affect, and `value` is the output value/value to use. For example, `INPUT x` places user input into `x` whilst `PRINT: x` outputs the value of `x`.
+
+Single line comments begin with `;`. Block comments are started with `;:` and are closed with `:;`.
 
 ## Expressions
 

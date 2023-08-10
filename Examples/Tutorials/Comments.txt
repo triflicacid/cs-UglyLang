@@ -1,0 +1,7 @@
+PRINTLN: "One"
+; PRINTLN: "Two"
+PRINTLN: "Three"
+;:
+PRINTLN: "Four"
+:;
+PRINTLN: "Five"

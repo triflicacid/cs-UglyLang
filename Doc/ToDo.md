@@ -6,8 +6,6 @@ The following section contains ideas for the language.
 
 - Record a value's definition location
 
-- Add a block comment (either via symbols such as /* ... */ or by keywords such as IGNORE .. RESUME)
-
 - Lists: dynamic get/set such that the properties can be calculated at runtime. Propose creating methods so that the `.<index>` way is kept as constant indexes only.
 
 - Functions: add the ability to raise errors inside functions. Create a function/keyword to allow the user to raise errors themselves.
