@@ -13,18 +13,28 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FLength : Function
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
-        {
-            new UnresolvedType[] { ResolvedType.List(new TypeParameter("a")) },
-        };
+        private static readonly TypeParameter Param = new("a");
 
-        public FLength() : base(Arguments, ResolvedType.Int) { }
-
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        public FLength()
         {
-            IntValue value = new(((ListValue)arguments[0]).Value.Count);
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            Overloads.Add(new OverloadOne());
+        }
+
+
+        internal class OverloadOne : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.List(Param) };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                IntValue value = new(((ListValue)arguments[0]).Value.Count);
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

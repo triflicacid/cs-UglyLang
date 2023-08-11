@@ -1,0 +1,7 @@
+DEF Fn: <arg: a> WHERE a: INT | FLOAT
+	PRINTLN: "TYPE: " a
+END
+
+DO: Fn<3>
+DO: Fn<3.141>
+; DO: Fn<"Hello"> ; ERROR

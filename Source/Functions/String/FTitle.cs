@@ -13,18 +13,26 @@ namespace UglyLang.Source.Functions.String
     /// </summary>
     public class FTitle : Function
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FTitle()
         {
-            new UnresolvedType[] { ResolvedType.String },
-        };
+            Overloads.Add(new OverloadOne());
+        }
 
-        public FTitle() : base(Arguments, ResolvedType.String) { }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        internal class OverloadOne : FunctionOverload
         {
-            StringValue value = new(string.Join(" ", ((StringValue)arguments[0]).Value.Split(" ").Select(s => s[0].ToString().ToUpper() + s[1..].ToLower())));
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.StringT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.StringT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                StringValue value = new(string.Join(" ", ((StringValue)arguments[0]).Value.Split(" ").Select(s => s[0].ToString().ToUpper() + s[1..].ToLower())));
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

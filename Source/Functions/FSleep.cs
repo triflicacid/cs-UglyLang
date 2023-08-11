@@ -13,23 +13,31 @@ namespace UglyLang.Source.Functions
     /// </summary>
     public class FSleep : Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FSleep()
         {
-            new UnresolvedType[] { ResolvedType.Int },
-        };
-
-        public FSleep() : base(Arguments, ResolvedType.Empty) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "SLEEP";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+
+        internal class OverloadOne : FunctionOverload
         {
-            Thread.Sleep((int)((IntValue)arguments[0]).Value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.IntT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.EmptyT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                Thread.Sleep((int)((IntValue)arguments[0]).Value);
+                return Signal.NONE;
+            }
         }
     }
 }

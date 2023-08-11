@@ -14,30 +14,44 @@ namespace UglyLang.Source.Functions.List
     public class FAdd : Function
     {
         private static readonly TypeParameter TypeParam = new("a"); // For convenience of repetition below
-        private static readonly List<UnresolvedType[]> Arguments = new()
+
+        public FAdd()
         {
-            new UnresolvedType[] { ResolvedType.List(TypeParam), new ResolvedType(TypeParam) },
-            new UnresolvedType[] { ResolvedType.List(TypeParam), new ResolvedType(TypeParam), ResolvedType.Int },
-        };
+            Overloads.Add(new OverloadOne());
+            Overloads.Add(new OverloadTwo());
+        }
 
-        public FAdd() : base(Arguments, ResolvedType.Empty) { }
 
-        protected override Signal CallOverload(Context context, int index, List<Value> arguments, TypeParameterCollection c)
+        internal class OverloadOne : FunctionOverload
         {
-            ListValue list = (ListValue)arguments[0];
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.List(TypeParam), TypeParam };
 
-            if (index == 1)
+            public OverloadOne()
+            : base(Arguments, Types.Type.EmptyT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
-                // Add at the given index
-                list.Value.Insert((int) ((IntValue)arguments[2]).Value, arguments[1]);
-            }
-            else
-            {
-                // Add to the end
+                ListValue list = (ListValue)arguments[0];
                 list.Value.Add(arguments[1]);
+                return Signal.NONE;
             }
+        }
 
-            return Signal.NONE;
+        internal class OverloadTwo : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.List(TypeParam), TypeParam, Types.Type.IntT };
+
+            public OverloadTwo()
+            : base(Arguments, Types.Type.EmptyT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                ListValue list = (ListValue)arguments[0];
+                list.Value.Insert((int)((IntValue)arguments[2]).Value, arguments[1]);
+                return Signal.NONE;
+            }
         }
     }
 }

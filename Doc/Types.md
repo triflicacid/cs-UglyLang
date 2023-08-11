@@ -66,3 +66,14 @@ This returns the first item in any list. The parameterised type `a[]` is matched
 Once inside the scope of a function, `a` may be used as:
 - A variable with type `TYPE` with the value of the type of the members of the argument list.
 - A type. No longer parameterised, however, as it references the type of the members of the argument list.
+
+## Type Constraints
+Basic constraints may be added to type parameters which limit which types the type parameter may match. For example,
+
+```
+DEF Fn: a <n1: a, n2: a> WHERE a: INT|FLOAT
+	FINISH: ADD<MUL<a,2>,b>
+END
+```
+
+At the moment, this must be direct equality between types, not simply matching.

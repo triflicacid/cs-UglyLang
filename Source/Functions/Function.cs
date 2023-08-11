@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UglyLang.Source.Functions
 {
@@ -38,103 +41,111 @@ namespace UglyLang.Source.Functions
         }
     }
 
-    public abstract class Function : ICallable, ISymbolValue
+    /// <summary>
+    /// A function is simply a collection of overloads under one common reference.
+    /// </summary>
+    public class Function : ICallable, ISymbolValue
     {
-        public readonly List<UnresolvedType[]> ArgumentTypes;
-        public readonly UnresolvedType ReturnType;
+        protected readonly List<FunctionOverload> Overloads = new();
 
-        public Function(List<UnresolvedType[]> argumentTypes, UnresolvedType returnType)
+        /// <summary>
+        /// Does this function contain an overload which matches the given signature
+        /// </summary>
+        public bool DoesOverloadExist(Types.Type[] argumentTypes, Types.Type returnType)
         {
-            ArgumentTypes = argumentTypes;
-            ReturnType = returnType;
+            // TODO
+            /*foreach (FunctionOverload overload in Overloads)
+            {
+
+            }*/
+
+            return false;
         }
 
+        public bool RegisterOverload(FunctionOverload overload)
+        {
+            if (DoesOverloadExist(overload.ArgumentTypes, overload.ReturnType))
+                return false;
+
+            Overloads.Add(overload);
+            return true;
+        }
+
+        /// <summary>
+        /// Call said function with the given arguments.
+        /// </summary>
         public Signal Call(Context context, List<Value> arguments)
         {
             List<Types.Type> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
+            
+            FunctionOverload? chosenOverload = null;
             TypeParameterCollection typeParameters = new();
-            List<Types.Type[]> resolvedArgumentTypes = new();
 
-            // Check that arguments match up to expected
-            bool match = false;
-            int index = 0;
-            foreach (UnresolvedType[] typeArray in ArgumentTypes)
+            foreach (FunctionOverload overload in Overloads)
             {
-                if (typeArray.Length == receivedArgumentTypes.Count)
+                if (overload.IsMatch(context, receivedArgumentTypes, typeParameters))
                 {
-                    Types.Type[] resolvedTypeArray = new Types.Type[typeArray.Length];
-                    match = true;
-                    for (int i = 0; i < typeArray.Length && match; i++)
-                    {
-                        // Attemt to resolve into a type
-                        Types.Type? aType = typeArray[i].Resolve(context);
-                        if (aType == null)
-                        {
-                            context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", typeArray[i].Value));
-                            return Signal.ERROR;
-                        }
-
-                        resolvedTypeArray[i] = aType;
-                        match = aType.DoesMatch(receivedArgumentTypes[i]);
-                        if (match)
-                        {
-                            if (aType.IsParameterised())
-                            {
-                                TypeParameterCollection result = aType.MatchParametersAgainst(receivedArgumentTypes[i]);
-
-                                // Results MUST match up with typeParameters
-                                foreach (string p in result.GetParamerNames())
-                                {
-                                    Types.Type pType = result.GetParameter(p);
-
-                                    if (typeParameters.HasParameter(p))
-                                    {
-                                        Types.Type oType = typeParameters.GetParameter(p);
-                                        if (!oType.Equals(pType)) // BAD
-                                        {
-                                            context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0} in argument {1}: expected {2}, got {3}", p, i + 1, oType, pType));
-                                            return Signal.ERROR;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // New parameter
-                                        typeParameters.SetParameter(p, pType);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                var casted = arguments[i].To(aType);
-                                if (casted == null)
-                                {
-                                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arguments[i].Type, aType));
-                                    return Signal.ERROR;
-                                }
-                                else
-                                {
-                                    arguments[i] = casted;
-                                }
-                            }
-                        }
-                    }
-
-                    resolvedArgumentTypes.Add(resolvedTypeArray);
-
-                    if (!match) break;
+                    chosenOverload = overload;
+                    break;
                 }
-                if (match) break;
-                index++;
+                else
+                {
+                    typeParameters.Clear();
+
+                    // Check if error
+                    if (context.Error != null)
+                        return Signal.ERROR;
+                }
             }
 
-            if (!match)
+            // Is there a match?
+            if (chosenOverload == null)
             {
                 string error = "cannot match argument types against a signature.";
                 error += Environment.NewLine + "  Received: <" + string.Join(", ", receivedArgumentTypes.Select(a => a.ToString()).ToArray()) + ">";
-                error += Environment.NewLine + "  Expected: " + string.Join(" | ", resolvedArgumentTypes.Select(a => "<" + string.Join(", ", a.Select(b => b.ToString())) + ">"));
+                error += Environment.NewLine + "  Expected: " + string.Join(" | ", Overloads.Select(o => "<" + string.Join(", ", o.ArgumentTypes.Select(b => b.ToString())) + ">"));
 
                 context.Error = new(0, 0, Error.Types.Type, error);
                 return Signal.ERROR;
+            }
+
+            // Resolve argument types of parameterisations
+            Types.Type[] argumentTypes = new Types.Type[chosenOverload.ArgumentTypes.Length];
+            for (int i = 0; i < chosenOverload.ArgumentTypes.Length; i++)
+            {
+                if (chosenOverload.ArgumentTypes[i].IsParameterised())
+                {
+                    Types.Type resolved = chosenOverload.ArgumentTypes[i].ResolveParametersAgainst(typeParameters);
+
+                    if (resolved.IsParameterised())
+                    {
+                        context.Error = new(0, 0, Error.Types.Type, string.Format("cannot resolve parameterised type '{0}' (partially resolved to {1})", chosenOverload.ArgumentTypes[i], resolved));
+                        return Signal.ERROR;
+                    }
+
+                    argumentTypes[i] = resolved;
+                }
+                else
+                {
+                    argumentTypes[i] = chosenOverload.ArgumentTypes[i];
+                }
+            }
+
+
+            // Cast arguments - the types match, but may not be equal
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                if (!arguments[i].Type.Equals(argumentTypes[i]))
+                {
+                    Value? casted = arguments[i].To(argumentTypes[i]);
+                    if (casted == null)
+                    {
+                        context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arguments[i].Type, argumentTypes[i]));
+                        return Signal.ERROR;
+                    }
+
+                    arguments[i] = casted;
+                }
             }
 
             // Register type parameters to the stack
@@ -146,13 +157,69 @@ namespace UglyLang.Source.Functions
                 context.CreateVariable(p, new TypeValue(typeParameters.GetParameter(p)));
             }
 
-            // Invoke the respective overload
-            return CallOverload(context, index, arguments, typeParameters);
-        }
+            // Invoke the overload
+            Signal sig = chosenOverload.Call(context, arguments, typeParameters);
+            if (sig == Signal.ERROR || sig == Signal.EXIT_PROG)
+                return sig;
 
-        /// <summary>
-        /// Call the function. Note that the given argument list matches with ONE ArgumentTypes member (this is checked in FuncValue. The stack frames and argument evaluation are handled in SymbolNode). Return a Signal indicating the status. The return result is available via context.GetFunctionReturnValue().
-        /// </summary>
-        protected abstract Signal CallOverload(Context context, int overloadIndex, List<Value> arguments, TypeParameterCollection typeParameters);
+            // Check against the return type
+            Value returnedValue = context.GetFunctionReturnValue() ?? new EmptyValue();
+            Types.Type returnType = chosenOverload.ReturnType; // NOTE that this is the expected rteurn type, NOT the type of returnedValue
+
+            if (returnType.IsParameterised()) // If it is parameterised, resolve it. If it is still parameterised, something went wrong.
+            {
+                TypeParameterCollection result = returnType.MatchParametersAgainst(returnedValue.Type);
+
+                // Results MUST match up with typeParameters
+                foreach (string p in result.GetParamerNames())
+                {
+                    Types.Type? pType = result.GetParameter(p);
+
+                    // Make sure that they're equal, otherwise we have a contradiction in the type parameters
+                    if (typeParameters.HasParameter(p))
+                    {
+                        Types.Type oType = typeParameters.GetParameter(p);
+                        if (!oType.Equals(pType)) // BAD
+                        {
+                            context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0}: expected {1}, got {2}", p, oType, pType));
+                            return Signal.ERROR;
+                        }
+                    }
+                    else
+                    {
+                        // Unknown parameter
+                        context.Error = new(0, 0, Error.Types.Type, string.Format("unbound type parameter '{0}'", p));
+                        return Signal.ERROR;
+                    }
+                }
+
+                returnType = returnType.ResolveParametersAgainst(typeParameters);
+                if (returnType.IsParameterised()) // If the return type is still paramerised, we have a problem
+                {
+                    context.Error = new(0, 0, Error.Types.Type, string.Format("parameterised type {0} cannot be resolved", returnType));
+                    return Signal.ERROR;
+                }
+            }
+            else if (!returnType.DoesMatch(returnedValue.Type))
+            {
+                context.Error = new(0, 0, Error.Types.Type, string.Format("expected return value to be {0}, got {1}", returnType, returnedValue.Type));
+                return Signal.ERROR;
+            }
+
+            // Cast if not equal
+            if (!returnType.Equals(returnedValue.Type))
+            {
+                // Cast return value to the desired type
+                Value? casted = returnedValue.To(returnType);
+                if (casted == null)
+                {
+                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", returnedValue.Type, returnType));
+                    return Signal.ERROR;
+                }
+            }
+
+            // All is good; the return type matches.
+            return Signal.NONE;
+        }
     }
 }

@@ -87,7 +87,7 @@ namespace UglyLang.Source.AST
                         if (context.Error != null)
                         {
                             context.Error.LineNumber = LineNumber;
-                            context.Error.ColumnNumber = ColumnNumber;
+                            context.Error.ColumnNumber = ColumnNumber + Symbol.Length;
                         }
 
                         return null;

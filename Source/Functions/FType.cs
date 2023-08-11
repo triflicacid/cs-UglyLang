@@ -13,24 +13,32 @@ namespace UglyLang.Source.Functions
     /// </summary>
     public class FType : Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FType()
         {
-            new UnresolvedType[] { ResolvedType.Any },
-        };
-
-        public FType() : base(Arguments, ResolvedType.Type) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "TYPE";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+
+        internal class OverloadOne : FunctionOverload
         {
-            TypeValue value = new(arguments[0].Type);
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.AnyT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.TypeT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                TypeValue value = new(arguments[0].Type);
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

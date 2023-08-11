@@ -13,40 +13,49 @@ namespace UglyLang.Source.Functions
     /// </summary>
     public class FNew : Function, IDefinedGlobally
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FNew()
         {
-            new UnresolvedType[] { ResolvedType.Type },
-        };
-
-        public FNew() : base(Arguments, ResolvedType.Any) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "NEW";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
-        {
-            Types.Type type = ((TypeValue)arguments[0]).Value;
 
-            // Can the type be constructed?
-            if (!type.CanConstruct())
+
+        internal class OverloadOne : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { new TypeType() };
+
+            public OverloadOne()
+            : base(Arguments, new Any())
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
+                Types.Type type = ((TypeValue)arguments[0]).Value;
+
+                // Can the type be constructed?
+                if (!type.CanConstruct())
+                {
+                    context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
+                    return Signal.NONE;
+                }
+
+                Value? value = type.ConstructNoArgs(context);
+                if (value == null)
+                {
+                    context.Error = new(0, 0, Error.Types.Type, string.Format("type constructor {0} requires arguments", type));
+                }
+                else
+                {
+                    context.SetFunctionReturnValue(value);
+                }
+
                 return Signal.NONE;
             }
-
-            Value? value = type.ConstructNoArgs(context);
-            if (value == null)
-            {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("type constructor {0} requires arguments", type));
-            }
-            else
-            {
-                context.SetFunctionReturnValue(value);
-            }
-
-            return Signal.NONE;
         }
     }
 }

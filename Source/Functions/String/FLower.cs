@@ -13,18 +13,26 @@ namespace UglyLang.Source.Functions.String
     /// </summary>
     public class FLower : Function
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FLower()
         {
-            new UnresolvedType[] { ResolvedType.String },
-        };
+            Overloads.Add(new OverloadOne());
+        }
 
-        public FLower() : base(Arguments, ResolvedType.String) { }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        internal class OverloadOne : FunctionOverload
         {
-            StringValue value = new(((StringValue)arguments[0]).Value.ToLower());
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.StringT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.StringT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                StringValue value = new(((StringValue)arguments[0]).Value.ToLower());
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

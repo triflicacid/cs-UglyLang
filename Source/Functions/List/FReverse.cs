@@ -13,21 +13,30 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FReverse : Function
     {
-        private static readonly UnresolvedType ListType = ResolvedType.List(new TypeParameter("a")); // For convenience of repetition below
-        private static readonly List<UnresolvedType[]> Arguments = new()
-        {
-            new UnresolvedType[] { ListType }
-        };
+        private static readonly Types.Type List = Types.Type.List(new TypeParameter("a"));
 
-        public FReverse() : base(Arguments, ListType) { }
-
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        public FReverse()
         {
-            ListValue list = (ListValue)arguments[0];
-            List<Value> copy = new(list.Value);
-            copy.Reverse();
-            context.SetFunctionReturnValue(new ListValue(((ListType)list.Type).Member, copy));
-            return Signal.NONE;
+            Overloads.Add(new OverloadOne());
+        }
+
+
+        internal class OverloadOne : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { List };
+
+            public OverloadOne()
+            : base(Arguments, List)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                ListValue list = (ListValue)arguments[0];
+                List<Value> copy = new(list.Value);
+                copy.Reverse();
+                context.SetFunctionReturnValue(new ListValue(((ListType)list.Type).Member, copy));
+                return Signal.NONE;
+            }
         }
     }
 }

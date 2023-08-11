@@ -78,6 +78,11 @@ namespace UglyLang.Source.Types
             return Dict.Keys.ToList();
         }
 
+        public void Clear()
+        {
+            Dict.Clear();
+        }
+
         /// <summary>
         /// Same as t1.DoesMatch(t2) but handles type parameters
         /// </summary>

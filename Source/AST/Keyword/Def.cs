@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source;
@@ -19,13 +20,15 @@ namespace UglyLang.Source.AST.Keyword
         public readonly List<(string, UnresolvedType)> Arguments;
         public readonly UnresolvedType ReturnType; // If NULL, returns nothing
         public ASTStructure? Body;
+        public readonly Dictionary<string, List<UnresolvedType>> TypeParamConstraints;
 
-        public DefKeywordNode(string name, List<(string, UnresolvedType)> arguments, UnresolvedType returnType)
+        public DefKeywordNode(string name, List<(string, UnresolvedType)> arguments, UnresolvedType returnType, Dictionary<string, List<UnresolvedType>>? constraints = null)
         {
             Name = name;
             Arguments = arguments;
             Body = null;
             ReturnType = returnType;
+            TypeParamConstraints = constraints ?? new();
         }
 
         public override Signal Action(Context context)
@@ -33,21 +36,13 @@ namespace UglyLang.Source.AST.Keyword
             if (Body == null) throw new NullReferenceException();
 
             // Check if the function is already defined
-            UserFunction func;
+            Function func;
             if (context.HasVariable(Name))
             {
                 ISymbolValue variable = context.GetVariable(Name);
                 if (variable is Function funcValue)
                 {
-                    if (funcValue is UserFunction userFunc)
-                    {
-                        func = userFunc;
-                    }
-                    else
-                    {
-                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("built-in function {0} cannot be overloaded", Name));
-                        return Signal.ERROR;
-                    }
+                    func = funcValue;
                 }
                 else
                 {
@@ -57,12 +52,65 @@ namespace UglyLang.Source.AST.Keyword
             }
             else
             {
-                func = new UserFunction(ReturnType);
+                func = new Function();
                 context.CreateVariable(Name, func);
             }
 
-            // Add overload
-            func.AddOverload(Arguments, Body);
+            // Resolve the arguments
+            List<(string, Types.Type)> resolvedArguments = new();
+            foreach ((string argName, UnresolvedType argType) in Arguments)
+            {
+                Types.Type? type = argType.Resolve(context);
+                if (type == null)
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve type {0}", argType.Value));
+                    return Signal.ERROR;
+                }
+
+                resolvedArguments.Add(new(argName, type));
+            }
+
+            // Resolve the constraints
+            Dictionary<string, Types.Type[]> resolvedConstraints = new();
+            foreach (var entry in TypeParamConstraints)
+            {
+                Types.Type[] types = new Types.Type[entry.Value.Count];
+                for (int i = 0; i < types.Length; i++)
+                {
+                    Types.Type? resolved = entry.Value[i].Resolve(context);
+                    if (resolved == null)
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve type {0}", entry.Value[i].Value));
+                        return Signal.ERROR;
+                    }
+
+                    if (resolved.IsParameterised())
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("type constraints cannot be parameterised (found '{0}')", resolved));
+                        return Signal.ERROR;
+                    }
+
+                    types[i] = resolved;
+                }
+
+                resolvedConstraints.Add(entry.Key, types);
+            }
+
+            // Resolve the return type
+            Types.Type? resolvedReturnType = ReturnType.Resolve(context);
+            if (resolvedReturnType == null)
+            {
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve type {0}", ReturnType.Value));
+                return Signal.ERROR;
+            }
+
+            // Create the overload and attempt to register it with the function
+            UserFunctionOverload overload = new(resolvedArguments, Body, resolvedReturnType, resolvedConstraints);
+            if (!func.RegisterOverload(overload))
+            {
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("an overload matching this signature has already been defined\n<{0}> -> {1}", string.Join(",", resolvedArguments.Select(p => p.Item2)), resolvedReturnType));
+                return Signal.ERROR;
+            }
 
             return Signal.NONE;
         }

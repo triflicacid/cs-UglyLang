@@ -13,38 +13,44 @@ namespace UglyLang.Source.Functions.String
     /// </summary>
     public class FSplit : Function
     {
-        private static readonly StringType String = new();
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FSplit()
         {
-            new UnresolvedType[] { ResolvedType.String, ResolvedType.String },
-        };
+            Overloads.Add(new OverloadOne());
+        }
 
-        public FSplit() : base(Arguments, ResolvedType.List(String)) { }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        internal class OverloadOne : FunctionOverload
         {
-            string s = ((StringValue)arguments[0]).Value;
-            string sep = ((StringValue)arguments[1]).Value;
-            ListValue list = new(String);
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.StringT, Types.Type.StringT };
 
-            if (sep.Length == 0)
-            {
-                foreach (char ch in s)
-                {
-                    list.Value.Add(new StringValue(ch.ToString()));
-                }
-            }
-            else
-            {
-                foreach (string seg in s.Split(sep))
-                {
-                    list.Value.Add(new StringValue(seg));
-                }
-            }
+            public OverloadOne()
+            : base(Arguments, Types.Type.StringT)
+            { }
 
-            context.SetFunctionReturnValue(list);
-            return Signal.NONE;
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                string s = ((StringValue)arguments[0]).Value;
+                string sep = ((StringValue)arguments[1]).Value;
+                ListValue list = new(Types.Type.StringT);
+
+                if (sep.Length == 0)
+                {
+                    foreach (char ch in s)
+                    {
+                        list.Value.Add(new StringValue(ch.ToString()));
+                    }
+                }
+                else
+                {
+                    foreach (string seg in s.Split(sep))
+                    {
+                        list.Value.Add(new StringValue(seg));
+                    }
+                }
+
+                context.SetFunctionReturnValue(list);
+                return Signal.NONE;
+            }
         }
     }
 }

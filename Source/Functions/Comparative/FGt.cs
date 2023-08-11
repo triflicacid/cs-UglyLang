@@ -11,24 +11,32 @@ namespace UglyLang.Source.Functions.Comparative
 {
     public class FGt : Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FGt()
         {
-            new UnresolvedType[] { ResolvedType.Float, ResolvedType.Float },
-        };
-
-        public FGt() : base(Arguments, ResolvedType.Int) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "GT";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+
+        internal class OverloadOne : FunctionOverload
         {
-            IntValue value = new(((FloatValue)arguments[0]).Value > ((FloatValue)arguments[1]).Value);
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.FloatT, Types.Type.FloatT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                IntValue value = new(((FloatValue)arguments[0]).Value > ((FloatValue)arguments[1]).Value);
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

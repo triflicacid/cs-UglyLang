@@ -13,18 +13,28 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FIndexOf : Function
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
-        {
-            new UnresolvedType[] { ResolvedType.List(new TypeParameter("a")), ResolvedType.Param("a") },
-        };
+        private static readonly TypeParameter Param = new("a");
 
-        public FIndexOf() : base(Arguments, ResolvedType.Int) { }
-
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        public FIndexOf()
         {
-            IntValue value = new(((ListValue)arguments[0]).IndexOf(arguments[1]));
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            Overloads.Add(new OverloadOne());
+        }
+
+
+        internal class OverloadOne : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.List(Param), Param };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                IntValue value = new(((ListValue)arguments[0]).IndexOf(arguments[1]));
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

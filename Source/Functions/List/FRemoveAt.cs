@@ -13,19 +13,29 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FRemoveAt : Function
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
-        {
-            new UnresolvedType[] { ResolvedType.List(new TypeParameter("a")), ResolvedType.Int },
-        };
+        private static readonly TypeParameter Param = new("a");
 
-        public FRemoveAt() : base(Arguments, ResolvedType.Int) { }
-
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        public FRemoveAt()
         {
-            ListValue list = (ListValue)arguments[0];
-            IntValue value = new(list.RemoveAt((int) ((IntValue)arguments[1]).Value));
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            Overloads.Add(new OverloadOne());
+        }
+
+
+        internal class OverloadOne : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.List(Param), Types.Type.IntT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                ListValue list = (ListValue)arguments[0];
+                IntValue value = new(list.RemoveAt((int)((IntValue)arguments[1]).Value));
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

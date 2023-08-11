@@ -11,23 +11,30 @@ namespace UglyLang.Source.Functions.Logical
 {
     public class FNot : Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FNot()
         {
-            new UnresolvedType[] { ResolvedType.Any },
-        };
-
-        public FNot() : base(Arguments, ResolvedType.Int) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "NOT";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+        internal class OverloadOne : FunctionOverload
         {
-            context.SetFunctionReturnValue(new IntValue(!arguments[0].IsTruthy()));
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.AnyT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                context.SetFunctionReturnValue(new IntValue(!arguments[0].IsTruthy()));
+                return Signal.NONE;
+            }
         }
     }
 }

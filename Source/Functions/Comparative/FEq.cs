@@ -12,23 +12,32 @@ namespace UglyLang.Source.Functions.Comparative
 {
     public class FEq : Function, IDefinedGlobally
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FEq()
         {
-            new UnresolvedType[] { ResolvedType.Any, ResolvedType.Any },
-        };
-
-        public FEq() : base(Arguments, ResolvedType.Int) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "EQ";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+
+        internal class OverloadOne : FunctionOverload
         {
-            IntValue value = new(arguments[0].Equals(arguments[1]));
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.AnyT, Types.Type.AnyT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                IntValue value = new(arguments[0].Equals(arguments[1]));
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

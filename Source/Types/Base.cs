@@ -76,6 +76,17 @@ namespace UglyLang.Source.Types
         {
             return new();
         }
+
+        public static readonly Type AnyT = new Any();
+        public static readonly Type EmptyT = new EmptyType();
+        public static readonly Type IntT = new IntType();
+        public static readonly Type FloatT = new FloatType();
+        public static readonly Type StringT = new StringType();
+        public static readonly Type TypeT = new TypeType();
+        public static Type List(Type t)
+        {
+            return new ListType(t);
+        }
     }
 
     public class Property

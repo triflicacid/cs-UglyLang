@@ -18,8 +18,13 @@ if (File.Exists(fullFilePath))
     Console.WriteLine();
     string program = File.ReadAllText(fullFilePath);
 
+    var watch = System.Diagnostics.Stopwatch.StartNew();
+
     Parser p = new();
     p.Parse(program);
+    watch.Stop();
+    long parsedTime = watch.ElapsedMilliseconds;
+
     if (p.Error != null)
     {
         Console.WriteLine("An error occured whilst parsing:");
@@ -27,10 +32,15 @@ if (File.Exists(fullFilePath))
     }
     else
     {
+        watch.Reset();
+
         Context ctx = new(filepath);
+        ctx.AddSource(filepath, program);
         ctx.InitialiseGlobals();
         Signal sig = p.AST.Evaluate(ctx);
-        Console.WriteLine(string.Format("Program terminated with signal {0} ({1})", (int) sig, sig.ToString()));
+        watch.Stop();
+        long executionTime = watch.ElapsedMilliseconds;
+        Console.WriteLine(string.Format("Program terminated with signal {0} ({1}) after {2} ms ({3} ms parsing, {4} ms execution)", (int) sig, sig.ToString(), parsedTime + executionTime, parsedTime, executionTime));
         if (ctx.Error != null)
         {
             Console.WriteLine(ctx.GetErrorString());

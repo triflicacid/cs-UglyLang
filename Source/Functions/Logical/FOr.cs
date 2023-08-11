@@ -11,25 +11,32 @@ namespace UglyLang.Source.Functions.Logical
 {
     public class FOr : Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FOr()
         {
-            new UnresolvedType[] { ResolvedType.Any, ResolvedType.Any },
-        };
-
-        public FOr() : base(Arguments, ResolvedType.Int) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "OR";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+        internal class OverloadOne : FunctionOverload
         {
-            Value a = arguments[0], b = arguments[1];
-            IntValue value = new(a.IsTruthy() || b.IsTruthy());
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.AnyT, Types.Type.AnyT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                Value a = arguments[0], b = arguments[1];
+                IntValue value = new(a.IsTruthy() || b.IsTruthy());
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

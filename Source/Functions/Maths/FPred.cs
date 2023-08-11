@@ -13,24 +13,31 @@ namespace UglyLang.Source.Functions.Maths
     /// </summary>
     public class FPred: Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FPred()
         {
-            new UnresolvedType[] { ResolvedType.Int },
-        };
-
-        public FPred() : base(Arguments, ResolvedType.Int) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "PRED";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+        internal class OverloadOne : FunctionOverload
         {
-            IntValue value = new(((IntValue)arguments[0]).Value - 1);
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.IntT};
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.IntT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                IntValue value = new(((IntValue)arguments[0]).Value - 1);
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

@@ -13,23 +13,32 @@ namespace UglyLang.Source.Functions
     /// </summary>
     public class FList : Function, IDefinedGlobally
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FList()
         {
-            new UnresolvedType[] { ResolvedType.Type },
-        };
-
-        public FList() : base(Arguments, ResolvedType.List(new Any())) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "LIST";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+
+        internal class OverloadOne : FunctionOverload
         {
-            Types.Type type = ((TypeValue)arguments[0]).Value;
-            context.SetFunctionReturnValue(new ListValue(type));
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { new TypeType() };
+
+            public OverloadOne()
+            : base(Arguments, new ListType(new Any()))
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                Types.Type type = ((TypeValue)arguments[0]).Value;
+                context.SetFunctionReturnValue(new ListValue(type));
+                return Signal.NONE;
+            }
         }
     }
 }

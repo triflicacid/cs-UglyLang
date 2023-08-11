@@ -13,28 +13,37 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FGet : Function
     {
-        private static readonly TypeParameter TypeParam = new("a"); // For convenience of repetition below
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        private static readonly TypeParameter Param = new("a");
+
+        public FGet()
         {
-            new UnresolvedType[] { ResolvedType.List(TypeParam), ResolvedType.Int },
-        };
+            Overloads.Add(new OverloadOne());
+        }
 
-        public FGet() : base(Arguments, new ResolvedType(TypeParam)) { }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+        internal class OverloadOne : FunctionOverload
         {
-            ListValue list = (ListValue)arguments[0];
-            int index = (int)((IntValue)arguments[1]).Value;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.List(Param), Types.Type.IntT };
 
-            if (index >= 0 && index < list.Value.Count)
+            public OverloadOne()
+            : base(Arguments, Param)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
-                context.SetFunctionReturnValue(list.Value[index]);
-                return Signal.NONE;
-            }
-            else
-            {
-                context.Error = new(0, 0, Error.Types.General, string.Format("index {0} is out of bounds for {1}", index, list.Type));
-                return Signal.ERROR;
+                ListValue list = (ListValue)arguments[0];
+                int index = (int)((IntValue)arguments[1]).Value;
+
+                if (index >= 0 && index < list.Value.Count)
+                {
+                    context.SetFunctionReturnValue(list.Value[index]);
+                    return Signal.NONE;
+                }
+                else
+                {
+                    context.Error = new(0, 0, Error.Types.General, string.Format("index {0} is out of bounds for {1}", index, list.Type));
+                    return Signal.ERROR;
+                }
             }
         }
     }

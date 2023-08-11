@@ -13,47 +13,71 @@ namespace UglyLang.Source.Functions
     /// </summary>
     public class FRandom : Function, IDefinedGlobally
     {
-
         private static readonly Random Generator = new();
-        private static readonly List<UnresolvedType[]> Arguments = new()
-        {
-            Array.Empty<UnresolvedType>(),
-            new UnresolvedType[] { ResolvedType.Float },
-            new UnresolvedType[] { ResolvedType.Float, ResolvedType.Float},
-        };
 
-        public FRandom() : base(Arguments, ResolvedType.Int) { }
+        public FRandom()
+        {
+            Overloads.Add(new OverloadOne());
+            Overloads.Add(new OverloadTwo());
+            Overloads.Add(new OverloadThree());
+        }
 
         public string GetDefinedName()
         {
             return "RANDOM";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+
+        internal class OverloadOne : FunctionOverload
         {
-            double n;
-            if (arguments.Count == 0) // Range: [0,1)
+            private readonly static Types.Type[] Arguments = Array.Empty<Types.Type>();
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.FloatT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
-                n = Generator.NextDouble();
+                double n = Generator.NextDouble();
+                context.SetFunctionReturnValue(new FloatValue(n));
+                return Signal.NONE;
             }
-            else if (arguments.Count == 1) // Range: [0,max)
+        }
+
+        internal class OverloadTwo : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.FloatT };
+
+            public OverloadTwo()
+            : base(Arguments, Types.Type.FloatT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
                 double max = ((FloatValue)arguments[0]).Value;
-                n = Generator.NextDouble() * max;
+                double n = Generator.NextDouble() * max;
+                context.SetFunctionReturnValue(new FloatValue(n));
+                return Signal.NONE;
             }
-            else if (arguments.Count == 2) // Range: [min,max)
+        }
+
+        internal class OverloadThree : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.FloatT, Types.Type.FloatT };
+
+            public OverloadThree()
+            : base(Arguments, Types.Type.FloatT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
                 double min = ((FloatValue)arguments[0]).Value;
                 double max = ((FloatValue)arguments[1]).Value;
-                n = min + Generator.NextDouble() * (max - min);
+                double n = min + Generator.NextDouble() * (max - min);
+                context.SetFunctionReturnValue(new FloatValue(n));
+                return Signal.NONE;
             }
-            else
-            {
-                throw new InvalidOperationException();
-            }
-
-            context.SetFunctionReturnValue(new FloatValue(n));
-            return Signal.NONE;
         }
     }
 }

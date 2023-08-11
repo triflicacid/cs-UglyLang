@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
@@ -75,23 +77,30 @@ namespace UglyLang.Source
                 switch (Type)
                 {
                     case Types.File:
-                        inside = "file";
+                        inside = "File";
                         break;
                     case Types.Function:
-                        inside = "function";
+                        inside = "Function";
                         break;
                 }
 
-                return string.Format("In {0} {1} (entered at line {2}, column {3}):", inside, Name, LineNumber, ColNumber);
+                return string.Format("{0} {1}, entered at line {2}, column {3}:", inside, Name, LineNumber + 1, ColNumber + 1);
             }
         }
 
         private readonly List<StackContext> Stack;
+        public readonly Dictionary<string, string[]> Sources = new(); // Map filenames to their respective sources.
         public Error? Error = null;
 
         public Context(string filename)
         {
             Stack = new() { new(0, 0, StackContext.Types.File, filename) };
+        }
+
+        public void AddSource(string sourceName, string source)
+        {
+            string[] lines = source.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            Sources.Add(sourceName, lines);
         }
 
         /// <summary>
@@ -157,9 +166,54 @@ namespace UglyLang.Source
             Stack[^1].SetSymbol(name, value);
         }
 
+        private string GetSourceLine(string filename, int lineNumber)
+        {
+            if (!Sources.ContainsKey(filename))
+                return $"({filename} line {lineNumber})";
+
+            return Sources[filename][lineNumber];
+        }
+
+        private string GetSourceLine(int stackIndex, int lineNumber)
+        {
+            string? filename = null;
+            for (int i = stackIndex; i >= 0; i--)
+            {
+                if (Stack[i].Type == StackContext.Types.File)
+                {
+                    filename = Stack[i].Name;
+                    break;
+                }
+            }
+
+            if (filename == null)
+                return "(unknown)";
+
+            return GetSourceLine(filename, lineNumber);
+        }
+
         public string GetErrorString()
         {
             return Error == null ? "" : ErrorToString(Error);
+        }
+
+        private static readonly Regex NonWhitespaceRegex = new("[^\\s]");
+
+        private string GetLineError(int stackIdx, int lineNumber, int colNumber)
+        {
+            string line = GetSourceLine(stackIdx, lineNumber);
+            int origLength = line.Length;
+            line = line.TrimStart();
+            string lineNumberS = (lineNumber + 1).ToString();
+            int colIdx = colNumber - (origLength - line.Length);
+
+            string str = Environment.NewLine + (lineNumber + 1) + " | " + line;
+            string pre = new(' ', lineNumberS.Length);
+            string before = NonWhitespaceRegex.Replace(line[..colIdx], " ");
+            string after = NonWhitespaceRegex.Replace(line[colIdx..], " ");
+            str += Environment.NewLine + pre + "   " + before + "^" + after + Environment.NewLine;
+
+            return str;
         }
 
         /// <summary>
@@ -170,10 +224,16 @@ namespace UglyLang.Source
             string str = "";
             for (int i = 0; i < Stack.Count; i++)
             {
+                // Error information
                 str += Stack[i].ToString() + Environment.NewLine;
+
+                if (i != 0)
+                    str += GetLineError(i, Stack[i].LineNumber, Stack[i].ColNumber);
             }
 
             str += error.ToString();
+            str += Environment.NewLine + GetLineError(Stack.Count - 1, error.LineNumber, error.ColumnNumber);
+
             return str;
         }
 

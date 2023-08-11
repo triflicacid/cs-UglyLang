@@ -40,6 +40,11 @@ namespace UglyLang.Source.AST
                     context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", CastType.Value));
                     return null;
                 }
+
+                if (castTo.IsParameterised())
+                {
+                    castTo = castTo.ResolveParametersAgainst(context.GetBoundTypeParams());
+                }
             }
 
             if (Children.Count == 0)

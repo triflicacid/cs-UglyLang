@@ -33,7 +33,7 @@ namespace UglyLang.Source
 
         public override string ToString()
         {
-            return Type.ToString() + " Error (" + LineNumber + ":" + ColumnNumber + ") - " + Message;
+            return Type.ToString() + " Error (" + (LineNumber + 1) + ":" + (ColumnNumber + 1) + ") - " + Message;
         }
     }
 }

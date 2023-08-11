@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source.Types;
@@ -13,40 +14,62 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FSlice : Function
     {
-        private static readonly UnresolvedType ListType= ResolvedType.List(new TypeParameter("a")); // For convenience of repetition below
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        private static readonly Types.Type List = Types.Type.List(new TypeParameter("a"));
+
+        public FSlice()
         {
-            new UnresolvedType[] { ListType, ResolvedType.Int }, // startIndex
-            new UnresolvedType[] { ListType, ResolvedType.Int, ResolvedType.Int }, // startIndex, endIndex
-        };
+            Overloads.Add(new OverloadOne());
+            Overloads.Add(new OverloadTwo());
+        }
 
-        public FSlice() : base(Arguments, ListType) { }
 
-        protected override Signal CallOverload(Context context, int index, List<Value> arguments, TypeParameterCollection c)
+        internal class OverloadOne : FunctionOverload
         {
-            ListValue list = (ListValue)arguments[0];
-            int startIndex = (int)((IntValue)arguments[1]).Value;
-            ListValue listSlice = new(((ListType)list.Type).Member);
+            private readonly static Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT };
 
-            if (index == 1)
+            public OverloadOne()
+            : base(Arguments, List)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
+                ListValue list = (ListValue)arguments[0];
+                int startIndex = (int)((IntValue)arguments[1]).Value;
+                ListValue listSlice = new(((ListType)list.Type).Member);
+
+                for (int i = startIndex; i < list.Value.Count; i++)
+                {
+                    listSlice.Value.Add(list.Value[i]);
+                }
+
+                context.SetFunctionReturnValue(listSlice);
+                return Signal.NONE;
+            }
+        }
+
+        internal class OverloadTwo : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT, Types.Type.IntT };
+
+            public OverloadTwo()
+            : base(Arguments, List)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                ListValue list = (ListValue)arguments[0];
+                int startIndex = (int)((IntValue)arguments[1]).Value;
                 int endIndex = Math.Min((int)((IntValue)arguments[2]).Value, list.Value.Count);
+                ListValue listSlice = new(((ListType)list.Type).Member);
 
                 for (int i = startIndex; i < endIndex; i++)
                 {
                     listSlice.Value.Add(list.Value[i]);
                 }
-            }
-            else
-            {
-                for (int i = startIndex; i < list.Value.Count; i++)
-                {
-                    listSlice.Value.Add(list.Value[i]);
-                }
-            }
 
-            context.SetFunctionReturnValue(listSlice);
-            return Signal.NONE;
+                context.SetFunctionReturnValue(listSlice);
+                return Signal.NONE;
+            }
         }
     }
 }

@@ -11,24 +11,31 @@ namespace UglyLang.Source.Functions.Maths
 {
     public class FExp : Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FExp()
         {
-            new UnresolvedType[] { ResolvedType.Float, ResolvedType.Float },
-        };
-
-        public FExp() : base(Arguments, ResolvedType.Float) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "EXP";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+        internal class OverloadOne : FunctionOverload
         {
-            FloatValue value = new(Math.Pow(((FloatValue)arguments[0]).Value, ((FloatValue)arguments[1]).Value));
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.FloatT, Types.Type.FloatT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.FloatT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                FloatValue value = new(Math.Pow(((FloatValue)arguments[0]).Value, ((FloatValue)arguments[1]).Value));
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source.Types;
@@ -10,22 +12,31 @@ namespace UglyLang.Source.Functions
 {
     public class FId : Function, IDefinedGlobally
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FId()
         {
-            new UnresolvedType[] { ResolvedType.Param("a") },
-        };
-
-        public FId() : base(Arguments, ResolvedType.Param("a")) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "ID";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+
+        internal class OverloadOne : FunctionOverload
         {
-            context.SetFunctionReturnValue(arguments[0]);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { new TypeParameter("a") };
+
+            public OverloadOne()
+            : base(Arguments, new TypeParameter("a"))
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                context.SetFunctionReturnValue(arguments[0]);
+                return Signal.NONE;
+            }
         }
     }
 }

@@ -11,24 +11,31 @@ namespace UglyLang.Source.Functions.Maths
 {
     public class FNeg : Function, IDefinedGlobally
     {
-
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FNeg()
         {
-            new UnresolvedType[] { ResolvedType.Float },
-        };
-
-        public FNeg() : base(Arguments, ResolvedType.Float) { }
+            Overloads.Add(new OverloadOne());
+        }
 
         public string GetDefinedName()
         {
             return "NEG";
         }
 
-        protected override Signal CallOverload(Context context, int _, List<Value> arguments, TypeParameterCollection c)
+
+        internal class OverloadOne : FunctionOverload
         {
-            FloatValue value = new(-((FloatValue)arguments[0]).Value);
-            context.SetFunctionReturnValue(value);
-            return Signal.NONE;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.FloatT };
+
+            public OverloadOne()
+            : base(Arguments, Types.Type.FloatT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                FloatValue value = new(-((FloatValue)arguments[0]).Value);
+                context.SetFunctionReturnValue(value);
+                return Signal.NONE;
+            }
         }
     }
 }

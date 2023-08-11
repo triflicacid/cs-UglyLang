@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using UglyLang.Source.Types;
@@ -13,32 +14,48 @@ namespace UglyLang.Source.Functions.String
     /// </summary>
     public class FSlice : Function
     {
-        private static readonly List<UnresolvedType[]> Arguments = new()
+        public FSlice()
         {
-            new UnresolvedType[] { ResolvedType.String, ResolvedType.Int },
-            new UnresolvedType[] { ResolvedType.String, ResolvedType.Int, ResolvedType.Int },
-        };
+            Overloads.Add(new OverloadOne());
+            Overloads.Add(new OverloadTwo());
+        }
 
-        public FSlice() : base(Arguments, ResolvedType.String) { }
 
-        protected override Signal CallOverload(Context context, int index, List<Value> arguments, TypeParameterCollection c)
+        internal class OverloadOne : FunctionOverload
         {
-            string s = ((StringValue)arguments[0]).Value;
-            int startIndex = (int)((IntValue)arguments[1]).Value;
-            string substr;
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.StringT, Types.Type.IntT };
 
-            if (index == 1)
+            public OverloadOne()
+            : base(Arguments, Types.Type.StringT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
+                string s = ((StringValue)arguments[0]).Value;
+                int startIndex = (int)((IntValue)arguments[1]).Value;
+                string substr = s.Substring(startIndex);
+                context.SetFunctionReturnValue(new StringValue(substr));
+                return Signal.NONE;
+            }
+        }
+
+        internal class OverloadTwo : FunctionOverload
+        {
+            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.StringT, Types.Type.IntT, Types.Type.IntT };
+
+            public OverloadTwo()
+            : base(Arguments, Types.Type.StringT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            {
+                string s = ((StringValue)arguments[0]).Value;
+                int startIndex = (int)((IntValue)arguments[1]).Value;
                 int endIndex = Math.Max((int)((IntValue)arguments[2]).Value, startIndex);
-                substr = s.Substring(startIndex, endIndex - startIndex);
+                string substr = s.Substring(startIndex, endIndex - startIndex);
+                context.SetFunctionReturnValue(new StringValue(substr));
+                return Signal.NONE;
             }
-            else
-            {
-                substr = s.Substring(startIndex);
-            }
-
-            context.SetFunctionReturnValue(new StringValue(substr));
-            return Signal.NONE;
         }
     }
 }
