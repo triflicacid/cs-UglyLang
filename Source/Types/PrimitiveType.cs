@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using UglyLang.Source.Functions.String;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -134,6 +135,19 @@ namespace UglyLang.Source.Types
 
     public class StringType : PrimitiveType
     {
+        public static readonly Dictionary<string, Property> Properties = Property.CreateDictionary(new Property[]
+        {
+            new("Contains", new FContains()),
+            new("IndexOf", new FIndexOf()),
+            new("Length", new FLength()),
+            new("Lower", new FLower()),
+            new("Reverse", new FReverse()),
+            new("Split", new FSplit()),
+            new("Slice", new FSlice()),
+            new("Title", new FTitle()),
+            new("Upper", new FUpper()),
+        });
+
         public override bool Equals(Type other)
         {
             return other is StringType;
@@ -172,6 +186,11 @@ namespace UglyLang.Source.Types
                 context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} requires 1 argument, got {1}", this, args.Count));
                 return null;
             }
+        }
+
+        public override Dictionary<string, Property> GetProperties()
+        {
+            return Properties;
         }
 
         public static string AsString()

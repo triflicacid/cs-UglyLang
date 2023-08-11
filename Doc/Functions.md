@@ -25,6 +25,26 @@ Returns a number, 0 or 1, depending on if a < b.
 - `LE<a: FLOAT, b: FLOAT> -> INT`
 Returns a number, 0 or 1, depending on if a <= b.
 
+## Generic Functions
+
+- ~~`CAST<a,t>`
+Returns a casted to type t.
+Note that this is different to the CAST keyword.~~
+- `CONCAT<a: ANY, b: ANY> -> STRING`
+Convert a and b to strings and concatenate them.
+- `ID<x: a> -> a`
+Returns the provided argument.
+- `LIST<a: TYPE> -> ANY[]`
+Creates a new list instance containing type a.
+- `NEW<a: TYPE> -> ANY`
+Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
+- `RANDOM -> FLOAT` / `RANDOM<max: FLOAT> -> FLOAT` / `RANDOM<min: FLOAT, max: FLOAT> -> FLOAT`
+Returns random number in the range: [0,1) / [0,max) / [min,max).
+- `SLEEP<t: FLOAT> -> EMPTY`
+Suspend execution for t milliseconds.
+- `TYPE<a: ANY> -> TYPE`
+Returns the type of a after evaluation.
+
 ## List Functions
 
 These functions are all available on lists. The list type is assumed to be `a[]`.
@@ -45,6 +65,8 @@ Returns the length of the list. Note that this is a function, not a property.
 Removes *every* instance of the given item from the list. Returns how many items were removed.
 - `RemoveAt<idx: INT> -> INT`
 Removes the item at the given index, returns is this was done (i.e. if the index was in-bounds).
+- `Reverse -> a[]`
+Reverses the list.
 - `Set<idx: INT, v: a> -> EMPTY`
 Sets the item at the given index to the given value.
 - `Slice<start: INT> -> a[] / Slice<start: INT, end: INT> -> a[]`
@@ -82,22 +104,19 @@ Returns a - b.
 - `SUCC<a: INT> -> INT`
 Returns the successor of integer a.
 
-## Generic Functions
+## String Functions
 
-- ~~`CAST<a,t>`
-Returns a casted to type t.
-Note that this is different to the CAST keyword.~~
-- `CONCAT<a: ANY, b: ANY> -> STRING`
-Convert a and b to strings and concatenate them.
-- `ID<x: a> -> a`
-Returns the provided argument.
-- `LIST<a: TYPE> -> ANY[]`
-Creates a new list instance containing type a.
-- `NEW<a: TYPE> -> ANY`
-Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
-- `RANDOM -> FLOAT` / `RANDOM<max: FLOAT> -> FLOAT` / `RANDOM<min: FLOAT, max: FLOAT> -> FLOAT`
-Returns random number in the range: [0,1) / [0,max) / [min,max).
-- `SLEEP<t: FLOAT> -> EMPTY`
-Suspend execution for t milliseconds.
-- `TYPE<a: ANY> -> TYPE`
-Returns the type of a after evaluation.
+- `Length -> INT`
+Returns the length of the string.
+- `Lower -> STRING`
+Returns the string in lowercase.
+- `Reverse -> STRING`
+Reverses the string
+- `Slice<start: INT> -> STRING / Slice<start: INT, end: INT> -> STRING`
+Returns a sliced potrion of the starting starting from `start` and ending at either the end of the string or at `end`.
+- `Split<sep: STRING> -> STRING[]`
+Splits the string by the given seperator. If the seperator if `""`, split by each character.
+- `Title -> STRING`
+Returns the string in title case.
+- `Upper -> STRING`
+Returns the string in uppercase.

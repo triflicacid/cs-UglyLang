@@ -8,6 +8,9 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source
 {
+    /// <summary>
+    /// If inherited from, this symbol will be defined as a global symbol on any new Context.
+    /// </summary>
     public interface IDefinedGlobally : ISymbolValue
     {
         public string GetDefinedName();

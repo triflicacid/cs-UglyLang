@@ -1,0 +1,13 @@
+LET name: "John doe"
+PRINTLN: name
+PRINTLN: "Length: " name.Length
+PRINTLN: name.Lower
+PRINTLN: name.Upper
+PRINTLN: name.Title
+PRINTLN: name.Reverse
+PRINTLN: name.Split<" ">
+PRINTLN: name.Split<"">
+PRINTLN: name.Slice<5>
+PRINTLN: name.Slice<5,7>
+PRINTLN: name.Contains<"J">
+PRINTLN: name.IndexOf<" ">

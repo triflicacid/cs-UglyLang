@@ -16,16 +16,17 @@ namespace UglyLang.Source.Types
     {
         public static readonly Dictionary<string, Property> Properties = Property.CreateDictionary(new Property[]
         {
-            new Property("Add", new FAdd()),
-            new Property("Contains", new FContains()),
-            new Property("Get", new FGet()),
-            new Property("IndexOf", new FIndexOf()),
-            new Property("Join", new FJoin()),
-            new Property("Length", new FLength()),
-            new Property("Remove", new FRemove()),
-            new Property("RemoveAt", new FRemoveAt()),
-            new Property("Set", new FSet()),
-            new Property("Slice", new FSlice()),
+            new("Add", new FAdd()),
+            new("Contains", new FContains()),
+            new("Get", new FGet()),
+            new("IndexOf", new FIndexOf()),
+            new("Join", new FJoin()),
+            new("Length", new FLength()),
+            new("Remove", new FRemove()),
+            new("RemoveAt", new FRemoveAt()),
+            new("Reverse", new FReverse()),
+            new("Set", new FSet()),
+            new("Slice", new FSlice()),
         });
 
         public readonly Type Member;

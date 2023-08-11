@@ -18,6 +18,11 @@ namespace UglyLang.Source.Values
             Value = new();
         }
 
+        public ListValue(Types.Type MemberType, List<Value> list) : base(new ListType(MemberType))
+        {
+            Value = list;
+        }
+
         public override bool IsTruthy()
         {
             return Value.Count > 0;
