@@ -38,6 +38,7 @@ Common types have a baked-in construction syntax.
 
 - `INT`. Numeric literals lacking a decimal point, or where the decimal portion is zero, construct an `INT` instance. For example, `13` or `-1.0`.
 - `FLOAT`. Numeric literals with a non-zero decimal portion construct a `FLOAT` instance. For example, `3.14` or `-2.7`.
+- `LIST`. The type of a list is assumed when the `type` is omitted in type constructors, with the type of the list equal to the type of the first member (`{ a: t, b: t, ... } => t[]`). All member types must be equal (no simply matching). For example, `{ 0, 1 }` is assumed `INT[]` but ` { 0, 1.1 }` is an error as `INT != FLOAT`. Note that this may be nested, e.g., `{{1},{1,1}}` is `INT[][]`.
 - `STRING`. Sequences of characters enclosed in quotation marks construct a `STRING` instance. For example `"Hello, world"` or `""`. Note that escape characters are **not** supported.
 - `TYPE`. Types may be constructed using braces, but to reference a type itself one uses `@` followed by the type name. For example, `@INT`. Note, that type literals **cannot** be parameterised, but it can reference parameters already bound in the context.
 

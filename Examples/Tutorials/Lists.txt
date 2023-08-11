@@ -18,7 +18,7 @@ PRINTLN: seq.0
 DO: seq.RemoveAt<1>
 DO: Show<seq>
 
-SET seq: INT[] { 1, 2, 3, 4, 5 }
+SET seq: { 1, 2, 3, 4, 5 } ; Type of INT[] is assumed
 PRINTLN: seq
 LOOP i: LT<i,seq.Length>
 	DO: seq.Set<i,MUL<seq.Get<i>,2> (INT)>
@@ -27,4 +27,3 @@ PRINTLN: seq
 PRINTLN: seq.Join<" ">
 PRINTLN: seq.Slice<1>
 PRINTLN: seq.Slice<1,4>
-

@@ -8,8 +8,6 @@ The following section contains ideas for the language.
 
 - Record a value's definition location
 
-- Add list constructors which omit the type, assuming that at least one member is provided. `INT[] {1,2} --> {1,2}`. This can be done as the types of the members can be inferred.
-
 - Add user-defined types. Example syntax:
 
 ```

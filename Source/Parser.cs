@@ -725,6 +725,7 @@ namespace UglyLang.Source
                     startPos = col;
                     while (col < expr.Length && !StopParsingCharRegex.IsMatch(expr[col].ToString())) col++;
                     string str = expr[startPos..col];
+                    bool isTypeless = str.Length == 0; // If typeless, assume list
 
                     // Eat whitespace
                     while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
@@ -732,7 +733,7 @@ namespace UglyLang.Source
                     // If there is a brace, it is a type constructor, else it is a symbol
                     if (col < expr.Length && expr[col] == '{')
                     {
-                        TypeConstructNode typeNode = new(new(str));
+                        TypeConstructNode typeNode = new(isTypeless ? null : new(str));
 
                         col++;
                         startPos = col;
@@ -743,6 +744,12 @@ namespace UglyLang.Source
                         // End?
                         if (col < expr.Length && expr[col] == '}')
                         {
+                            if (isTypeless) // We cannot determine the type as no arguments where provided
+                            {
+                                Error = new(lineNumber, colNumber + startPos, Error.Types.Syntax, "expected type name, got '{'");
+                                return (null, col);
+                            }
+
                             col++;
                         }
                         else
