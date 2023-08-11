@@ -25,7 +25,23 @@ namespace UglyLang.Source.Values
 
         public override Value? To(Types.Type type)
         {
-            if (type is ListType list && Type.Equals(list)) return this;
+            if (type is ListType list)
+            {
+                ListType lType = (ListType)Type;
+                if (Type.Equals(list))
+                    return this;
+
+                ListValue newList = new(list.Member);
+                foreach (Value value in Value)
+                {
+                    Value? newValue = value.To(list.Member);
+                    if (newValue == null)
+                        return null; // Cast error
+                    newList.Value.Add(newValue);
+                }
+                return newList;
+
+            }
             if (type is StringType)
             {
                 List<string> Members = new();

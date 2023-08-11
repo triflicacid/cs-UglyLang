@@ -40,7 +40,7 @@ namespace UglyLang.Source.AST.Keyword
                     Value? newValue = value.To(type);
                     if (newValue == null)
                     {
-                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", Symbol, type));
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} of type {1} to type {2}", Symbol, value.Type, type));
                         return Signal.ERROR;
                     }
                     else

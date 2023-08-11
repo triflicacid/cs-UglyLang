@@ -18,10 +18,14 @@ namespace UglyLang.Source.Types
         {
             new Property("Add", new FAdd()),
             new Property("Contains", new FContains()),
+            new Property("Get", new FGet()),
             new Property("IndexOf", new FIndexOf()),
+            new Property("Join", new FJoin()),
             new Property("Length", new FLength()),
             new Property("Remove", new FRemove()),
-            new Property("RemoveAt", new FRemoveAt())
+            new Property("RemoveAt", new FRemoveAt()),
+            new Property("Set", new FSet()),
+            new Property("Slice", new FSlice()),
         });
 
         public readonly Type Member;

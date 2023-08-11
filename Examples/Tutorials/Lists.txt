@@ -17,3 +17,14 @@ DO: Show<seq>
 PRINTLN: seq.0
 DO: seq.RemoveAt<1>
 DO: Show<seq>
+
+SET seq: INT[] { 1, 2, 3, 4, 5 }
+PRINTLN: seq
+LOOP i: LT<i,seq.Length>
+	DO: seq.Set<i,MUL<seq.Get<i>,2> (INT)>
+END
+PRINTLN: seq
+PRINTLN: seq.Join<" ">
+PRINTLN: seq.Slice<1>
+PRINTLN: seq.Slice<1,4>
+

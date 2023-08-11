@@ -58,7 +58,7 @@ namespace UglyLang.Source.AST
                     return null;
                 }
 
-                return value;
+                return newValue;
             }
             else
             {

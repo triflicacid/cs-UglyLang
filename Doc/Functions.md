@@ -14,53 +14,72 @@ Functions are called by referencing their name. If the function accepts argument
 
 ## Comparative Functions
 
-Note: all these functions, except `EQ`, have the signature `<FLOAT,FLOAT> -> INT`.
-
-- `EQ<a,b>` signature `<ANY,ANY> -> INT`
+- `EQ<a: ANY, b: ANY> -> INT`
 Returns a number, 0 or 1, depending on whether the given objects are equal.
-- `GT<a,b>`
+- `GT<a: FLOAT, b: FLOAT> -> INT`
 Returns a number, 0 or 1, depending on if a > b.
-- `GE<a,b>`
+- `GE<a: FLOAT, b: FLOAT> -> INT`
 Returns a number, 0 or 1, depending on if a >= b.
-- `LT<a,b>`
+- `LT<a: FLOAT, b: FLOAT> -> INT`
 Returns a number, 0 or 1, depending on if a < b.
-- `LE<a,b>`
+- `LE<a: FLOAT, b: FLOAT> -> INT`
 Returns a number, 0 or 1, depending on if a <= b.
+
+## List Functions
+
+These functions are all available on lists. The list type is assumed to be `a[]`.
+
+- `Add<e: a> -> EMPTY / Add<e: a, idx: INT> -> EMPTY`
+Either adds an item to the end of the list, or inserts an item at the given index.
+- `Contains<e: a> -> INT`
+Returns whether or not the list contains said item.
+- `Get<idx: INT> -> a`
+Returns item at the given index.
+- `IndexOf<e: a> -> INT`
+Returns the index of the given item in the list, or returns -1.
+- `Join<glue: STRING> -> STRING`
+Joins each item in the list by glue.
+- `Length -> INT`
+Returns the length of the list. Note that this is a function, not a property.
+- `Remove<e: a> -> INT`
+Removes *every* instance of the given item from the list. Returns how many items were removed.
+- `RemoveAt<idx: INT> -> INT`
+Removes the item at the given index, returns is this was done (i.e. if the index was in-bounds).
+- `Set<idx: INT, v: a> -> EMPTY`
+Sets the item at the given index to the given value.
+- `Slice<start: INT> -> a[] / Slice<start: INT, end: INT> -> a[]`
+Returns a slice of the list, starting from `start` andending either at the end of the list or at `end`.
 
 ## Logical Functions
 
-Note: all these functions have the signature `<ANY,ANY> -> INTEGER`.
-
-- `AND<a,b>`
+- `AND<a: ANY, b: ANY> -> INT`
 Returns true if a and b are both true.
-- `NOR<a>`
+- `NOT<a: ANY> -> INT`
 Returns the logical inverse of a.
-- `OR<a,b>`
+- `OR<a: ANY, b: ANY> -> INT`
 Returns true if a or b are true.
-- `XOR<a,b>`
+- `XOR<a: ANY, b: ANY> -> INT`
 Returns true if a or b are true, but not both.
 
 ## Mathematical Functions
 
-Note: all these functions have the signature `<FLOAT,FLOAT> -> FLOAT` or `<FLOAT> -> FLOAT` or `<INTEGER> -> INTEGER`.
-
-- `ADD<a,b>`
+- `ADD<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a + b.
-- `DIV<a,b>`
+- `DIV<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a / b.
-- `EXP<a,b>`
+- `EXP<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a ^ b.
-- `MOD<a,b>`
+- `MOD<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a % b.
-- `MUL<a,b>`
+- `MUL<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a * b.
-- `NEG<a>`
+- `NEG<a: FLOAT> -> FLOAT`
 Returns -a.
-- `PRED<a>`
+- `PRED<a: INT> -> INT`
 Returns the predecessor of integer a.
-- `SUB<a,b>`
+- `SUB<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a - b.
-- `SUCC<a>`
+- `SUCC<a: INT> -> INT`
 Returns the successor of integer a.
 
 ## Generic Functions
@@ -68,18 +87,17 @@ Returns the successor of integer a.
 - ~~`CAST<a,t>`
 Returns a casted to type t.
 Note that this is different to the CAST keyword.~~
-- `CONCAT<a,b>` signature `<ANY,ANY> -> STRING`
+- `CONCAT<a: ANY, b: ANY> -> STRING`
 Convert a and b to strings and concatenate them.
-- `ID<a>` signature `<a> -> a`
+- `ID<x: a> -> a`
 Returns the provided argument.
-- `LIST<a>` signature `LIST<TYPE> -> ANY[]`
+- `LIST<a: TYPE> -> ANY[]`
 Creates a new list instance containing type a.
-- `NEW<a>` signature `<TYPE> -> ANY`
+- `NEW<a: TYPE> -> ANY`
 Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
-- `RANDOM` / `RANDOM<max>` / `RANDOM<min,max>` signatures `(<> | <FLOAT> | <FLOAT,FLOAT>) -> FLOAT`
+- `RANDOM -> FLOAT` / `RANDOM<max: FLOAT> -> FLOAT` / `RANDOM<min: FLOAT, max: FLOAT> -> FLOAT`
 Returns random number in the range: [0,1) / [0,max) / [min,max).
-- `SLEEP<t>` signature `<FLOAT> -> EMPTY`
+- `SLEEP<t: FLOAT> -> EMPTY`
 Suspend execution for t milliseconds.
-- `TYPE<a>` signature `<ANY> -> STRING`
-Returns the type of a after evaluation as a string.
-
+- `TYPE<a: ANY> -> TYPE`
+Returns the type of a after evaluation.
