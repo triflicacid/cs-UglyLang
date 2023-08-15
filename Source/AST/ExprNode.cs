@@ -19,13 +19,11 @@ namespace UglyLang.Source.AST
 
         public ExprNode()
         {
-            Type = ASTNodeType.EXPR;
             Children = new();
         }
 
         public ExprNode(ASTNode child)
         {
-            Type = ASTNodeType.EXPR;
             Children = new() { child };
         }
 

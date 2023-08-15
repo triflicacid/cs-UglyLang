@@ -1,50 +1,51 @@
+
 # Keywords
+The following document will describe each keyword, split up into appropriate sections. The syntax of a line of source code is `<Keyword> <Before>: <After>`, with `Before` and `After` indicating what type of entity is expected in each position. Listed below are the possible values of the aforementioned fields:
+
+- none: nothing is expected in this position.
+- `expr`: an expression.
+- `symbol`: a symbol is expected (no member access).
+- `symbol_chain`: a symbol is expected. Member access is permitted, in which case the chain will reference a property.
+- `type`: a type name is expected.
 
 ## General
 
-- `CAST <symbol>: <type>`
-Change the type of the given variable.
-- `DO: <expr>`
-Execute the expression.
-- `END`
-Marks the end of a loop/function.
-- `ERROR` / `ERROR: <expr>`
-Raises an error with either a default message, or with a message equal to the evaluated expression.
-- `EXIT`
-Exits the current loop.
-- `FINISH` / `FINISH: <expr>`
-Exits the current function and rteurns the stated value, or none.
-- `INPUT <symbol>`
-Prompts the user for input, setting the symbol to the given value.
-- `LET <symbol>: <expr>`
-Creates a new symbol.
-- `PRINT: <expr>`
-Prints the given value to the screen. Subsequent invokations of `PRINT` will print on the same line.
-- `PRINTLN: <expr>`
-Prints the given value to the screen, followed by a newline.
-- `SET <symbol>: <expr>`
-Sets the given symbol to the given value. Note that the type of the variable and the type of `expr` must match.
-- `STOP`
-Halt execution of the program
+| Keyword | Before | After | Description |
+| - | - | - | - |
+| `CAST` | `symbol` | `type` | Change the type of the given symbol. |
+| `DO` | none | `expr` | Evaluate the given expression. |
+| `END` | none | none | Marks the end of the previous loop/function block. |
+| `ERROR` | none | none | Raises an error with a default message. |
+| `ERROR` | none | `expr` | Raises an error with the evaluated expression as the message. |
+| `EXIT` | none | none | Exits the current loop structure. |
+| `INPUT` | `symbol` | none | Prompts the user for input, storing the entered value in the given symbol. |
+| `LET` | `symbol` | `expr` | Creates a new symbol and initialises it to the given value. |
+| `PRINT` | none | `expr` | Prints the expression to the screen. Subsequent invocations of `PRINT[LN]` will print on the same line. |
+| `PRINTLN` | none | `expr` | Prints the expression to the screen, followed by a line break. |
+| `SET` | `symbol_chain` | `expr` | Sets the symbol/property to the new value. |
+| `STOP` | none | none | Terminates program execution |
 
 ## Conditional Statement
-
-- `IF: <expr>`
-Start a new conditional block. Execute the block if the condition is met.
-- `ELSEIF: <expr>`
-Used after an IF keyword to introduce a new conditional. Block will be executed if the condition is true and other if/elseif conditions in the block before it have not been executed.
-- `ELSE`
-Used after an `IF`/`ELSEIF` keyword. Contents will be executed if none of the chained if/elseif blocks were executed.
+| Keyword | Before | After | Description |
+| - | - | - | - |
+| `IF` | none | `expr` | Opens a new conditional block. The block is executed if the condition is met. |
+| `ELSEIF` | none | `expr` | Adds a new branch to the current conditional block. The branch will execute if the condition is met and no previous branch has been executed. |
+| `ELSE` | none | `expr` | Terminates a conditional block. This branch is executed if no other branch inside the block has been executed. |
 
 ## Loop Statement
 
-- `LOOP [<counter>]`
-Repeat the code block indefinitely.
-- `LOOP [<counter>]: <expr>`
-Loop the current block while the condition is truthy.
+| Keyword | Before | After | Description |
+| - | - | - | - |
+| `LOOP` | none* | none | Opens a loop block. The contents of said block are executed indefinitely. |
+| `LOOP` | none* | `expr`| Opens a loop block. The contents of said block are executed for as long as the condition is met. |
 
-For both: If the symbol is provided, this will be the loop counter. If already defined, it must be an int or float. It not, it will be defined as an int. It will be set to 0 initially and increment each iteration (after body execution).
+\* - `Before` may be a `symbol`. If the symbol is defined, it must be numeric, else it is defined as an `INT`. This symbol acts as a loop counter. It is initially set to zero and is incremented at the end of each iteration.
 
 ## Procedures/Functions
 
-Functions can be defined using the `DEF` keyword. See `Functions.md`.
+| Keyword | Before | After | Description |
+| - | - | - | - |
+| `DEF` | `symbol` | *custom* | Defines a new function with the given name. See `Functions.md` for further details. |
+| `FINISH` | none | none | Exits the current function, yielding the return value of `EMPTY`. |
+| `FINISH` | none | `expr` | Exits the current function, yielding the return value of the result of `expr`. |
+

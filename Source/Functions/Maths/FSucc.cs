@@ -34,7 +34,7 @@ namespace UglyLang.Source.Functions.Maths
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
             {
-                FloatValue value = new(((FloatValue)arguments[0]).Value + 1);
+                IntValue value = new(((IntValue)arguments[0]).Value + 1);
                 context.SetFunctionReturnValue(value);
                 return Signal.NONE;
             }

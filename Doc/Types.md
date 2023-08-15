@@ -77,3 +77,13 @@ END
 ```
 
 At the moment, this must be direct equality between types, not simply matching.
+
+# Properties
+Properties may exist on types, as well as on individual values which support it.
+
+Properties may be retrieved using the `.` syntax. It is important to note:
+
+- Some properties may be read-only, which prohibits updating a property's value.
+- Most types are rigid in their property types, meaning that changing the type of a defined property is not permitted.
+
+When functions are accessed using the `.` syntax, the function is wrapped in a function context. When a function context is called, the parent is passed in as the first argument. That is why the `LIST.Get` function has a signatue of `<a[],INT>` despite the fact that, visually, only one argument of type `INT` is passed.

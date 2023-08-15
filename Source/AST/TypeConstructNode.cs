@@ -17,7 +17,6 @@ namespace UglyLang.Source.AST
         {
             Construct = construct;
             Arguments = new();
-            Type = ASTNodeType.TYPE_CONSTRUCT;
         }
 
         public override Value? Evaluate(Context context)

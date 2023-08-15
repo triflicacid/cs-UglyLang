@@ -28,7 +28,7 @@ if (File.Exists(fullFilePath))
     if (p.Error != null)
     {
         Console.WriteLine("An error occured whilst parsing:");
-        Console.WriteLine(p.Error.ToString());
+        Console.WriteLine(p.GetErrorString());
     }
     else
     {

@@ -18,7 +18,6 @@ namespace UglyLang.Source.AST
 
         public TypeNode(UnresolvedType value)
         {
-            Type = ASTNodeType.TYPE;
             Value = value;
         }
 

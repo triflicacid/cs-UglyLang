@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
@@ -176,9 +178,6 @@ namespace UglyLang.Source
                             break;
                     }
 
-                    if (line[colNumber] == '>')
-                        colNumber++;
-
                     // Eat whitespace
                     while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
                         colNumber++;
@@ -217,7 +216,7 @@ namespace UglyLang.Source
 
                 // Fetch keyword information - this will tell us what to parse.
                 var keywordInfo = KeywordNode.KeywordDict[keyword];
-                string before = "", after = "";
+                ASTNode? before = null, after = null;
                 int beforeCol = 0, afterCol = 0;
 
                 if (keywordInfo != null)
@@ -229,28 +228,47 @@ namespace UglyLang.Source
                     {
                         beforeCol = colNumber;
 
-                        // Extract symbol
-                        while (colNumber < line.Length && !(char.IsWhiteSpace(line[colNumber]) || line[colNumber] == ':')) before += line[colNumber++];
-
-                        if (keywordInfo.Before == TriState.YES)
+                        if (keywordInfo.BeforeItem == ParseOptions.Before.SYMBOL)
                         {
-                            if (before.Length == 0)
+                            string symbolStr = ExtractSymbolFromString(line[colNumber..]);
+                            if (symbolStr.Length == 0)
                             {
-                                string got = colNumber == line.Length ? "end of line" : ":";
-                                Error = new(lineNumber, beforeCol, Error.Types.Syntax, string.Format("expected symbol, got {0}", got));
-                                break;
+                                if (keywordInfo.Before == TriState.YES)
+                                {
+                                    string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
+                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected symbol, got {0}", got));
+                                    break;
+                                }
                             }
-                            else if (!IsValidSymbol(before))
+                            else
                             {
-                                Error = new(lineNumber, beforeCol, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", before));
-                                break;
+                                SymbolNode symbolNode = new(symbolStr)
+                                {
+                                    LineNumber = lineNumber,
+                                    ColumnNumber = colNumber
+                                };
+                                colNumber += symbolStr.Length;
+
+                                before = symbolNode;
                             }
+                        }
+                        else if (keywordInfo.BeforeItem == ParseOptions.Before.CHAINED_SYMBOL)
+                        {
+                            (before, int endCol) = ParseSymbol(line[colNumber..], lineNumber, colNumber);
+                            if (before == null) break; // Propagate
+                            colNumber += endCol;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException(keywordInfo.BeforeItem.ToString());
                         }
                     }
 
 
                     if (keywordInfo.After == TriState.YES || keywordInfo.After == TriState.OPTIONAL)
                     {
+                        afterCol = colNumber;
+
                         // Colon?
                         if (colNumber >= line.Length)
                         {
@@ -263,18 +281,56 @@ namespace UglyLang.Source
                         else if (line[colNumber] == ':')
                         {
                             colNumber++;
-                            
-                            // Eat whitespace
-                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
 
+                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                                colNumber++;
                             afterCol = colNumber;
-                            after = line[colNumber..];
-                            colNumber = line.Length;
 
-                            if (after.Length == 0)
+                            if (keywordInfo.AfterItem == ParseOptions.After.EXPR) // : Expression
                             {
-                                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected expression, got end of line, after ':'");
-                                break;
+                                (ExprNode? exprNode, int endCol) = ParseExpression(line[colNumber..], lineNumber, colNumber);
+
+                                if (exprNode == null)
+                                {
+                                    if (keywordInfo.After == TriState.YES)
+                                    {
+                                        if (Error == null)
+                                        {
+                                            string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
+                                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected expression, got {0}", got));
+                                        }
+
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    after = exprNode;
+                                }
+
+                                colNumber += endCol;
+                            }
+                            else if (keywordInfo.AfterItem == ParseOptions.After.TYPE) // : Type
+                            {
+                                while (colNumber < line.Length && ParseNameChar.IsMatch(line[colNumber].ToString())) colNumber++;
+
+                                string s = line[afterCol..colNumber];
+                                if (s.Length == 0)
+                                {
+                                    if (keywordInfo.After == TriState.YES)
+                                    {
+                                        string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
+                                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected type, got '{0}'", got));
+                                    }
+                                    
+                                    break;
+                                }
+
+                                after = new SymbolNode(s);
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException(keywordInfo.AfterItem.ToString());
                             }
                         }
                         else
@@ -305,15 +361,12 @@ namespace UglyLang.Source
                 {
                     case "CAST":
                         {
-                            keywordNode = new CastKeywordNode(before, new UnresolvedType(after));
+                            keywordNode = new CastKeywordNode((AbstractSymbolNode)before, new UnresolvedType(((SymbolNode)after).Symbol));
                             break;
                         }
                     case "DO":
                         {
-                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                            if (expr == null) return; // Propagate error
-
-                            keywordNode = new DoKeywordNode(expr);
+                            keywordNode = new DoKeywordNode((ExprNode)after);
                             break;
                         }
                     case "ELSE":
@@ -355,11 +408,8 @@ namespace UglyLang.Source
 
                                 if (latest is IfKeywordNode ifKeyword && ifKeyword.Conditions.Count > 0)
                                 {
-                                    (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                                    if (expr == null) return; // Propagate error
-
                                     ifKeyword.Conditions.Last().Body = previousTree;
-                                    ifKeyword.Conditions.Add(new(expr));
+                                    ifKeyword.Conditions.Add(new((ExprNode)after));
                                 }
                                 else
                                 {
@@ -416,15 +466,7 @@ namespace UglyLang.Source
                         }
                     case "ERROR":
                         {
-                            ExprNode? expr = null;
-
-                            if (after.Length != 0)
-                            {
-                                (expr, _) = ParseExpression(after, lineNumber, afterCol);
-                                if (expr == null) return; // Propagate error
-                            }
-
-                            keywordNode = new ErrorKeywordNode(expr);
+                            keywordNode = new ErrorKeywordNode(after == null ? null : (ExprNode)after);
                             break;
                         }
                     case "EXIT":
@@ -447,40 +489,26 @@ namespace UglyLang.Source
                             }
                             else
                             {
-                                ExprNode? expr = null;
-                                if (after.Length > 0)
-                                {
-                                    (expr, _) = ParseExpression(after, lineNumber, afterCol);
-                                    if (expr == null)
-                                        return; // Propagate error
-                                }
-
-                                keywordNode = new FinishKeywordNode(expr);
+                                keywordNode = new FinishKeywordNode(after == null ? null : (ExprNode)after);
                             }
                             break;
                         }
                     case "IF":
                         {
-                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                            if (expr == null) return; // Propagate error
-
                             IfKeywordNode ifKeyword = new();
-                            ifKeyword.Conditions.Add(new(expr));
+                            ifKeyword.Conditions.Add(new((ExprNode)after));
                             keywordNode = ifKeyword;
                             createNewNest = true;
                             break;
                         }
                     case "INPUT":
                         {
-                            keywordNode = new InputKeywordNode(before);
+                            keywordNode = new InputKeywordNode(((SymbolNode)before).Symbol);
                             break;
                         }
                     case "LET":
                         {
-                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                            if (expr == null) return; // Propagate error
-
-                            keywordNode = new LetKeywordNode(before, expr);
+                            keywordNode = new LetKeywordNode(((SymbolNode)before).Symbol, (ExprNode)after);
                             break;
                         }
                     case "LOOP":
@@ -488,17 +516,15 @@ namespace UglyLang.Source
                             LoopKeywordNode loopKeyword = new();
 
                             // Is there a counter?
-                            if (before.Length > 0)
+                            if (before != null)
                             {
-                                loopKeyword.Counter = before;
+                                loopKeyword.Counter = ((SymbolNode)before).Symbol;
                             }
 
                             // Is there a condition?
-                            if (after.Length > 0)
+                            if (after != null)
                             {
-                                (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                                if (expr == null) return; // Propagate error
-                                loopKeyword.Condition = expr;
+                                loopKeyword.Condition = (ExprNode)after;
                             }
 
                             keywordNode = loopKeyword;
@@ -507,26 +533,17 @@ namespace UglyLang.Source
                         }
                     case "PRINT":
                         {
-                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                            if (expr == null) return; // Propagate error
-
-                            keywordNode = new PrintKeywordNode(expr, false);
+                            keywordNode = new PrintKeywordNode((ExprNode)after, false);
                             break;
                         }
                     case "PRINTLN":
                         {
-                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                            if (expr == null) return; // Propagate error
-
-                            keywordNode = new PrintKeywordNode(expr, true);
+                            keywordNode = new PrintKeywordNode((ExprNode)after, true);
                             break;
                         }
                     case "SET":
                         {
-                            (ExprNode? expr, _) = ParseExpression(after, lineNumber, afterCol);
-                            if (expr == null) return; // Propagate error
-
-                            keywordNode = new SetKeywordNode(before, expr);
+                            keywordNode = new SetKeywordNode((AbstractSymbolNode)before, (ExprNode)after);
                             break;
                         }
                     case "STOP":
@@ -778,7 +795,7 @@ namespace UglyLang.Source
 
         private static readonly Regex SymbolRegex = new("^[A-Za-z_\\$][A-Za-z_\\$0-9\\.]*$");
         private static readonly Regex LeadingSymbolCharRegex = new("[A-Za-z_\\$]");
-        private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9\\.]*)");
+        private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9]*)");
         private static readonly Regex NumberRegex = new("^(?<number>-?(0|[1-9]\\d*)(\\.\\d+)?)");
         private static readonly Regex ParseNameChar = new("[A-Za-z\\[\\]0-9]");
 
@@ -797,6 +814,157 @@ namespace UglyLang.Source
         private static string ExtractNumberFromString(string str) {
             Match match = NumberRegex.Match(str);
             return match.Groups["number"].Value;
+        }
+
+        private (List<ExprNode>?, int) ParseSymbolArguments(string str, int lineNumber = 0, int colNumber = 0)
+        {
+            int col = 0;
+            List<ExprNode> arguments = new();
+
+            // Were any arguments provided?
+            if (col < str.Length && str[col] == '<')
+            {
+                int argStartPos = col;
+                col++;
+
+                // Extract each argument, seperated by ','
+                while (col < str.Length)
+                {
+                    (ExprNode? argExpr, int end) = ParseExpression(str[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
+
+                    if (argExpr == null)
+                    {
+                        return (null, col);
+                    }
+                    else
+                    {
+                        col += end;
+                        arguments.Add(argExpr);
+                        if (str[col] == '>')
+                            break;
+                        col++;
+                    }
+                }
+
+                if (col == str.Length)
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
+                    return (null, col);
+                }
+                else if (str[col] == '>')
+                {
+                    col++;
+                }
+                else
+                {
+                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", str[col]));
+                    return (null, col);
+                }
+            }
+
+            return (arguments, col);
+        }
+
+        /// <summary>
+        /// Parse a symbol. Could be either a single symbol (SymbolNode), or an access chain (ChainedSymbolNode).
+        /// </summary>
+        private (AbstractSymbolNode?, int) ParseSymbol(string expr, int lineNumber = 0, int colNumber = 0)
+        {
+            int col = 0;
+
+            // Extract symbol
+            string symbol = ExtractSymbolFromString(expr);
+            if (symbol.Length == 0)
+            {
+                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected symbol, got " + expr[col]);
+                return (null, col);
+            }
+
+            // Create base symbol node
+            SymbolNode baseSymbolNode = new(symbol)
+            {
+                LineNumber = lineNumber,
+                ColumnNumber = colNumber + col
+            };
+            col += symbol.Length;
+
+
+            // Eat whitespace
+            while (col < expr.Length && char.IsWhiteSpace(expr[col]))
+                col++;
+
+            // Arguments?
+            (List<ExprNode>? arguments, int endCol) = ParseSymbolArguments(expr[col..], lineNumber, col + colNumber);
+            if (arguments == null)
+                return (null, col + endCol);
+
+            col += endCol;
+            baseSymbolNode.CallArguments = arguments;
+
+            // Property chain?
+            if (col < expr.Length && expr[col] == '.')
+            {
+                ChainedSymbolNode chainNode = new();
+                chainNode.Symbols.Add(baseSymbolNode);
+
+                while (col < expr.Length && expr[col] == '.')
+                {
+                    col++;
+                    SymbolNode childNode;
+
+                    // Numerical property?
+                    if (char.IsDigit(expr[col]) || (expr[col] == '-' && col + 1 < expr.Length && char.IsDigit(expr[col + 1])))
+                    {
+                        string str = ExtractNumberFromString(expr[col..]);
+                        childNode = new(str)
+                        {
+                            ColumnNumber = col + colNumber,
+                            LineNumber = lineNumber
+                        };
+
+                        col += str.Length;
+                    }
+                    else
+                    {
+                        // Extract symbol
+                        symbol = ExtractSymbolFromString(expr[col..]);
+                        if (symbol.Length == 0)
+                        {
+                            string got = col == expr.Length ? "end of line" : expr[col].ToString();
+                            Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected symbol, got " + got);
+                            return (null, col);
+                        }
+
+                        childNode = new(symbol)
+                        {
+                            ColumnNumber = col + colNumber,
+                            LineNumber = lineNumber
+                        };
+
+                        col += symbol.Length;
+
+                        // Eat whitespace
+                        while (col < expr.Length && char.IsWhiteSpace(expr[col]))
+                            col++;
+
+                        // Arguments?
+                        (arguments, endCol) = ParseSymbolArguments(expr[col..], lineNumber, col + colNumber);
+                        if (arguments == null)
+                            return (null, col + endCol);
+
+                        col += endCol;
+                        childNode.CallArguments = arguments;
+                    }
+
+                    chainNode.Symbols.Add(childNode);
+                }
+
+                return (chainNode, col);
+            }
+            else
+            {
+                return (baseSymbolNode, col);
+            }
         }
 
         /// <summary>
@@ -819,7 +987,7 @@ namespace UglyLang.Source
                     return (null, col);
                 }
 
-                ASTNode node;
+                ASTNode? node;
                 int startPos = col;
 
                 // Is a string literal?
@@ -883,7 +1051,6 @@ namespace UglyLang.Source
                 else
                 {
                     // Extract symbol, then extract all until whitespace
-                    string symbol = ExtractSymbolFromString(expr[col..]);
                     startPos = col;
                     while (col < expr.Length && ParseNameChar.IsMatch(expr[col].ToString())) col++;
                     string str = expr[startPos..col];
@@ -954,73 +1121,27 @@ namespace UglyLang.Source
                         node = typeNode;
                     }
 
-                    // Is it a symbol?
-                    else if (IsValidSymbol(symbol))
-                    {
-                        col = startPos + symbol.Length;
-                        SymbolNode symbolNode = new(symbol);
-                        symbolNode.ColumnNumber = startPos;
-
-                        // Were any arguments provided?
-                        if (col < expr.Length && expr[col] == '<')
-                        {
-                            int argStartPos = col;
-                            symbolNode.CallArguments = new();
-                            col++;
-
-                            // Extract each argument, seperated by ','
-                            while (col < expr.Length)
-                            {
-                                (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
-
-                                if (argExpr == null)
-                                {
-                                    return (null, col);
-                                }
-                                else
-                                {
-                                    col += end;
-                                    symbolNode.CallArguments.Add(argExpr);
-                                    if (expr[col] == '>') break;
-                                    col++;
-                                }
-                            }
-
-                            if (col == expr.Length)
-                            {
-                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
-                                return (null, col);
-                            }
-                            else if (expr[col] == '>')
-                            {
-                                col++;
-                            }
-                            else
-                            {
-                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", expr[col]));
-                                return (null, col);
-                            }
-                        }
-
-                        node = symbolNode;
-                    }
-
                     else
                     {
-                        Error = new(lineNumber, colNumber + startPos, Error.Types.Syntax, string.Format("invalid syntax: '{0}'", expr[startPos]));
-                        return (null, col);
+                        (node, int endCol) = ParseSymbol(expr[startPos..], lineNumber, startPos);
+                        if (node == null) return (null, endCol);
+                        col = startPos + endCol;
                     }
                 }
 
                 // Eat whitespace
                 while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
 
-                node.LineNumber = lineNumber;
-                node.ColumnNumber += colNumber;
-                exprNode.Children.Add(node);
+                if (node != null)
+                {
+                    node.LineNumber = lineNumber;
+                    node.ColumnNumber += colNumber;
+                    exprNode.Children.Add(node);
+                }
 
                 // Stop if: Reached the end of the line? Comment? Bracket? Met and ending character?
-                if (col == expr.Length || col < expr.Length && (expr[col] == '(' || expr[col] == CommentChar || (endChar != null && endChar.Contains(expr[col])))) break;
+                if (expr[col] == CommentChar) return (exprNode, expr.Length);
+                if (col == expr.Length || col < expr.Length && (expr[col] == '(' || (endChar != null && endChar.Contains(expr[col])))) break;
             }
 
             // Type casting?
@@ -1120,6 +1241,36 @@ namespace UglyLang.Source
             {
                 return ("", -1);
             }
+        }
+
+        public string GetErrorString()
+        {
+            return Error == null ? "" : ErrorToString(Error);
+        }
+
+        private static readonly Regex NonWhitespaceRegex = new("[^\\s]");
+
+        /// <summary>
+        /// Given an error, return the error as a string
+        /// </summary>
+        private string ErrorToString(Error error)
+        {
+            string str = error.ToString() + Environment.NewLine;
+
+            string[] lines = Source.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            string line = lines[error.LineNumber];
+            int origLength = line.Length;
+            line = line.TrimStart();
+            string lineNumberS = (error.LineNumber + 1).ToString();
+            int colIdx = error.ColumnNumber - (origLength - line.Length);
+
+            str += Environment.NewLine + (error.LineNumber + 1) + " | " + line;
+            string pre = new(' ', lineNumberS.Length);
+            string before = NonWhitespaceRegex.Replace(line[..colIdx], " ");
+            string after = NonWhitespaceRegex.Replace(line[colIdx..], " ");
+            str += Environment.NewLine + pre + "   " + before + "^" + after;
+
+            return str;
         }
     }
 }

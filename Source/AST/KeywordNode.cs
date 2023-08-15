@@ -12,11 +12,6 @@ namespace UglyLang.Source.AST
     /// </summary>
     public abstract class KeywordNode : ASTNode
     {
-        public KeywordNode()
-        {
-            Type = ASTNodeType.KEYWORD;
-        }
-
         public override Value Evaluate(Context context)
         {
             throw new NotImplementedException();
@@ -26,35 +21,39 @@ namespace UglyLang.Source.AST
         {
             /// Does the keyword expect something immediatley after it?
             public readonly TriState Before;
+            public readonly ParseOptions.Before BeforeItem;
 
             /// Does the keyword expect a colon and something after it?
             public readonly TriState After;
+            public readonly ParseOptions.After AfterItem;
 
-            public KeywordInfo(TriState before, TriState after)
+            public KeywordInfo(TriState before, ParseOptions.Before beforeItem, TriState after, ParseOptions.After afterItem)
             {
                 After = after;
                 Before = before;
+                BeforeItem = beforeItem;
+                AfterItem = afterItem;
             }
         }
 
         public static readonly Dictionary<string, KeywordInfo> KeywordDict = new() {
-            { "CAST", new(TriState.YES, TriState.YES) },
-            { "DEF", new(TriState.YES, TriState.NO) },
-            { "DO", new(TriState.NO, TriState.YES) },
-            { "ELSE", new(TriState.NO, TriState.NO) },
-            { "ELSEIF", new(TriState.NO, TriState.YES) },
-            { "END", new(TriState.NO, TriState.NO) },
-            { "ERROR", new(TriState.NO, TriState.OPTIONAL) },
-            { "EXIT", new(TriState.NO, TriState.NO) },
-            { "FINISH", new(TriState.NO, TriState.OPTIONAL) },
-            { "IF", new(TriState.NO, TriState.YES) },
-            { "INPUT", new(TriState.YES, TriState.NO) },
-            { "LET", new(TriState.YES, TriState.YES) },
-            { "LOOP", new(TriState.OPTIONAL, TriState.OPTIONAL) },
-            { "PRINT", new(TriState.NO, TriState.YES) },
-            { "PRINTLN", new(TriState.NO, TriState.YES) },
-            { "SET", new(TriState.YES, TriState.YES) },
-            { "STOP", new(TriState.NO, TriState.NO) },
+            { "CAST", new(TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.YES, ParseOptions.After.TYPE) },
+            { "DEF", new(TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.EXPR) },
+            { "DO", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },
+            { "ELSE", new(TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE) },
+            { "ELSEIF", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },
+            { "END", new(TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE) },
+            { "ERROR", new(TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR) },
+            { "EXIT", new(TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE) },
+            { "FINISH", new(TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR) },
+            { "IF", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },
+            { "INPUT", new(TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.EXPR) },
+            { "LET", new(TriState.YES, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.EXPR) },
+            { "LOOP", new(TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.OPTIONAL, ParseOptions.After.EXPR) },
+            { "PRINT", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },
+            { "PRINTLN", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },
+            { "SET", new(TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.YES, ParseOptions.After.EXPR) },
+            { "STOP", new(TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE) },
         };
     }
 }

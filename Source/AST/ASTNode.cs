@@ -13,7 +13,6 @@ namespace UglyLang.Source.AST
     /// </summary>
     public abstract class ASTNode
     {
-        public ASTNodeType Type;
         public int LineNumber = 0;
         public int ColumnNumber = 0;
 
@@ -25,18 +24,5 @@ namespace UglyLang.Source.AST
         {
             return Signal.NONE;
         }
-    }
-
-    /// <summary>
-    /// Enumeration listing all the possible types of AST Node
-    /// </summary>
-    public enum ASTNodeType
-    {
-        KEYWORD,
-        VALUE,
-        SYMBOL,
-        EXPR,
-        TYPE,
-        TYPE_CONSTRUCT,
     }
 }

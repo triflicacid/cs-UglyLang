@@ -8,7 +8,9 @@ The following section contains ideas for the language.
 
 - Record a value's definition location
 
-- More flexible property access. At the moment, names are parsed which include periods which are then recognised as properties. Propse adding a MemberAccessNode which has a parent Symbol and a child Symbol.
+- ~~More flexible property access. At the moment, names are parsed which include periods which are then recognised as properties.~~
+	- Propose suitable functionality for `INPUT` which uses `AbstractSymbolNode.SetValue`.
+	- Propose suitable functionality with the `LET` keyword to define new properties (add methods `AllowPropertyCreation` and `CreateProperty` to the base type class).
 
 - Add user-defined types. Example syntax:
 

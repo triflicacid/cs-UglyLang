@@ -17,7 +17,6 @@ namespace UglyLang.Source.AST
 
         public ValueNode(Value value)
         {
-            Type = ASTNodeType.VALUE;
             Value = value;
         }
 

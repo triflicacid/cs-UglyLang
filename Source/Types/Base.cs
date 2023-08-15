@@ -77,6 +77,14 @@ namespace UglyLang.Source.Types
             return new();
         }
 
+        /// <summary>
+        /// Should this type allow its properties to change type? By default, this is true.
+        /// </summary>
+        public virtual bool HasRigidPropertyTypes()
+        {
+            return true;
+        }
+
         public static readonly Type AnyT = new Any();
         public static readonly Type EmptyT = new EmptyType();
         public static readonly Type IntT = new IntType();
@@ -86,55 +94,6 @@ namespace UglyLang.Source.Types
         public static Type List(Type t)
         {
             return new ListType(t);
-        }
-    }
-
-    public class Property
-    {
-        private string _Name;
-        private ISymbolValue _Value;
-        public bool IsReadonly = false;
-
-        public Property(string name, ISymbolValue value, bool isReadonly = false)
-        {
-            _Name = name;
-            _Value = value;
-            IsReadonly = isReadonly;
-        }
-
-        public string GetName()
-        {
-            return _Name;
-        }
-
-        public ISymbolValue GetValue()
-        {
-            return _Value;
-        }
-
-        /// <summary>
-        /// Set the value of said property. Return boolean success. Note, that we do not check if the types are compatibe; this is to be done elsewhere.
-        /// </summary>
-        public bool SetValue(ISymbolValue value)
-        {
-            if (IsReadonly)
-            {
-                return false;
-            }
-
-            _Value = value;
-            return true;
-        }
-
-        public static Dictionary<string, Property> CreateDictionary(Property[] properties)
-        {
-            Dictionary<string, Property> dict = new();
-            foreach (Property property in properties)
-            {
-                dict.Add(property.GetName(), property);
-            }
-
-            return dict;
         }
     }
 }

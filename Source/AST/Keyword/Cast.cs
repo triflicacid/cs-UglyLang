@@ -14,10 +14,10 @@ namespace UglyLang.Source.AST.Keyword
     /// </summary>
     public class CastKeywordNode : KeywordNode
     {
-        public readonly string Symbol;
+        public readonly AbstractSymbolNode Symbol;
         public readonly UnresolvedType CastType;
 
-        public CastKeywordNode(string symbol, UnresolvedType type)
+        public CastKeywordNode(AbstractSymbolNode symbol, UnresolvedType type)
         {
             Symbol = symbol;
             CastType = type;
@@ -25,6 +25,16 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context)
         {
+            Types.Type? type = CastType.Resolve(context);
+            if (type == null)
+            {
+                context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", CastType));
+                return Signal.ERROR;
+            }
+
+            return Symbol.CastValue(context, type) ? Signal.NONE : Signal.ERROR;
+
+            /*
             if (context.HasVariable(Symbol))
             {
                 Types.Type? type = CastType.Resolve(context);
@@ -60,6 +70,7 @@ namespace UglyLang.Source.AST.Keyword
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, Symbol);
                 return Signal.ERROR;
             }
+            */
         }
     }
 }
