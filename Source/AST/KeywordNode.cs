@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Values;
+﻿using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST
 {
@@ -47,7 +42,7 @@ namespace UglyLang.Source.AST
             { "EXIT", new(TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE) },
             { "FINISH", new(TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR) },
             { "IF", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },
-            { "INPUT", new(TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.EXPR) },
+            { "INPUT", new(TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.NO, ParseOptions.After.EXPR) },
             { "LET", new(TriState.YES, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.EXPR) },
             { "LOOP", new(TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.OPTIONAL, ParseOptions.After.EXPR) },
             { "PRINT", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },

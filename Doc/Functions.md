@@ -34,8 +34,8 @@ Note that this is different to the CAST keyword.~~
 Convert a and b to strings and concatenate them.
 - `ID<x: a> -> a`
 Returns the provided argument.
-- `LIST<a: TYPE> -> ANY[]`
-Creates a new list instance containing type a.
+- `LIST<a: TYPE, [len: INT]> -> ANY[]`
+Creates a new list instance containing type a. If a length is provided, populates the list with instances of type (must be able to be condtructed without any arguments).
 - `NEW<a: TYPE> -> ANY`
 Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
 - `RANDOM -> FLOAT` / `RANDOM<max: FLOAT> -> FLOAT` / `RANDOM<min: FLOAT, max: FLOAT> -> FLOAT`

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source;
-using UglyLang.Source.Values;
-
-namespace UglyLang.Source.AST.Keyword
+﻿namespace UglyLang.Source.AST.Keyword
 {
     /// <summary>
     /// Evaluate an expression and throw away the result

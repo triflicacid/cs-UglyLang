@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions
@@ -74,7 +69,7 @@ namespace UglyLang.Source.Functions
         public Signal Call(Context context, List<Value> arguments)
         {
             List<Types.Type> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
-            
+
             FunctionOverload? chosenOverload = null;
             TypeParameterCollection typeParameters = new();
 

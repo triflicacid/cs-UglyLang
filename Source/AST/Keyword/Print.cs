@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source;
-using UglyLang.Source.Values;
+﻿using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST.Keyword
 {
@@ -37,7 +31,7 @@ namespace UglyLang.Source.AST.Keyword
             {
                 Console.Write(str);
             }
-            
+
             return Signal.NONE;
         }
     }

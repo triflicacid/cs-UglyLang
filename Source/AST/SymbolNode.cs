@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using UglyLang.Source;
-using UglyLang.Source.Functions;
+﻿using UglyLang.Source.Functions;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST
@@ -21,9 +14,9 @@ namespace UglyLang.Source.AST
         public abstract string GetSymbolString();
 
         /// <summary>
-        /// Attempt to set this symbol to the given value in the given context. Return whether this was a success - see context.Error.
+        /// Attempt to set this symbol to the given value in the given context. Cast only if the types match, or if forceCast is truthy. Return whether this was a success - see context.Error.
         /// </summary>
-        public abstract bool SetValue(Context context, Value value);
+        public abstract bool SetValue(Context context, Value value, bool forceCast = false);
 
         /// <summary>
         /// Attempt to cast this symbol to the given type. Return whether this was a success - see context.Error.
@@ -124,7 +117,7 @@ namespace UglyLang.Source.AST
             }
         }
 
-        public override bool SetValue(Context context, Value value)
+        public override bool SetValue(Context context, Value value, bool forceCast = false)
         {
             // Make sure that the types line up
             if (context.HasVariable(Symbol))
@@ -133,7 +126,7 @@ namespace UglyLang.Source.AST
 
                 if (oldSymbolValue is Value oldValue)
                 {
-                    if (oldValue.Type.DoesMatch(value.Type))
+                    if (forceCast || oldValue.Type.DoesMatch(value.Type))
                     {
                         Value? newValue = value.To(oldValue.Type);
                         if (newValue == null)

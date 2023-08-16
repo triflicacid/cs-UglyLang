@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UglyLang.Source.Types
+﻿namespace UglyLang.Source.Types
 {
     public class TypeParameter : Type
     {

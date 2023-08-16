@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Numerics;
-using System.Text;
+﻿using System.Data.Common;
 using System.Text.RegularExpressions;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
@@ -168,10 +163,14 @@ namespace UglyLang.Source
 
         private string GetSourceLine(string filename, int lineNumber)
         {
-            if (!Sources.ContainsKey(filename))
-                return $"({filename} line {lineNumber})";
-
-            return Sources[filename][lineNumber];
+            try
+            {
+                return Sources[filename][lineNumber];
+            }
+            catch
+            {
+                return $"({filename} line {lineNumber + 1})";
+            }
         }
 
         private string GetSourceLine(int stackIndex, int lineNumber)

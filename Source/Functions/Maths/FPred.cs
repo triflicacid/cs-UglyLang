@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.Maths
@@ -11,7 +6,7 @@ namespace UglyLang.Source.Functions.Maths
     /// <summary>
     /// Return the successor of the given integer
     /// </summary>
-    public class FPred: Function, IDefinedGlobally
+    public class FPred : Function, IDefinedGlobally
     {
         public FPred()
         {
@@ -26,7 +21,7 @@ namespace UglyLang.Source.Functions.Maths
 
         internal class OverloadOne : FunctionOverload
         {
-            private readonly static Types.Type[] Arguments = new Types.Type[] { Types.Type.IntT};
+            private static readonly Types.Type[] Arguments = new Types.Type[] { Types.Type.IntT };
 
             public OverloadOne()
             : base(Arguments, Types.Type.IntT)

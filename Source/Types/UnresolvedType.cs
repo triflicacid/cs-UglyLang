@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Values;
-
-namespace UglyLang.Source.Types
+﻿namespace UglyLang.Source.Types
 {
     /// <summary>
     /// Wraps a string which will be resolved to a type

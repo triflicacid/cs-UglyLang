@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UglyLang.Source.Types
+﻿namespace UglyLang.Source.Types
 {
     /// <summary>
     /// A loose type wrapper representing any type

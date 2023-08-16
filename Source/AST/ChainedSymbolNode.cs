@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Functions;
+﻿using UglyLang.Source.Functions;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
@@ -21,6 +15,10 @@ namespace UglyLang.Source.AST
         {
             return string.Join('.', Symbols.Select(s => s.GetSymbolString()));
         }
+
+        // Override position properties
+        public new int LineNumber => Symbols[0].LineNumber;
+        public new int ColumnNumber => Symbols[0].ColumnNumber;
 
         /// <summary>
         /// Get the values of this symbol chain. Return (value, valueProperty, valuesParent), or null if error (see context.Error).
@@ -135,11 +133,11 @@ namespace UglyLang.Source.AST
 
             if (value is Value val)
                 return val;
-            
+
             throw new InvalidOperationException(); // Should not happen.
         }
 
-        public override bool SetValue(Context context, Value value)
+        public override bool SetValue(Context context, Value value, bool forceCast = false)
         {
             var values = RetrieveValues(context);
             if (values == null) return false; // Propagate
@@ -157,9 +155,9 @@ namespace UglyLang.Source.AST
             }
 
             // Make sure that the types line up
-            if (oldChild is Value oldValue)
+            if (property.GetValue() is Value && oldChild is Value oldValue)
             {
-                if (oldValue.Type.DoesMatch(value.Type))
+                if (forceCast || oldValue.Type.DoesMatch(value.Type))
                 {
                     Value? newValue = value.To(oldValue.Type);
                     if (newValue == null)

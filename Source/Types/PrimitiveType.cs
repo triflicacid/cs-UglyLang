@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Functions.String;
+﻿using UglyLang.Source.Functions.String;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -63,7 +57,7 @@ namespace UglyLang.Source.Types
         {
             if (args.Count == 1)
             {
-                IntValue? value = (IntValue?) args[0].To(this);
+                IntValue? value = (IntValue?)args[0].To(this);
                 if (value == null)
                 {
                     context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", args[0].Type, this));

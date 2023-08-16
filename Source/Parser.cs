@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.Design;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+﻿using System.Text.RegularExpressions;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
 using UglyLang.Source.Types;
@@ -59,7 +50,7 @@ namespace UglyLang.Source
                     }
                     continue;
                 }
-                else if (line[colNumber] == BlockCommentChar && colNumber + 1 < line.Length && line[colNumber + 1] == CommentChar)
+                else if (inComment && line[colNumber] == BlockCommentChar && colNumber + 1 < line.Length && line[colNumber + 1] == CommentChar)
                 {
                     inComment = false;
                     continue;
@@ -72,7 +63,7 @@ namespace UglyLang.Source
                 // Extract keyword
                 string keyword = "";
                 int keywordCol = colNumber;
-            
+
                 while (colNumber < line.Length && char.IsLetter(line[colNumber]))
                 {
                     keyword += line[colNumber++];
@@ -99,7 +90,7 @@ namespace UglyLang.Source
                     // Extract name
                     int beforeColNumber = colNumber;
                     while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber])) colNumber++;
-                    string functionName = line[beforeColNumber .. colNumber];
+                    string functionName = line[beforeColNumber..colNumber];
 
                     if (!IsValidSymbol(functionName))
                     {
@@ -322,7 +313,7 @@ namespace UglyLang.Source
                                         string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
                                         Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected type, got '{0}'", got));
                                     }
-                                    
+
                                     break;
                                 }
 
@@ -503,7 +494,7 @@ namespace UglyLang.Source
                         }
                     case "INPUT":
                         {
-                            keywordNode = new InputKeywordNode(((SymbolNode)before).Symbol);
+                            keywordNode = new InputKeywordNode((AbstractSymbolNode)before);
                             break;
                         }
                     case "LET":
@@ -796,7 +787,8 @@ namespace UglyLang.Source
         private static readonly Regex SymbolRegex = new("^[A-Za-z_\\$][A-Za-z_\\$0-9\\.]*$");
         private static readonly Regex LeadingSymbolCharRegex = new("[A-Za-z_\\$]");
         private static readonly Regex LeadingSymbolRegex = new("^(?<symbol>[A-Za-z_\\$][A-Za-z_\\$0-9]*)");
-        private static readonly Regex NumberRegex = new("^(?<number>-?(0|[1-9]\\d*)(\\.\\d+)?)");
+        private static readonly Regex FloatRegex = new("^(?<number>-?(0|[1-9]\\d*)(\\.\\d+)?)");
+        private static readonly Regex IntegerRegex = new("^(?<integer>-?(0|[1-9]\\d*))");
         private static readonly Regex ParseNameChar = new("[A-Za-z\\[\\]0-9]");
 
         /// <summary>
@@ -809,11 +801,21 @@ namespace UglyLang.Source
         }
 
         /// <summary>
-        /// Extract a number from a string
+        /// Extract a decimal number from a string
         /// </summary>
-        private static string ExtractNumberFromString(string str) {
-            Match match = NumberRegex.Match(str);
+        private static string ExtractFloatFromString(string str)
+        {
+            Match match = FloatRegex.Match(str);
             return match.Groups["number"].Value;
+        }
+
+        /// <summary>
+        /// Extract an integer from a string
+        /// </summary>
+        private static string ExtractIntegerFromString(string str)
+        {
+            Match match = IntegerRegex.Match(str);
+            return match.Groups["integer"].Value;
         }
 
         private (List<ExprNode>?, int) ParseSymbolArguments(string str, int lineNumber = 0, int colNumber = 0)
@@ -886,6 +888,7 @@ namespace UglyLang.Source
                 LineNumber = lineNumber,
                 ColumnNumber = colNumber + col
             };
+
             col += symbol.Length;
 
 
@@ -915,7 +918,7 @@ namespace UglyLang.Source
                     // Numerical property?
                     if (char.IsDigit(expr[col]) || (expr[col] == '-' && col + 1 < expr.Length && char.IsDigit(expr[col + 1])))
                     {
-                        string str = ExtractNumberFromString(expr[col..]);
+                        string str = ExtractIntegerFromString(expr[col..]);
                         childNode = new(str)
                         {
                             ColumnNumber = col + colNumber,
@@ -1002,14 +1005,14 @@ namespace UglyLang.Source
                     }
 
                     node = new ValueNode(new StringValue(str));
-                    node.ColumnNumber = col;
+                    node.ColumnNumber = colNumber + col;
                     col += end + 1;
                 }
 
                 // Is a number?
                 else if (char.IsDigit(expr[col]) || (expr[col] == '-' && col + 1 < expr.Length && char.IsDigit(expr[col + 1])))
                 {
-                    string str = ExtractNumberFromString(expr[col..]);
+                    string str = ExtractFloatFromString(expr[col..]);
                     double number = Convert.ToDouble(str);
                     Value value;
 
@@ -1023,7 +1026,7 @@ namespace UglyLang.Source
                     }
 
                     node = new ValueNode(value);
-                    node.ColumnNumber = col;
+                    node.ColumnNumber = colNumber + col;
                     col += str.Length;
                 }
 
@@ -1044,7 +1047,7 @@ namespace UglyLang.Source
 
                     string s = expr[startPos..col];
                     node = new TypeNode(new(s));
-                    node.ColumnNumber = startPos;
+                    node.ColumnNumber = colNumber + startPos;
                 }
 
                 // Extract the next word and proceed from there
@@ -1063,7 +1066,7 @@ namespace UglyLang.Source
                     if (col < expr.Length && expr[col] == '{')
                     {
                         TypeConstructNode typeNode = new(isTypeless ? null : new(str));
-                        typeNode.ColumnNumber = startPos;
+                        typeNode.ColumnNumber = colNumber + startPos;
 
                         col++;
                         startPos = col;
@@ -1113,7 +1116,7 @@ namespace UglyLang.Source
                             }
                             else
                             {
-                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}', got {0}", expr[col]));
+                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}}', got {0}", expr[col]));
                                 return (null, col);
                             }
                         }
@@ -1123,7 +1126,7 @@ namespace UglyLang.Source
 
                     else
                     {
-                        (node, int endCol) = ParseSymbol(expr[startPos..], lineNumber, startPos);
+                        (node, int endCol) = ParseSymbol(expr[startPos..], lineNumber, colNumber + startPos);
                         if (node == null) return (null, endCol);
                         col = startPos + endCol;
                     }
@@ -1135,13 +1138,12 @@ namespace UglyLang.Source
                 if (node != null)
                 {
                     node.LineNumber = lineNumber;
-                    node.ColumnNumber += colNumber;
                     exprNode.Children.Add(node);
                 }
 
                 // Stop if: Reached the end of the line? Comment? Bracket? Met and ending character?
-                if (expr[col] == CommentChar) return (exprNode, expr.Length);
                 if (col == expr.Length || col < expr.Length && (expr[col] == '(' || (endChar != null && endChar.Contains(expr[col])))) break;
+                if (expr[col] == CommentChar) return (exprNode, expr.Length);
             }
 
             // Type casting?

@@ -12,13 +12,13 @@ The following document will describe each keyword, split up into appropriate sec
 
 | Keyword | Before | After | Description |
 | - | - | - | - |
-| `CAST` | `symbol` | `type` | Change the type of the given symbol. |
+| `CAST` | `symbol_chain` | `type` | Change the type of the given symbol/property. |
 | `DO` | none | `expr` | Evaluate the given expression. |
 | `END` | none | none | Marks the end of the previous loop/function block. |
 | `ERROR` | none | none | Raises an error with a default message. |
 | `ERROR` | none | `expr` | Raises an error with the evaluated expression as the message. |
 | `EXIT` | none | none | Exits the current loop structure. |
-| `INPUT` | `symbol` | none | Prompts the user for input, storing the entered value in the given symbol. |
+| `INPUT` | `symbol_chain` | none | Prompts the user for input, storing the entered value in the given symbol/property. |
 | `LET` | `symbol` | `expr` | Creates a new symbol and initialises it to the given value. |
 | `PRINT` | none | `expr` | Prints the expression to the screen. Subsequent invocations of `PRINT[LN]` will print on the same line. |
 | `PRINTLN` | none | `expr` | Prints the expression to the screen, followed by a line break. |

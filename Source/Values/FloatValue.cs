@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 
 namespace UglyLang.Source.Values
 {
@@ -36,7 +30,7 @@ namespace UglyLang.Source.Values
         public override Value? To(Types.Type type)
         {
             if (type is Any or FloatType) return new FloatValue(Value);
-            if (type is IntType) return new IntValue((long) Value);
+            if (type is IntType) return new IntValue((long)Value);
             if (type is StringType) return new StringValue(Value.ToString());
             return null;
         }

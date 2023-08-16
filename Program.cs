@@ -40,7 +40,7 @@ if (File.Exists(fullFilePath))
         Signal sig = p.AST.Evaluate(ctx);
         watch.Stop();
         long executionTime = watch.ElapsedMilliseconds;
-        Console.WriteLine(string.Format("Program terminated with signal {0} ({1}) after {2} ms ({3} ms parsing, {4} ms execution)", (int) sig, sig.ToString(), parsedTime + executionTime, parsedTime, executionTime));
+        Console.WriteLine(string.Format("Program terminated with signal {0} ({1}) after {2} ms ({3} ms parsing, {4} ms execution)", (int)sig, sig.ToString(), parsedTime + executionTime, parsedTime, executionTime));
         if (ctx.Error != null)
         {
             Console.WriteLine(ctx.GetErrorString());

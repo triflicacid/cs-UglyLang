@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Functions.List
@@ -25,7 +19,7 @@ namespace UglyLang.Source.Functions.List
 
         internal class OverloadOne : FunctionOverload
         {
-            private readonly static Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT };
+            private static readonly Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT };
 
             public OverloadOne()
             : base(Arguments, List)
@@ -49,7 +43,7 @@ namespace UglyLang.Source.Functions.List
 
         internal class OverloadTwo : FunctionOverload
         {
-            private readonly static Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT, Types.Type.IntT };
+            private static readonly Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT, Types.Type.IntT };
 
             public OverloadTwo()
             : base(Arguments, List)
