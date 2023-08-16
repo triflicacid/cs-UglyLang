@@ -36,13 +36,14 @@ namespace UglyLang.Source.Functions
                 if (!type.CanConstruct())
                 {
                     context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
-                    return Signal.NONE;
+                    return Signal.ERROR;
                 }
 
                 Value? value = type.ConstructNoArgs(context);
                 if (value == null)
                 {
                     context.Error = new(0, 0, Error.Types.Type, string.Format("type constructor {0} requires arguments", type));
+                    return Signal.ERROR;
                 }
                 else
                 {

@@ -8,9 +8,6 @@ The following section contains ideas for the language.
 
 - Record a value's definition location
 
-- ~~More flexible property access. At the moment, names are parsed which include periods which are then recognised as properties.~~
-	- Propose suitable functionality with the `LET` keyword to define new properties (add methods `AllowPropertyCreation` and `CreateProperty` to the base type class).
-
 - Add user-defined types. Example syntax:
 
 ```
@@ -27,9 +24,13 @@ LET joe: Person { "Joe", 34 }
 PRINTLN: joe.Say<"Hello, world"> ; => Joe says 'Hello, world'.
 PRINTLN: joe.age ; => 34
 SET joe.age: SUCC<joe.age> ; joe.age = 35
-
 ```
 
 The arguments of the constructor would correspond to each `FIELD` field, in order of definition.
 
 - Type constraints: add option to allow an instance of a type. Either make this the behaviour by default (equl to or instance of), or add a new symbol such as `'`.
+
+- Allow multi-word keywords (key*phrases*)
+	- Add keyphrase `LOOP OVER <symbol>: <symbol>` where the first symbol is iterated over, each member being set to the second symbol.
+
+- Create a basic text editor for this language with syntax highlighting. Either in a new repository or in this repository. If it is the latter, propose placing them in `Language` and `Editor` directories.

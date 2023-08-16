@@ -1,0 +1,14 @@
+DEF About: <n: MAP[a]>
+	PRINTLN: "Map with " n.Size " " a " values"
+END
+
+LET names: NEW<@MAP[STRING]>
+DO: About<names>
+PRINTLN: names.Has<"developer">
+DO: names.Set<"developer", "Sandra">
+DO: About<names>
+PRINTLN: names.Get<"developer">
+PRINTLN: names
+PRINTLN: "Keys: " names.Keys
+PRINTLN: names.Delete<"developer">
+PRINTLN: names

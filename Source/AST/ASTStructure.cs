@@ -12,7 +12,7 @@
         public ASTNode PeekNode()
         {
             if (roots.Count == 0) throw new NullReferenceException();
-            return roots[roots.Count - 1];
+            return roots[^1];
         }
 
         public Signal Evaluate(Context context)

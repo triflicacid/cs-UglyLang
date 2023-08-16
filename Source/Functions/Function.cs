@@ -127,7 +127,7 @@ namespace UglyLang.Source.Functions
             // Cast arguments - the types match, but may not be equal
             for (int i = 0; i < arguments.Count; i++)
             {
-                if (!arguments[i].Type.Equals(argumentTypes[i]))
+                if (argumentTypes[i] is not Any && !arguments[i].Type.Equals(argumentTypes[i]))
                 {
                     Value? casted = arguments[i].To(argumentTypes[i]);
                     if (casted == null)
@@ -199,7 +199,7 @@ namespace UglyLang.Source.Functions
             }
 
             // Cast if not equal
-            if (!returnType.Equals(returnedValue.Type))
+            if (returnType is not Any && !returnType.Equals(returnedValue.Type))
             {
                 // Cast return value to the desired type
                 Value? casted = returnedValue.To(returnType);

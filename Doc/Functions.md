@@ -40,7 +40,7 @@ Creates a new list instance containing type a. If a length is provided, populate
 Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
 - `RANDOM -> FLOAT` / `RANDOM<max: FLOAT> -> FLOAT` / `RANDOM<min: FLOAT, max: FLOAT> -> FLOAT`
 Returns random number in the range: [0,1) / [0,max) / [min,max).
-- `SLEEP<t: FLOAT> -> EMPTY`
+- `SLEEP<t: FLOAT>`
 Suspend execution for t milliseconds.
 - `TYPE<a: ANY> -> TYPE`
 Returns the type of a after evaluation.
@@ -49,7 +49,7 @@ Returns the type of a after evaluation.
 
 These functions are all available on lists. The list type is assumed to be `a[]`.
 
-- `Add<e: a> -> EMPTY / Add<e: a, idx: INT> -> EMPTY`
+- `Add<e: a> / Add<e: a, idx: INT>`
 Either adds an item to the end of the list, or inserts an item at the given index.
 - `Contains<e: a> -> INT`
 Returns whether or not the list contains said item.
@@ -67,7 +67,7 @@ Removes *every* instance of the given item from the list. Returns how many items
 Removes the item at the given index, returns is this was done (i.e. if the index was in-bounds).
 - `Reverse -> a[]`
 Reverses the list.
-- `Set<idx: INT, v: a> -> EMPTY`
+- `Set<idx: INT, v: a>`
 Sets the item at the given index to the given value.
 - `Slice<start: INT> -> a[] / Slice<start: INT, end: INT> -> a[]`
 Returns a slice of the list, starting from `start` andending either at the end of the list or at `end`.
@@ -82,6 +82,22 @@ Returns the logical inverse of a.
 Returns true if a or b are true.
 - `XOR<a: ANY, b: ANY> -> INT`
 Returns true if a or b are true, but not both.
+
+## Map Functions
+These functions are all available on maps. The map type is assumed to be `MAP[a]`.
+
+- `Delete<key: STRING> -> a`
+Deletes the key and its value from the map, or raises an error if the key does not exist. Returns the old value associated with the key.
+- `Get<key: STRING> -> a`
+Returns the value associated with the given key, or raises an error.
+- `Has<key: STRING> -> INT`
+Returns whether or not the map contains the given key.
+- `Keys -> STRING[]`
+Returns a list of all the keys.
+- `Size -> INT`
+Returns the number of items registered in the map.
+- `Set<key: STRING, value: a>`
+Sets the key to the given value. Creates the key if does not exist in the map.
 
 ## Mathematical Functions
 

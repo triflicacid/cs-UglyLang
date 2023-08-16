@@ -10,6 +10,7 @@
             Type,    // Incorrect/mismatching type(s)
             Cast,    // Error whilst casting
             Raised,  // Used when the ERROR keyword is invoked
+            Argument, // Error in a functions argument (used inside functions)
         }
 
         public int LineNumber;

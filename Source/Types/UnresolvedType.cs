@@ -22,10 +22,19 @@
 
         public static Type? Resolve(Context context, string value)
         {
-            // Built-in?
+            // Primitives?
             if (value == IntType.AsString()) return new IntType();
             if (value == FloatType.AsString()) return new FloatType();
             if (value == StringType.AsString()) return new StringType();
+
+            // Map?
+            if (value.StartsWith("MAP[") && value[^1] == ']')
+            {
+                Type? member = Resolve(context, value[4..^1]);
+                return member == null ? null : new MapType(member);
+            }
+
+            // List?
             if (value.Length > 2 && value[^1] == ']' && value[^2] == '[')
             {
                 Type? member = Resolve(context, value[..^2]);

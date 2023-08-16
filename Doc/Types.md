@@ -19,6 +19,9 @@ Note that integers are used to represent Booleans, with 0 representing False and
 
 **Compound Types**
 - `a[]`. Represents a list of type `a`.
+	- Property `.MemberType: TYPE` contains the type of the members (`a`).
+- `MAP[a]`. Represents a map between `STRING` keys and values of type `a`.
+	- Property `.ValueType: TYPE` contains the type of the values (`a`).
 
 # User-Defined Types
 

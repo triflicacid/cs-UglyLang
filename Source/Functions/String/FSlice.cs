@@ -27,7 +27,7 @@ namespace UglyLang.Source.Functions.String
             {
                 string s = ((StringValue)arguments[0]).Value;
                 int startIndex = (int)((IntValue)arguments[1]).Value;
-                string substr = s.Substring(startIndex);
+                string substr = s[startIndex..];
                 context.SetFunctionReturnValue(new StringValue(substr));
                 return Signal.NONE;
             }
@@ -46,7 +46,7 @@ namespace UglyLang.Source.Functions.String
                 string s = ((StringValue)arguments[0]).Value;
                 int startIndex = (int)((IntValue)arguments[1]).Value;
                 int endIndex = Math.Max((int)((IntValue)arguments[2]).Value, startIndex);
-                string substr = s.Substring(startIndex, endIndex - startIndex);
+                string substr = s[startIndex..endIndex];
                 context.SetFunctionReturnValue(new StringValue(substr));
                 return Signal.NONE;
             }

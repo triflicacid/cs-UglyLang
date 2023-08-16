@@ -1,5 +1,4 @@
-﻿using System.Data.Common;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 

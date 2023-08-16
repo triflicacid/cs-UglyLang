@@ -90,5 +90,9 @@ namespace UglyLang.Source.Types
         {
             return new ListType(t);
         }
+        public static Type Map(Type t)
+        {
+            return new MapType(t);
+        }
     }
 }
