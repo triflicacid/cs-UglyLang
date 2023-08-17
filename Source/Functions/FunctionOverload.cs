@@ -108,7 +108,7 @@ namespace UglyLang.Source.Functions
             // Create variables for the parameters
             for (int i = 0; i < arguments.Count; i++)
             {
-                context.CreateVariable(ParameterNames[i], arguments[i]);
+                context.CreateSymbol(ParameterNames[i], arguments[i]);
             }
 
             // Evaluate the function's body

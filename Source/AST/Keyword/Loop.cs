@@ -18,7 +18,7 @@ namespace UglyLang.Source.AST.Keyword
             Counter = null;
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
             if (Body == null) throw new NullReferenceException(); // Should not be the case
 
@@ -26,9 +26,9 @@ namespace UglyLang.Source.AST.Keyword
             bool counterIsFloat = false;
             if (Counter != null)
             {
-                if (context.HasVariable(Counter))
+                if (container.HasSymbol(Counter))
                 {
-                    ISymbolValue oldValue = context.GetVariable(Counter);
+                    ISymbolValue oldValue = container.GetSymbol(Counter);
                     if (oldValue is IntValue intValue)
                     {
                         intValue.Value = 0;
@@ -46,7 +46,7 @@ namespace UglyLang.Source.AST.Keyword
                 }
                 else
                 {
-                    context.CreateVariable(Counter, new IntValue(0));
+                    container.CreateSymbol(Counter, new IntValue(0));
                 }
             }
 
@@ -55,7 +55,7 @@ namespace UglyLang.Source.AST.Keyword
                 // If the loop has a condition, only continue if the condition is truthy
                 if (Condition != null)
                 {
-                    Value? value = Condition.Evaluate(context);
+                    Value? value = Condition.Evaluate(context, container);
                     if (value == null) // Propagate error?
                         return Signal.ERROR;
 
@@ -64,7 +64,7 @@ namespace UglyLang.Source.AST.Keyword
                 }
 
                 // Evaluate the loop body and handle the resulting signal
-                Signal signal = Body.Evaluate(context);
+                Signal signal = Body.Evaluate(context, container);
                 if (signal != Signal.NONE)
                 {
                     if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
@@ -74,7 +74,7 @@ namespace UglyLang.Source.AST.Keyword
                 // Increment the counter variable, if present
                 if (Counter != null)
                 {
-                    Value oldValue = (Value)context.GetVariable(Counter);
+                    Value oldValue = (Value)container.GetSymbol(Counter);
                     if (counterIsFloat)
                     {
                         ((FloatValue)oldValue).Value++;

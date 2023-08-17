@@ -15,12 +15,12 @@
         /// <summary>
         /// Resolve said type, or return NULL if error.
         /// </summary>
-        public virtual Type? Resolve(Context context)
+        public virtual Type? Resolve(ISymbolContainer container)
         {
-            return Resolve(context, Value);
+            return Resolve(container, Value);
         }
 
-        public static Type? Resolve(Context context, string value)
+        public static Type? Resolve(ISymbolContainer container, string value)
         {
             // Primitives?
             if (value == IntType.AsString()) return new IntType();
@@ -33,19 +33,19 @@
             // Map?
             if (value.StartsWith("MAP[") && value[^1] == ']')
             {
-                Type? member = Resolve(context, value[4..^1]);
+                Type? member = Resolve(container, value[4..^1]);
                 return member == null ? null : new MapType(member);
             }
 
             // List?
             if (value.Length > 2 && value[^1] == ']' && value[^2] == '[')
             {
-                Type? member = Resolve(context, value[..^2]);
+                Type? member = Resolve(container, value[..^2]);
                 return member == null ? null : new ListType(member);
             }
 
             // User type?
-            if (context.HasVariable(value) && context.GetVariable(value) is UserType t)
+            if (container.HasSymbol(value) && container.GetSymbol(value) is UserType t)
             {
                 return t;
             }
@@ -67,7 +67,7 @@
             ResolveTo = type;
         }
 
-        public override Type? Resolve(Context context)
+        public override Type? Resolve(ISymbolContainer container)
         {
             return ResolveTo;
         }

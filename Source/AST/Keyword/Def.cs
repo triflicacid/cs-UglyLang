@@ -24,15 +24,15 @@ namespace UglyLang.Source.AST.Keyword
             TypeParamConstraints = constraints ?? new();
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
             if (Body == null) throw new NullReferenceException();
 
             // Check if the function is already defined
             Function func;
-            if (context.HasVariable(Name))
+            if (container.HasSymbol(Name))
             {
-                ISymbolValue variable = context.GetVariable(Name);
+                ISymbolValue variable = container.GetSymbol(Name);
                 if (variable is Function funcValue)
                 {
                     func = funcValue;
@@ -46,14 +46,14 @@ namespace UglyLang.Source.AST.Keyword
             else
             {
                 func = new Function();
-                context.CreateVariable(Name, func);
+                container.CreateSymbol(Name, func);
             }
 
             // Resolve the arguments
             List<(string, Types.Type)> resolvedArguments = new();
             foreach ((string argName, UnresolvedType argType) in Arguments)
             {
-                Types.Type? type = argType.Resolve(context);
+                Types.Type? type = argType.Resolve(container);
                 if (type == null)
                 {
                     context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve type {0}", argType.Value));
@@ -70,7 +70,7 @@ namespace UglyLang.Source.AST.Keyword
                 Types.Type[] types = new Types.Type[entry.Value.Count];
                 for (int i = 0; i < types.Length; i++)
                 {
-                    Types.Type? resolved = entry.Value[i].Resolve(context);
+                    Types.Type? resolved = entry.Value[i].Resolve(container);
                     if (resolved == null)
                     {
                         context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve type {0}", entry.Value[i].Value));
@@ -90,7 +90,7 @@ namespace UglyLang.Source.AST.Keyword
             }
 
             // Resolve the return type
-            Types.Type? resolvedReturnType = ReturnType.Resolve(context);
+            Types.Type? resolvedReturnType = ReturnType.Resolve(container);
             if (resolvedReturnType == null)
             {
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve type {0}", ReturnType.Value));

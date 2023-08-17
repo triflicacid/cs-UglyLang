@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.AST;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source
@@ -15,7 +9,7 @@ namespace UglyLang.Source
         Function
     }
 
-    public abstract class AbstractStackContext
+    public abstract class AbstractStackContext : ISymbolContainer
     {
         public readonly int LineNumber;
         public readonly int ColNumber;
@@ -34,6 +28,8 @@ namespace UglyLang.Source
         public abstract bool HasSymbol(string symbol);
 
         public abstract ISymbolValue GetSymbol(string symbol);
+
+        public abstract void CreateSymbol(string symbol, ISymbolValue value);
 
         public abstract void SetSymbol(string symbol, ISymbolValue value);
 
@@ -79,16 +75,14 @@ namespace UglyLang.Source
             return Symbols[symbol];
         }
 
+        public override void CreateSymbol(string symbol, ISymbolValue value)
+        {
+            Symbols.Add(symbol, value);
+        }
+
         public override void SetSymbol(string symbol, ISymbolValue value)
         {
-            if (HasSymbol(symbol))
-            {
-                Symbols[symbol] = value;
-            }
-            else
-            {
-                Symbols.Add(symbol, value);
-            }
+            Symbols[symbol] = value;
         }
 
         public override TypeParameterCollection GetTypeParameters()
@@ -130,6 +124,11 @@ namespace UglyLang.Source
         public override ISymbolValue GetSymbol(string symbol)
         {
             return Master.GetSymbol(symbol);
+        }
+
+        public override void CreateSymbol(string symbol, ISymbolValue value)
+        {
+            Master.CreateSymbol(symbol, value);
         }
 
         public override void SetSymbol(string symbol, ISymbolValue value)

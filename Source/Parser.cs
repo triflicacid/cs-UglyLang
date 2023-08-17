@@ -35,6 +35,7 @@ namespace UglyLang.Source
             // Nested structure
             Stack<ASTStructure> trees = new();
             trees.Push(new());
+            Stack<(KeywordNode, KeywordInfo)> infoStack = new(); // Contains information on what keyword triggered a new ASTStructure to be pushed to `trees`. COntains a reference to the keyword ASTNode.
             bool inComment = false;
 
             string[] lines = source.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
@@ -85,11 +86,26 @@ namespace UglyLang.Source
                     Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected keyword, got '{0}'", line[colNumber]));
                     break;
                 }
-                else if (!KeywordNode.KeywordDict.ContainsKey(keyword)) // Is it a valid keyword?
+                else if (!KeywordInfo.Lookup.ContainsKey(keyword)) // Is it a valid keyword?
                 {
-                    Error = new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, keyword);
+                    Error = new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("unknown keyword {0}", keyword));
                     break;
                 }
+
+                // Check if the keyword is allowed here
+                if (infoStack.Count > 0)
+                {
+                    (KeywordNode _, KeywordInfo kwInfo) = infoStack.Peek();
+
+                    if (kwInfo.Allow != null && !kwInfo.Allow.Contains(keyword))
+                    {
+                        Error = new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("keyword {0} is not permitted in a {1} context", keyword, kwInfo.Keyword));
+                        break;
+                    }
+                }
+
+                // Fetch keyword information - this will tell us what to parse.
+                var keywordInfo = KeywordInfo.Lookup[keyword];
 
                 // Is define keyword? This one needs special parsing.
                 if (keyword == "DEF")
@@ -211,12 +227,12 @@ namespace UglyLang.Source
 
                     // Nest and add a new tree
                     trees.Push(new());
+                    infoStack.Push((node, keywordInfo));
 
                     continue;
                 }
 
-                // Fetch keyword information - this will tell us what to parse.
-                var keywordInfo = KeywordNode.KeywordDict[keyword];
+                // Create nodes to store Before and After entities
                 ASTNode? before = null, after = null;
                 int beforeCol = 0, afterCol = 0;
 
@@ -454,6 +470,7 @@ namespace UglyLang.Source
                             else
                             {
                                 ASTStructure previousTree = trees.Pop();
+                                infoStack.Pop();
                                 ASTNode latest = trees.Peek().PeekNode();
 
                                 if (latest is IfKeywordNode ifKeyword)
@@ -478,6 +495,10 @@ namespace UglyLang.Source
                                 else if (latest is DefKeywordNode defKeyword)
                                 {
                                     defKeyword.Body = previousTree;
+                                }
+                                else if (latest is NamespaceKeywordNode nsKeyword)
+                                {
+                                    nsKeyword.Body = previousTree;
                                 }
                                 else
                                 {
@@ -570,6 +591,12 @@ namespace UglyLang.Source
                             createNewNest = true;
                             break;
                         }
+                    case "NAMESPACE":
+                        {
+                            keywordNode = new NamespaceKeywordNode(((SymbolNode)before).Symbol);
+                            createNewNest = true;
+                            break;
+                        }
                     case "PRINT":
                         {
                             keywordNode = new PrintKeywordNode((ExprNode)after, false);
@@ -591,7 +618,7 @@ namespace UglyLang.Source
                             break;
                         }
                     default:
-                        throw new InvalidOperationException();
+                        throw new InvalidOperationException(keyword);
                 }
 
                 if (Error != null) return;
@@ -607,6 +634,7 @@ namespace UglyLang.Source
                 if (createNewNest)
                 {
                     trees.Push(new());
+                    infoStack.Push((keywordNode, keywordInfo));
                 }
             }
 

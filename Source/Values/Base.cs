@@ -3,12 +3,6 @@ using UglyLang.Source.Types;
 
 namespace UglyLang.Source.Values
 {
-    /// <summary>
-    /// Identifies an object as potentially being assigned to a symbol
-    /// </summary>
-    public interface ISymbolValue
-    { }
-
     public abstract class Value : ISymbolValue
     {
         public Types.Type Type;
@@ -30,6 +24,14 @@ namespace UglyLang.Source.Values
         /// </summary>
         public abstract bool IsTruthy();
 
+        /// <summary>
+        /// Determines whether or not returned functions from GetProperty are wrapped in a FunctionContext wrapper. By default, this returns true.
+        /// </summary>
+        public virtual bool AreFunctionsContextual()
+        {
+            return true;
+        }
+
         public bool HasProperty(string name)
         {
             return Type.GetProperties().ContainsKey(name) || HasPropertyExtra(name);
@@ -46,7 +48,7 @@ namespace UglyLang.Source.Values
 
             Property? prop = Type.GetProperties().ContainsKey(name) ? Type.GetProperties()[name] : GetPropertyExtra(name);
             if (prop == null) throw new InvalidOperationException();
-            if (!prop.IsReadonly && prop.GetValue() is Function func)
+            if (AreFunctionsContextual() && prop.GetValue() is Function func)
             {
                 prop.SetValue(new FunctionContext(func, this));
             }

@@ -23,7 +23,7 @@ namespace UglyLang.Source.AST
         /// <summary>
         /// Get the values of this symbol chain. Return (value, valueProperty, valuesParent), or null if error (see context.Error).
         /// </summary>
-        private (ISymbolValue, Property?, Value?)? RetrieveValues(Context context)
+        private (ISymbolValue, Property?, Value?)? RetrieveValues(Context context, ISymbolContainer container)
         {
             if (Symbols.Count == 0) throw new InvalidOperationException();
 
@@ -35,7 +35,7 @@ namespace UglyLang.Source.AST
             {
                 if (parent == null)
                 {
-                    parent = symbol.Evaluate(context);
+                    parent = symbol.Evaluate(context, container);
                     if (parent == null)
                         return null;
                 }
@@ -62,7 +62,7 @@ namespace UglyLang.Source.AST
                                 {
                                     foreach (ExprNode expr in symbol.CallArguments)
                                     {
-                                        Value? arg = expr.Evaluate(context);
+                                        Value? arg = expr.Evaluate(context, container);
                                         if (arg == null || context.Error != null)
                                             return null;
 
@@ -124,9 +124,9 @@ namespace UglyLang.Source.AST
             return new(parent, parentProperty, grandparent);
         }
 
-        public override Value? Evaluate(Context context)
+        public override Value? Evaluate(Context context, ISymbolContainer container)
         {
-            var values = RetrieveValues(context);
+            var values = RetrieveValues(context, container);
             if (values == null) return null; // Propagate
 
             (ISymbolValue value, Property? _, ISymbolValue? _) = values.Value;
@@ -137,9 +137,9 @@ namespace UglyLang.Source.AST
             throw new InvalidOperationException(); // Should not happen.
         }
 
-        public override bool SetValue(Context context, Value value, bool forceCast = false)
+        public override bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false)
         {
-            var values = RetrieveValues(context);
+            var values = RetrieveValues(context, container);
             if (values == null) return false; // Propagate
 
             (ISymbolValue oldChild, Property? property, Value? parent) = values.Value;
@@ -168,8 +168,14 @@ namespace UglyLang.Source.AST
                     else
                     {
                         // Update the property
-                        parent.SetProperty(property.GetName(), value);
-                        return true;
+                        bool isOk = parent.SetProperty(property.GetName(), value);
+                        if (!isOk)
+                        {
+                            SymbolNode symbol = Symbols[^1];
+                            context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", symbol.Symbol));
+                        }
+
+                        return isOk;
                     }
                 }
                 else
@@ -185,9 +191,9 @@ namespace UglyLang.Source.AST
             }
         }
 
-        public override bool CastValue(Context context, Types.Type type)
+        public override bool CastValue(Context context, ISymbolContainer container, Types.Type type)
         {
-            var values = RetrieveValues(context);
+            var values = RetrieveValues(context, container);
             if (values == null) return false; // Propagate
 
             (ISymbolValue child, Property? property, Value? parent) = values.Value;
@@ -222,8 +228,14 @@ namespace UglyLang.Source.AST
                 }
                 else
                 {
-                    parent.SetProperty(property.GetName(), newValue);
-                    return true;
+                    bool isOk = parent.SetProperty(property.GetName(), newValue);
+                    if (!isOk)
+                    {
+                        SymbolNode symbol = Symbols[^1];
+                        context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be cast", symbol.Symbol));
+                    }
+
+                    return isOk;
                 }
             }
             else

@@ -22,6 +22,7 @@ The following document will describe each keyword, split up into appropriate sec
 | `IMPORT` | `symbol` | `expr`| Same as the above, but bundles all symbols into a namespace with the name of `symbol`. |
 | `INPUT` | `symbol_chain` | none | Prompts the user for input, storing the entered value in the given symbol/property. |
 | `LET` | `symbol` | `expr` | Creates a new symbol and initialises it to the given value. |
+| `NAMESPACE` | `symbol` | none | Declares a new namespace. Only definitions are allowed in said namespace (`DEF`, `LET` etc). |
 | `PRINT` | none | `expr` | Prints the expression to the screen. Subsequent invocations of `PRINT[LN]` will print on the same line. |
 | `PRINTLN` | none | `expr` | Prints the expression to the screen, followed by a line break. |
 | `SET` | `symbol_chain` | `expr` | Sets the symbol/property to the new value. |

@@ -24,7 +24,7 @@ Note that integers are used to represent Booleans, with 0 representing False and
 	- Property `.ValueType: TYPE` contains the type of the values (`a`).
 - `NAMESPACE`. Represents a collection of symbols. Primarily used when importing a file.
 	- It **cannot** be constructed.
-	- It contains symbols which can be accessed as properties (all of which are read-only).
+	- It contains symbols which can be accessed as properties.
 
 # User-Defined Types
 

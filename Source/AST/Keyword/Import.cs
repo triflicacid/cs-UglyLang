@@ -43,7 +43,14 @@
                 // Assign the parsed AST
                 Content = p.AST;
 
-                return (p.Error == null, p.Error == null ? "" : p.GetErrorString());
+                if (p.Error == null)
+                {
+                    return (true, "");
+                }
+                else
+                {
+                    return (false, p.GetErrorString());
+                }
             }
             else
             {
@@ -51,7 +58,7 @@
             }
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
             if (Content == null) throw new InvalidOperationException();
 
@@ -65,7 +72,7 @@
                 context.PushStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
             }
 
-            Signal s = Content.Evaluate(context);
+            Signal s = Content.Evaluate(context, container);
             if (s == Signal.ERROR) return s;
 
             var oldContext = context.PopStackContext();
@@ -73,14 +80,14 @@
             if (Namespace != null)
             {
                 // Export into a namespace and create new variable
-                if (context.HasVariable(Namespace.Symbol))
+                if (container.HasSymbol(Namespace.Symbol))
                 {
                     context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("{0} is already defined", Namespace.Symbol));
                     return Signal.ERROR;
                 }
                 else
                 {
-                    context.CreateVariable(Namespace.Symbol, ((StackContext)oldContext).ExportToNamespace());
+                    container.CreateSymbol(Namespace.Symbol, ((StackContext)oldContext).ExportToNamespace());
                 }
             }
 

@@ -1,0 +1,16 @@
+NAMESPACE Maths
+	NAMESPACE Constants
+		LET pi: 3.141592653589793
+		LET e:  2.718281828459045
+	END
+
+	DEF Succ: INT <n: INT>
+		FINISH: ADD<n,1>
+	END
+END
+
+PRINTLN: Maths
+PRINTLN: Maths.Succ<1>
+PRINTLN: Maths.Constants.pi
+SET Maths.Constants.pi: 3
+PRINTLN: Maths.Constants.pi

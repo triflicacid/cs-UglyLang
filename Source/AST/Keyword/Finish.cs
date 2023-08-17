@@ -14,7 +14,7 @@ namespace UglyLang.Source.AST.Keyword
             ReturnOnExit = expr;
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
             if (ReturnOnExit == null)
             {
@@ -22,7 +22,7 @@ namespace UglyLang.Source.AST.Keyword
             }
             else
             {
-                Value? value = ReturnOnExit.Evaluate(context);
+                Value? value = ReturnOnExit.Evaluate(context, container);
                 if (value == null) return Signal.ERROR;
 
                 context.SetFunctionReturnValue(value);

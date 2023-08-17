@@ -16,13 +16,13 @@ namespace UglyLang.Source.AST.Keyword
             Expr = expr;
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
             // Evaluate the expression.
-            Value? evaldValue = Expr.Evaluate(context);
+            Value? evaldValue = Expr.Evaluate(context, container);
 
             // Attempt to set the symbol to this new value
-            return evaldValue != null && Symbol.SetValue(context, evaldValue) ? Signal.NONE : Signal.ERROR;
+            return evaldValue != null && Symbol.SetValue(context, container, evaldValue) ? Signal.NONE : Signal.ERROR;
         }
     }
 }

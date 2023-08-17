@@ -15,7 +15,7 @@ namespace UglyLang.Source.AST.Keyword
             Expr = expr;
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
             Error.Types errType;
             string errString;
@@ -27,7 +27,7 @@ namespace UglyLang.Source.AST.Keyword
             }
             else
             {
-                Value? errVal = Expr.Evaluate(context);
+                Value? errVal = Expr.Evaluate(context, container);
                 if (errVal == null)
                 {
                     return Signal.ERROR; // Propagate

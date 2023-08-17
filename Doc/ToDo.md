@@ -33,6 +33,4 @@ The arguments of the constructor would correspond to each `FIELD` field, in orde
 - Allow multi-word keywords (key*phrases*)
 	- Add keyphrase `LOOP OVER <symbol>: <symbol>` where the first symbol is iterated over, each member being set to the second symbol.
 
-- Propose the creation of custom namespaces using the `NAMESPACE` keyword.
-
 - Create a basic text editor for this language with syntax highlighting. Either in a new repository or in this repository. If it is the latter, propose placing them in `Language` and `Editor` directories.

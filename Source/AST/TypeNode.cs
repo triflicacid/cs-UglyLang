@@ -15,9 +15,9 @@ namespace UglyLang.Source.AST
             Value = value;
         }
 
-        public override Value? Evaluate(Context context)
+        public override Value? Evaluate(Context context, ISymbolContainer container)
         {
-            Types.Type? type = Value.Resolve(context);
+            Types.Type? type = Value.Resolve(container);
             if (type == null)
             {
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", Value.Value));

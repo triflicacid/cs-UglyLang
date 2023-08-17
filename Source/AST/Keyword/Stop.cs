@@ -5,7 +5,7 @@
     /// </summary>
     public class StopKeywordNode : KeywordNode
     {
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
             return Signal.EXIT_PROG;
         }

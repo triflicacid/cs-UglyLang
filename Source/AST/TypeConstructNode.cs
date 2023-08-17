@@ -14,14 +14,14 @@ namespace UglyLang.Source.AST
             Arguments = new();
         }
 
-        public override Value? Evaluate(Context context)
+        public override Value? Evaluate(Context context, ISymbolContainer container)
         {
             // Evaluate each argument
             List<Value> evaldArguments = new();
             Value? value;
             foreach (ExprNode node in Arguments)
             {
-                value = node.Evaluate(context);
+                value = node.Evaluate(context, container);
                 if (value == null)
                     return null; // Propagate error
                 evaldArguments.Add(value);
@@ -46,7 +46,7 @@ namespace UglyLang.Source.AST
             }
             else
             {
-                rawType = Construct.Resolve(context);
+                rawType = Construct.Resolve(container);
 
                 if (rawType == null)
                 {

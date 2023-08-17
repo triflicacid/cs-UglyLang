@@ -16,12 +16,12 @@ namespace UglyLang.Source.AST
         /// <summary>
         /// Attempt to set this symbol to the given value in the given context. Cast only if the types match, or if forceCast is truthy. Return whether this was a success - see context.Error.
         /// </summary>
-        public abstract bool SetValue(Context context, Value value, bool forceCast = false);
+        public abstract bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false);
 
         /// <summary>
         /// Attempt to cast this symbol to the given type. Return whether this was a success - see context.Error.
         /// </summary>
-        public abstract bool CastValue(Context context, Types.Type type);
+        public abstract bool CastValue(Context context, ISymbolContainer container, Types.Type type);
     }
 
     /// <summary>
@@ -45,11 +45,11 @@ namespace UglyLang.Source.AST
             return Symbol;
         }
 
-        public override Value? Evaluate(Context context)
+        public override Value? Evaluate(Context context, ISymbolContainer container)
         {
-            if (context.HasVariable(Symbol))
+            if (container.HasSymbol(Symbol))
             {
-                ISymbolValue variable = context.GetVariable(Symbol);
+                ISymbolValue variable = container.GetSymbol(Symbol);
                 Value value;
 
                 if (variable is ICallable func)
@@ -63,7 +63,7 @@ namespace UglyLang.Source.AST
                     {
                         foreach (ExprNode expr in CallArguments)
                         {
-                            Value? arg = expr.Evaluate(context);
+                            Value? arg = expr.Evaluate(context, container);
                             if (arg == null) return null;
                             if (context.Error != null)
                             {
@@ -111,12 +111,12 @@ namespace UglyLang.Source.AST
             }
         }
 
-        public override bool SetValue(Context context, Value value, bool forceCast = false)
+        public override bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false)
         {
             // Make sure that the types line up
-            if (context.HasVariable(Symbol))
+            if (container.HasSymbol(Symbol))
             {
-                ISymbolValue oldSymbolValue = context.GetVariable(Symbol);
+                ISymbolValue oldSymbolValue = container.GetSymbol(Symbol);
 
                 if (oldSymbolValue is Value oldValue)
                 {
@@ -130,7 +130,7 @@ namespace UglyLang.Source.AST
                         }
                         else
                         {
-                            context.SetVariable(Symbol, newValue);
+                            container.SetSymbol(Symbol, newValue);
                             return true;
                         }
                     }
@@ -148,16 +148,16 @@ namespace UglyLang.Source.AST
             }
             else
             {
-                context.CreateVariable(Symbol, value);
+                container.CreateSymbol(Symbol, value);
                 return true;
             }
         }
 
-        public override bool CastValue(Context context, Types.Type type)
+        public override bool CastValue(Context context, ISymbolContainer container, Types.Type type)
         {
-            if (context.HasVariable(Symbol))
+            if (container.HasSymbol(Symbol))
             {
-                ISymbolValue sValue = context.GetVariable(Symbol);
+                ISymbolValue sValue = container.GetSymbol(Symbol);
                 if (sValue is Value value)
                 {
                     Value? newValue = value.To(type);
@@ -168,7 +168,7 @@ namespace UglyLang.Source.AST
                     }
                     else
                     {
-                        context.SetVariable(Symbol, newValue);
+                        container.SetSymbol(Symbol, newValue);
                         return true;
                     }
                 }

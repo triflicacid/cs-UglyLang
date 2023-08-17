@@ -146,7 +146,7 @@ namespace UglyLang.Source.Functions
             // Set type parameters as variables, so they can be referenced as types
             foreach (string p in typeParameters.GetParamerNames())
             {
-                context.CreateVariable(p, new TypeValue(typeParameters.GetParameter(p)));
+                context.CreateSymbol(p, new TypeValue(typeParameters.GetParameter(p)));
             }
 
             // Invoke the overload

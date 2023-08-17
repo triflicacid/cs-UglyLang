@@ -12,9 +12,9 @@
             Expr = expr;
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
-            return Expr.Evaluate(context) == null ? Signal.ERROR : Signal.NONE;
+            return Expr.Evaluate(context, container) == null ? Signal.ERROR : Signal.NONE;
         }
     }
 }

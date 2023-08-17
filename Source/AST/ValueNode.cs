@@ -14,7 +14,7 @@ namespace UglyLang.Source.AST
             Value = value;
         }
 
-        public override Value Evaluate(Context context)
+        public override Value Evaluate(Context context, ISymbolContainer container)
         {
             return Value;
         }

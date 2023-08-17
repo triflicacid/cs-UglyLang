@@ -5,15 +5,7 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source
 {
-    /// <summary>
-    /// If inherited from, this symbol will be defined as a global symbol on any new Context.
-    /// </summary>
-    public interface IDefinedGlobally : ISymbolValue
-    {
-        public string GetDefinedName();
-    }
-
-    public class Context
+    public class Context : ISymbolContainer
     {
         public string BaseDirectory;
         private readonly List<AbstractStackContext> Stack;
@@ -27,7 +19,7 @@ namespace UglyLang.Source
         {
             Stack = new() { new StackContext(0, 0, StackContextType.File, filename) };
             BaseDirectory = baseDirectory;
-            CreateVariable("_BaseDir", new StringValue(BaseDirectory));
+            CreateSymbol("_BaseDir", new StringValue(BaseDirectory));
         }
 
         /// <summary>
@@ -47,7 +39,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Does the given variable exist?
         /// </summary>
-        public bool HasVariable(string name)
+        public bool HasSymbol(string name)
         {
             foreach (var d in Stack)
             {
@@ -59,7 +51,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Get the value of the given variable or throw an error. Looks from the topmost scope downwards.
         /// </summary>
-        public ISymbolValue GetVariable(string name)
+        public ISymbolValue GetSymbol(string name)
         {
             for (int i = Stack.Count - 1; i >= 0; i--)
             {
@@ -70,22 +62,9 @@ namespace UglyLang.Source
         }
 
         /// <summary>
-        /// Get the value of the given variable. If the symbol cannot be found, return the default. Looks from the topmost scope downwards.
-        /// </summary>
-        public ISymbolValue GetVariableOrDefault(string name, ISymbolValue fallback)
-        {
-            for (int i = Stack.Count - 1; i >= 0; i--)
-            {
-                if (Stack[i].HasSymbol(name)) return Stack[i].GetSymbol(name);
-            }
-
-            return fallback;
-        }
-
-        /// <summary>
         /// Set the value of the given symbol, or create a new one. Sets from the topmost scope down.
         /// </summary>
-        public void SetVariable(string name, ISymbolValue value)
+        public void SetSymbol(string name, ISymbolValue value)
         {
             for (int i = Stack.Count - 1; i >= 0; i--)
             {
@@ -96,13 +75,13 @@ namespace UglyLang.Source
                 }
             }
 
-            CreateVariable(name, value);
+            CreateSymbol(name, value);
         }
 
         /// <summary>
         /// Creates a new symbol in the topmost scope and sets it
         /// </summary>
-        public void CreateVariable(string name, ISymbolValue value)
+        public void CreateSymbol(string name, ISymbolValue value)
         {
             Stack[^1].SetSymbol(name, value);
         }
@@ -308,7 +287,7 @@ namespace UglyLang.Source
                 .Where(p => type.IsAssignableFrom(p) && !p.IsInterface)
                 .Select(o => (IDefinedGlobally)Activator.CreateInstance(o)))
             {
-                CreateVariable(x.GetDefinedName(), x);
+                CreateSymbol(x.GetDefinedName(), x);
             }
         }
     }

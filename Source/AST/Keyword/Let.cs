@@ -16,22 +16,22 @@ namespace UglyLang.Source.AST.Keyword
             Value = value;
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
-            if (context.HasVariable(Name))
+            if (container.HasSymbol(Name))
             {
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("\"{0}\" is already defined.", Name));
                 return Signal.ERROR;
             }
             else
             {
-                Value? evaldValue = Value.Evaluate(context);
+                Value? evaldValue = Value.Evaluate(context, container);
                 if (evaldValue == null) // Propagate error?
                 {
                     return Signal.ERROR;
                 }
 
-                context.CreateVariable(Name, evaldValue);
+                container.CreateSymbol(Name, evaldValue);
                 return Signal.NONE;
             }
         }

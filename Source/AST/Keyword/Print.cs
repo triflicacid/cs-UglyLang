@@ -16,9 +16,9 @@ namespace UglyLang.Source.AST.Keyword
             Newline = newline;
         }
 
-        public override Signal Action(Context context)
+        public override Signal Action(Context context, ISymbolContainer container)
         {
-            Value? value = Expr.Evaluate(context);
+            Value? value = Expr.Evaluate(context, container);
             if (value == null) // Propagate error?
                 return Signal.ERROR;
 
