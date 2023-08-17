@@ -54,7 +54,7 @@ namespace UglyLang.Source.AST
                             if (parent is ICallable func)
                             {
                                 // Push new stack context
-                                context.PushStackContext(LineNumber, ColumnNumber, Context.StackContext.Types.Function, symbol.Symbol);
+                                context.PushStackContext(symbol.LineNumber, symbol.ColumnNumber, StackContextType.Function, symbol.Symbol);
 
                                 // Evaluate arguments
                                 List<Value> arguments = new();
@@ -71,7 +71,7 @@ namespace UglyLang.Source.AST
                                 }
 
                                 // Call function with given arguments
-                                Signal signal = func.Call(context, arguments);
+                                Signal signal = func.Call(context, arguments, symbol.LineNumber, symbol.ColumnNumber);
                                 if (signal == Signal.ERROR)
                                 {
                                     if (context.Error != null)

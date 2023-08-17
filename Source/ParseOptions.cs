@@ -20,6 +20,7 @@
             NONE,
             EXPR, // ExprNode
             TYPE, // SymbolNode with .Symbol set to the type string
+            STRING, // StringNode
         }
     }
 }

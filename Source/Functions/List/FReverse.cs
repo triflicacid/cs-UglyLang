@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.List
             : base(Arguments, List)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 ListValue list = (ListValue)arguments[0];
                 List<Value> copy = new(list.Value);

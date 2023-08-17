@@ -34,6 +34,8 @@ Note that this is different to the CAST keyword.~~
 Convert a and b to strings and concatenate them.
 - `ID<x: a> -> a`
 Returns the provided argument.
+- `IMPORT<path: STRING> -> NAMESPACE`
+Imports the given file and returns the bundles namespace. Behaviour of `LET name: IMPORT<path>` is similar to `IMPORT name: path`.
 - `LIST<a: TYPE, [len: INT]> -> ANY[]`
 Creates a new list instance containing type a. If a length is provided, populates the list with instances of type (must be able to be condtructed without any arguments).
 - `NEW<a: TYPE> -> ANY`

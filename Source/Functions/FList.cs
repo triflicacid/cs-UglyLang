@@ -29,7 +29,7 @@ namespace UglyLang.Source.Functions
             : base(Arguments, new ListType(new Any()))
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 Types.Type type = ((TypeValue)arguments[0]).Value;
                 context.SetFunctionReturnValue(new ListValue(type));
@@ -45,7 +45,7 @@ namespace UglyLang.Source.Functions
             : base(Arguments, new ListType(new Any()))
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 Types.Type type = ((TypeValue)arguments[0]).Value;
                 int length = (int)((IntValue)arguments[1]).Value;

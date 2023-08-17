@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.List
             : base(Arguments, Types.Type.StringT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 string glue = ((StringValue)arguments[1]).Value;
                 string result = "";

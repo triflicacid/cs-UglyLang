@@ -25,7 +25,7 @@ namespace UglyLang.Source.Functions.Comparative
             : base(Arguments, Types.Type.IntT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 IntValue value = new(arguments[0].Equals(arguments[1]));
                 context.SetFunctionReturnValue(value);

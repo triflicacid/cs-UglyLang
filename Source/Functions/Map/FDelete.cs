@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.Map
             : base(Arguments, Param)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 MapValue map = (MapValue)arguments[0];
                 string key = ((StringValue)arguments[1]).Value;
@@ -37,7 +37,7 @@ namespace UglyLang.Source.Functions.Map
                 }
                 else
                 {
-                    context.Error = new(0, 0, Error.Types.Argument, string.Format("map does not contain key '{0}'", key));
+                    context.Error = new(lineNo, colNo, Error.Types.Argument, string.Format("map does not contain key '{0}'", key));
                     return Signal.ERROR;
                 }
             }

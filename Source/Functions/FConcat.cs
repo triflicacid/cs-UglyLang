@@ -28,7 +28,7 @@ namespace UglyLang.Source.Functions
             : base(Arguments, new StringType())
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 StringValue value = new(StringValue.From(arguments[0]).Value + StringValue.From(arguments[1]).Value);
                 context.SetFunctionReturnValue(value);

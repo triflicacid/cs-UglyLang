@@ -22,7 +22,7 @@ namespace UglyLang.Source.Functions.String
             : base(Arguments, Types.Type.StringT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 StringValue value = new(((StringValue)arguments[0]).Value.ToLower());
                 context.SetFunctionReturnValue(value);

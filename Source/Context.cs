@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using UglyLang.Source.AST;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
@@ -14,87 +15,33 @@ namespace UglyLang.Source
 
     public class Context
     {
-        public class StackContext
-        {
-            public enum Types
-            {
-                File,
-                Function
-            }
-
-            private readonly Dictionary<string, ISymbolValue> Symbols;
-            public readonly TypeParameterCollection TypeParams;
-            public readonly int LineNumber;
-            public readonly int ColNumber;
-            public readonly Types Type;
-            public readonly string Name;
-            public Value? FunctionReturnValue = null;
-
-            public StackContext(int line, int col, Types type, string name, TypeParameterCollection? tParams = null)
-            {
-                Symbols = new() {
-                    { "_Context", new StringValue(name) }
-                };
-                LineNumber = line;
-                ColNumber = col;
-                Type = type;
-                Name = name;
-                TypeParams = tParams ?? new();
-            }
-
-            public bool HasSymbol(string symbol)
-            {
-                return Symbols.ContainsKey(symbol);
-            }
-
-            public ISymbolValue GetSymbol(string symbol)
-            {
-                if (!HasSymbol(symbol)) throw new Exception(string.Format("Failed to get variable: name '{0}' could not be found", symbol));
-                return Symbols[symbol];
-            }
-
-            public void SetSymbol(string symbol, ISymbolValue value)
-            {
-                if (HasSymbol(symbol))
-                {
-                    Symbols[symbol] = value;
-                }
-                else
-                {
-                    Symbols.Add(symbol, value);
-                }
-            }
-
-            public override string ToString()
-            {
-                string inside = "unknown";
-                switch (Type)
-                {
-                    case Types.File:
-                        inside = "File";
-                        break;
-                    case Types.Function:
-                        inside = "Function";
-                        break;
-                }
-
-                return string.Format("{0} {1}, entered at line {2}, column {3}:", inside, Name, LineNumber + 1, ColNumber + 1);
-            }
-        }
-
-        private readonly List<StackContext> Stack;
+        public string BaseDirectory;
+        private readonly List<AbstractStackContext> Stack;
         public readonly Dictionary<string, string[]> Sources = new(); // Map filenames to their respective sources.
         public Error? Error = null;
 
-        public Context(string filename)
+        /// <summary>
+        /// Create a new execution context. Firstly, provide the filename of the entry file, then provide the ABSOLUTE path to the base directory (used for imports).
+        /// </summary>
+        public Context(string baseDirectory, string filename)
         {
-            Stack = new() { new(0, 0, StackContext.Types.File, filename) };
+            Stack = new() { new StackContext(0, 0, StackContextType.File, filename) };
+            BaseDirectory = baseDirectory;
+            CreateVariable("_BaseDir", new StringValue(BaseDirectory));
         }
 
+        /// <summary>
+        /// Add a file's source code so that it may be referenced if needed.
+        /// </summary>
         public void AddSource(string sourceName, string source)
         {
             string[] lines = source.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             Sources.Add(sourceName, lines);
+        }
+
+        public void RemoveSource(string sourceName)
+        {
+            Sources.Remove(sourceName);
         }
 
         /// <summary>
@@ -177,7 +124,7 @@ namespace UglyLang.Source
             string? filename = null;
             for (int i = stackIndex; i >= 0; i--)
             {
-                if (Stack[i].Type == StackContext.Types.File)
+                if (Stack[i].Type == StackContextType.File)
                 {
                     filename = Stack[i].Name;
                     break;
@@ -226,7 +173,7 @@ namespace UglyLang.Source
                 str += Stack[i].ToString() + Environment.NewLine;
 
                 if (i != 0)
-                    str += GetLineError(i, Stack[i].LineNumber, Stack[i].ColNumber);
+                    str += GetLineError(i == 0 ? 0 : i - 1, Stack[i].LineNumber, Stack[i].ColNumber);
             }
 
             str += error.ToString();
@@ -238,18 +185,28 @@ namespace UglyLang.Source
         /// <summary>
         /// Push a new stack context
         /// </summary>
-        public void PushStackContext(int line, int col, StackContext.Types type, string name, TypeParameterCollection? typeParams = null)
+        public void PushStackContext(int line, int col, StackContextType type, string name, TypeParameterCollection? typeParams = null)
         {
-            Stack.Add(new(line, col, type, name, typeParams));
+            Stack.Add(new StackContext(line, col, type, name, typeParams));
+        }
+
+        /// <summary>
+        /// Push a new proxy stack context forthe latest stack context
+        /// </summary>
+        public void PushProxyStackContext(int line, int col, StackContextType type, string name)
+        {
+            Stack.Add(new ProxyStackContext(line, col, type, name, Stack[^1]));
         }
 
         /// <summary>
         /// Pop the latest stack context
         /// </summary>
-        public void PopStackContext()
+        public AbstractStackContext PopStackContext()
         {
             if (Stack.Count < 2) throw new InvalidOperationException();
+            AbstractStackContext peek = Stack[^1];
             Stack.RemoveAt(Stack.Count - 1);
+            return peek;
         }
 
         public void SetFunctionReturnValue(Value value)
@@ -268,7 +225,7 @@ namespace UglyLang.Source
         /// </summary>
         public void MergeTypeParams(TypeParameterCollection c)
         {
-            Stack[^1].TypeParams.MergeWith(c);
+            Stack[^1].GetTypeParameters().MergeWith(c);
         }
 
         /// <summary>
@@ -277,14 +234,69 @@ namespace UglyLang.Source
         public TypeParameterCollection GetBoundTypeParams()
         {
             TypeParameterCollection c = new();
-            foreach (StackContext context in Stack)
+            foreach (AbstractStackContext context in Stack)
             {
-                foreach (string name in context.TypeParams.GetParamerNames())
-                {
-                    c.SetParameter(name, context.TypeParams.GetParameter(name));
-                }
+                c.MergeWith(context.GetTypeParameters());
             }
             return c;
+        }
+
+        /// <summary>
+        /// Import a new file, read the contents and execute it. If `source` is provided, do not read the file and use this parameter instead.
+        /// </summary>
+        public (Signal, NamespaceValue?) Import(string path, int entryLine = 0, int entryColumn = 0, string? source = null)
+        {
+            string fullpath = Path.Join(BaseDirectory, path);
+
+            // Does the source already exist?
+            if (Sources.ContainsKey(path))
+            {
+                Error = new(entryLine, entryColumn, Error.Types.Import, string.Format("'{0}' has already been imported", fullpath));
+                return (Signal.ERROR, null);
+            }
+
+            // Attempt to locate the source
+            if (source != null || File.Exists(fullpath))
+            {
+                PushStackContext(entryLine, entryColumn, StackContextType.File, path);
+
+                // Read the file
+                source ??= File.ReadAllText(fullpath);
+                AddSource(path, source);
+
+                Signal signal;
+
+                // Attempt to parse the source
+                Parser p = new(BaseDirectory);
+                Dictionary<string, string> sources = new();
+                p.Parse(path, source, sources);
+
+                if (p.Error == null)
+                {
+                    signal = p.AST.Evaluate(this);
+                    signal = signal == Signal.ERROR || signal == Signal.EXIT_PROG ? signal : Signal.NONE;
+                }
+                else
+                {
+                    Error = p.Error;
+                    signal = Signal.ERROR;
+                }
+
+                NamespaceValue? ns = null;
+                if (signal != Signal.ERROR)
+                {
+                    RemoveSource(path);
+                    StackContext oldContext = (StackContext)PopStackContext();
+                    ns = oldContext.ExportToNamespace();
+                }
+                
+                return (signal, ns);
+            }
+            else
+            {
+                Error = new(entryLine, entryColumn, Error.Types.Import, string.Format("'{0}' cannot be found", fullpath));
+                return (Signal.ERROR, null);
+            }
         }
 
         public void InitialiseGlobals()

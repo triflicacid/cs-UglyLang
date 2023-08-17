@@ -4,6 +4,7 @@
     {
         public enum Types
         {
+            Import,  // Error whilst importing/in an import
             General, // Generic error
             Syntax,  // The syntax is incorrect
             Name,    // Cannot find a name/variable

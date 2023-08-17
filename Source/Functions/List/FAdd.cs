@@ -25,7 +25,7 @@ namespace UglyLang.Source.Functions.List
             : base(Arguments, Types.Type.EmptyT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 ListValue list = (ListValue)arguments[0];
                 list.Value.Add(arguments[1]);
@@ -41,7 +41,7 @@ namespace UglyLang.Source.Functions.List
             : base(Arguments, Types.Type.EmptyT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 ListValue list = (ListValue)arguments[0];
                 list.Value.Insert((int)((IntValue)arguments[2]).Value, arguments[1]);

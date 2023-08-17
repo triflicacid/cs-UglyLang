@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
 using UglyLang.Source.Types;
@@ -12,22 +14,30 @@ namespace UglyLang.Source
         private static readonly char BlockCommentChar = ':';
         private static readonly char TypeLiteralChar = '@';
 
+        public readonly string BaseDirectory;
         public Error? Error = null;
+        public string? ErrorString = null;
         public ASTStructure? AST = null;
         public string Source = "";
 
-        public void Parse(string program)
+        public Parser(string baseDirectory)
+        {
+            BaseDirectory = baseDirectory;
+        }
+
+        public void Parse(string filename, string source, Dictionary<string, string> sources)
         {
             AST = null;
             Error = null;
-            Source = program;
+            Source = source;
+            sources.Add(filename, source);
 
             // Nested structure
             Stack<ASTStructure> trees = new();
             trees.Push(new());
             bool inComment = false;
 
-            string[] lines = program.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            string[] lines = source.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             for (int lineNumber = 0, colNumber = 0; lineNumber < lines.Length; lineNumber++, colNumber = 0)
             {
                 string line = lines[lineNumber];
@@ -75,9 +85,9 @@ namespace UglyLang.Source
                     Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected keyword, got '{0}'", line[colNumber]));
                     break;
                 }
-                else if (!KeywordNode.KeywordDict.ContainsKey(keyword))
+                else if (!KeywordNode.KeywordDict.ContainsKey(keyword)) // Is it a valid keyword?
                 {
-                    Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
+                    Error = new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, keyword);
                     break;
                 }
 
@@ -210,127 +220,150 @@ namespace UglyLang.Source
                 ASTNode? before = null, after = null;
                 int beforeCol = 0, afterCol = 0;
 
-                if (keywordInfo != null)
+                // Eat whitespace
+                while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+
+                if (keywordInfo.Before == TriState.YES || keywordInfo.Before == TriState.OPTIONAL)
                 {
-                    // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                    beforeCol = colNumber;
 
-                    if (keywordInfo.Before == TriState.YES || keywordInfo.Before == TriState.OPTIONAL)
+                    if (keywordInfo.BeforeItem == ParseOptions.Before.SYMBOL)
                     {
-                        beforeCol = colNumber;
-
-                        if (keywordInfo.BeforeItem == ParseOptions.Before.SYMBOL)
+                        string symbolStr = ExtractSymbolFromString(line[colNumber..]);
+                        if (symbolStr.Length == 0)
                         {
-                            string symbolStr = ExtractSymbolFromString(line[colNumber..]);
-                            if (symbolStr.Length == 0)
+                            if (keywordInfo.Before == TriState.YES)
                             {
-                                if (keywordInfo.Before == TriState.YES)
+                                string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected symbol, got {0}", got));
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            SymbolNode symbolNode = new(symbolStr)
+                            {
+                                LineNumber = lineNumber,
+                                ColumnNumber = colNumber
+                            };
+                            colNumber += symbolStr.Length;
+
+                            before = symbolNode;
+                        }
+                    }
+                    else if (keywordInfo.BeforeItem == ParseOptions.Before.CHAINED_SYMBOL)
+                    {
+                        (before, int endCol) = ParseSymbol(line[colNumber..], lineNumber, colNumber);
+                        if (before == null) break; // Propagate
+                        colNumber += endCol;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(keywordInfo.BeforeItem.ToString());
+                    }
+                }
+
+
+                if (keywordInfo.After == TriState.YES || keywordInfo.After == TriState.OPTIONAL)
+                {
+                    afterCol = colNumber;
+
+                    // Colon?
+                    if (colNumber >= line.Length)
+                    {
+                        if (keywordInfo.After == TriState.YES)
+                        {
+                            Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected colon ':', got end of line");
+                            break;
+                        }
+                    }
+                    else if (line[colNumber] == ':')
+                    {
+                        colNumber++;
+
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                            colNumber++;
+                        afterCol = colNumber;
+
+                        if (keywordInfo.AfterItem == ParseOptions.After.EXPR) // : Expression
+                        {
+                            (ExprNode? exprNode, int endCol) = ParseExpression(line[colNumber..], lineNumber, colNumber);
+
+                            if (exprNode == null)
+                            {
+                                if (keywordInfo.After == TriState.YES)
                                 {
-                                    string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
-                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected symbol, got {0}", got));
+                                    if (Error == null)
+                                    {
+                                        string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
+                                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected expression, got {0}", got));
+                                    }
+
                                     break;
                                 }
                             }
                             else
                             {
-                                SymbolNode symbolNode = new(symbolStr)
+                                after = exprNode;
+                            }
+
+                            colNumber += endCol;
+                        }
+                        else if (keywordInfo.AfterItem == ParseOptions.After.TYPE) // : Type
+                        {
+                            while (colNumber < line.Length && ParseNameChar.IsMatch(line[colNumber].ToString())) colNumber++;
+
+                            string s = line[afterCol..colNumber];
+                            if (s.Length == 0)
+                            {
+                                if (keywordInfo.After == TriState.YES)
+                                {
+                                    string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
+                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected type, got '{0}'", got));
+                                }
+
+                                break;
+                            }
+
+                            after = new SymbolNode(s);
+                        }
+                        else if (keywordInfo.AfterItem == ParseOptions.After.STRING) // : "String"
+                        {
+                            if (line[colNumber] == '"')
+                            {
+                                (string str, int end) = ExtractString(line[colNumber..]);
+
+                                if (end == -1)
+                                {
+                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, "unterminated string literal");
+                                    break;
+                                }
+
+                                after = new StringNode(str)
                                 {
                                     LineNumber = lineNumber,
                                     ColumnNumber = colNumber
                                 };
-                                colNumber += symbolStr.Length;
-
-                                before = symbolNode;
-                            }
-                        }
-                        else if (keywordInfo.BeforeItem == ParseOptions.Before.CHAINED_SYMBOL)
-                        {
-                            (before, int endCol) = ParseSymbol(line[colNumber..], lineNumber, colNumber);
-                            if (before == null) break; // Propagate
-                            colNumber += endCol;
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException(keywordInfo.BeforeItem.ToString());
-                        }
-                    }
-
-
-                    if (keywordInfo.After == TriState.YES || keywordInfo.After == TriState.OPTIONAL)
-                    {
-                        afterCol = colNumber;
-
-                        // Colon?
-                        if (colNumber >= line.Length)
-                        {
-                            if (keywordInfo.After == TriState.YES)
-                            {
-                                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected colon ':', got end of line");
-                                break;
-                            }
-                        }
-                        else if (line[colNumber] == ':')
-                        {
-                            colNumber++;
-
-                            while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
-                                colNumber++;
-                            afterCol = colNumber;
-
-                            if (keywordInfo.AfterItem == ParseOptions.After.EXPR) // : Expression
-                            {
-                                (ExprNode? exprNode, int endCol) = ParseExpression(line[colNumber..], lineNumber, colNumber);
-
-                                if (exprNode == null)
-                                {
-                                    if (keywordInfo.After == TriState.YES)
-                                    {
-                                        if (Error == null)
-                                        {
-                                            string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
-                                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected expression, got {0}", got));
-                                        }
-
-                                        break;
-                                    }
-                                }
-                                else
-                                {
-                                    after = exprNode;
-                                }
-
-                                colNumber += endCol;
-                            }
-                            else if (keywordInfo.AfterItem == ParseOptions.After.TYPE) // : Type
-                            {
-                                while (colNumber < line.Length && ParseNameChar.IsMatch(line[colNumber].ToString())) colNumber++;
-
-                                string s = line[afterCol..colNumber];
-                                if (s.Length == 0)
-                                {
-                                    if (keywordInfo.After == TriState.YES)
-                                    {
-                                        string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
-                                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected type, got '{0}'", got));
-                                    }
-
-                                    break;
-                                }
-
-                                after = new SymbolNode(s);
+                                colNumber += end + 1;
                             }
                             else
                             {
-                                throw new InvalidOperationException(keywordInfo.AfterItem.ToString());
+                                string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected string literal, got " + got);
+                                break;
                             }
                         }
                         else
                         {
-                            if (keywordInfo.After == TriState.YES)
-                            {
-                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected colon ':', got '{0}'", line[colNumber]));
-                                break;
-                            }
+                            throw new InvalidOperationException(keywordInfo.AfterItem.ToString());
+                        }
+                    }
+                    else
+                    {
+                        if (keywordInfo.After == TriState.YES)
+                        {
+                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected colon ':', got '{0}'", line[colNumber]));
+                            break;
                         }
                     }
                 }
@@ -490,6 +523,21 @@ namespace UglyLang.Source
                             ifKeyword.Conditions.Add(new((ExprNode)after));
                             keywordNode = ifKeyword;
                             createNewNest = true;
+                            break;
+                        }
+                    case "IMPORT":
+                        {
+                            string path = ((StringNode)after).Value;
+                            ImportKeywordNode importNode = new(path, before == null ? null : (SymbolNode)before);
+                            (bool isOk, string err) = importNode.Load(BaseDirectory, sources);
+                            
+                            if (!isOk)
+                            {
+                                Error = new(lineNumber, 0, Error.Types.Import, string.Format("in file '{0}', whilst parsing '{1}'", filename, path));
+                                ErrorString = err;
+                            }
+
+                            keywordNode = importNode;
                             break;
                         }
                     case "INPUT":
@@ -1271,6 +1319,9 @@ namespace UglyLang.Source
             string before = NonWhitespaceRegex.Replace(line[..colIdx], " ");
             string after = NonWhitespaceRegex.Replace(line[colIdx..], " ");
             str += Environment.NewLine + pre + "   " + before + "^" + after;
+
+            // If error string, append it
+            if (ErrorString != null) str += Environment.NewLine + ErrorString;
 
             return str;
         }

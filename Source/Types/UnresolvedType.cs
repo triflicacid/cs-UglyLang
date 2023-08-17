@@ -27,6 +27,9 @@
             if (value == FloatType.AsString()) return new FloatType();
             if (value == StringType.AsString()) return new StringType();
 
+            // Namespace? Hide it from public viewing.
+            if (value == "NAMESPACE") return null;
+
             // Map?
             if (value.StartsWith("MAP[") && value[^1] == ']')
             {

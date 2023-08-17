@@ -32,7 +32,7 @@ namespace UglyLang.Source.Functions
             : base(Arguments, Types.Type.FloatT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 double n = Generator.NextDouble();
                 context.SetFunctionReturnValue(new FloatValue(n));
@@ -48,7 +48,7 @@ namespace UglyLang.Source.Functions
             : base(Arguments, Types.Type.FloatT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 double max = ((FloatValue)arguments[0]).Value;
                 double n = Generator.NextDouble() * max;
@@ -65,7 +65,7 @@ namespace UglyLang.Source.Functions
             : base(Arguments, Types.Type.FloatT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 double min = ((FloatValue)arguments[0]).Value;
                 double max = ((FloatValue)arguments[1]).Value;

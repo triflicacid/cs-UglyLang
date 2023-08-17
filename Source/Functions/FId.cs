@@ -25,7 +25,7 @@ namespace UglyLang.Source.Functions
             : base(Arguments, new TypeParameter("a"))
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 context.SetFunctionReturnValue(arguments[0]);
                 return Signal.NONE;

@@ -22,6 +22,9 @@ Note that integers are used to represent Booleans, with 0 representing False and
 	- Property `.MemberType: TYPE` contains the type of the members (`a`).
 - `MAP[a]`. Represents a map between `STRING` keys and values of type `a`.
 	- Property `.ValueType: TYPE` contains the type of the values (`a`).
+- `NAMESPACE`. Represents a collection of symbols. Primarily used when importing a file.
+	- It **cannot** be constructed.
+	- It contains symbols which can be accessed as properties (all of which are read-only).
 
 # User-Defined Types
 
@@ -29,9 +32,9 @@ Note that integers are used to represent Booleans, with 0 representing False and
 
 # Constructing Types
 
-Each type is constructed differently, each requiring different arguments or none at all. Types which require no arguments may be constructed using the `NEW<t: TYPE>` function.
+Each type is constructed differently, requiring different arguments or none at all. Types which require no arguments may be constructed using the `NEW<t: TYPE>` function.
 
-Every type may be constructed using the following syntax:
+Every type (unless specified above) may be constructed using the following syntax:
 
 ``` <type> { <arg1>, <arg2>, ... } ```
 

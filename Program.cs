@@ -8,9 +8,10 @@ string filepath = Console.ReadLine() ?? "";
 if (filepath.Length == 0) filepath = defaultFilename;
 
 // Construct full filepath to current directory
-string fullFilePath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
-fullFilePath = Directory.GetParent(Directory.GetParent(Directory.GetParent(fullFilePath).FullName).FullName).FullName;
-fullFilePath += "\\" + filepath;
+string baseDir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+baseDir = Directory.GetParent(Directory.GetParent(Directory.GetParent(baseDir).FullName).FullName).FullName;
+string fullFilePath = Path.Join(baseDir, filepath);
+
 Console.WriteLine("Opening " + fullFilePath + " ...");
 
 if (File.Exists(fullFilePath))
@@ -20,8 +21,9 @@ if (File.Exists(fullFilePath))
 
     var watch = System.Diagnostics.Stopwatch.StartNew();
 
-    Parser p = new();
-    p.Parse(program);
+    Parser p = new(baseDir);
+    Dictionary<string, string> sources = new();
+    p.Parse(filepath, program, sources);
     watch.Stop();
     long parsedTime = watch.ElapsedMilliseconds;
 
@@ -34,8 +36,10 @@ if (File.Exists(fullFilePath))
     {
         watch.Reset();
 
-        Context ctx = new(filepath);
-        ctx.AddSource(filepath, program);
+        Context ctx = new(baseDir, filepath);
+        foreach (string filename in sources.Keys) ctx.AddSource(filename, sources[filename]);
+
+
         ctx.InitialiseGlobals();
         Signal sig = p.AST.Evaluate(ctx);
         watch.Stop();

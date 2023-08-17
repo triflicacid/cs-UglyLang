@@ -28,21 +28,21 @@ namespace UglyLang.Source.Functions
             : base(Arguments, new Any())
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 Types.Type type = ((TypeValue)arguments[0]).Value;
 
                 // Can the type be constructed?
                 if (!type.CanConstruct())
                 {
-                    context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
+                    context.Error = new(lineNo, colNo, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
                     return Signal.ERROR;
                 }
 
                 Value? value = type.ConstructNoArgs(context);
                 if (value == null)
                 {
-                    context.Error = new(0, 0, Error.Types.Type, string.Format("type constructor {0} requires arguments", type));
+                    context.Error = new(lineNo, colNo, Error.Types.Type, string.Format("type constructor {0} requires arguments", type));
                     return Signal.ERROR;
                 }
                 else

@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.List
             : base(Arguments, Types.Type.EmptyT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 ListValue list = (ListValue)arguments[0];
                 int index = (int)((IntValue)arguments[1]).Value;
@@ -36,7 +36,7 @@ namespace UglyLang.Source.Functions.List
                 }
                 else
                 {
-                    context.Error = new(0, 0, Error.Types.General, string.Format("index {0} is out of bounds for {1}", index, list.Type));
+                    context.Error = new(lineNo, colNo, Error.Types.Argument, string.Format("index {0} is out of bounds for {1}", index, list.Type));
                     return Signal.ERROR;
                 }
             }

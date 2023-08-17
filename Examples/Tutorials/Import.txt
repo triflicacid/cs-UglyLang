@@ -1,0 +1,10 @@
+; Import into global scope
+;IMPORT: "Import2.txt"
+;DO: Say<"Joe", "Hello, world!">
+
+; Import using the function
+;LET x: IMPORT<"import.txt">
+
+; Import into a namespace
+IMPORT x: "Import2.txt"
+DO: x.Say<"Joe", "Hello, world!">

@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.Logical
             : base(Arguments, Types.Type.IntT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 Value a = arguments[0], b = arguments[1];
                 IntValue value = new(a.IsTruthy() || b.IsTruthy());

@@ -8,7 +8,7 @@ namespace UglyLang.Source.Functions
         /// <summary>
         /// Call the given function with said arguments. Redirect call to CallOverload once the correct overload has been found.
         /// </summary>
-        public Signal Call(Context context, List<Value> arguments);
+        public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber);
     }
 
     /// <summary>
@@ -25,11 +25,11 @@ namespace UglyLang.Source.Functions
             Context = context;
         }
 
-        public Signal Call(Context context, List<Value> arguments)
+        public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber)
         {
             List<Value> newArguments = new(arguments);
             newArguments.Insert(0, Context);
-            return Func.Call(context, newArguments);
+            return Func.Call(context, newArguments, lineNumber, colNumber);
         }
     }
 
@@ -66,7 +66,7 @@ namespace UglyLang.Source.Functions
         /// <summary>
         /// Call said function with the given arguments.
         /// </summary>
-        public Signal Call(Context context, List<Value> arguments)
+        public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber)
         {
             List<Types.Type> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
 
@@ -150,7 +150,7 @@ namespace UglyLang.Source.Functions
             }
 
             // Invoke the overload
-            Signal sig = chosenOverload.Call(context, arguments, typeParameters);
+            Signal sig = chosenOverload.Call(context, arguments, typeParameters, lineNumber, colNumber);
             if (sig == Signal.ERROR || sig == Signal.EXIT_PROG)
                 return sig;
 

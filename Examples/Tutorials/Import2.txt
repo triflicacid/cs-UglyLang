@@ -1,0 +1,3 @@
+DEF Say: <name: STRING, speech: STRING>
+	PRINTLN: name " says '" speech "'"
+END

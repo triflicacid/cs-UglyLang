@@ -42,6 +42,7 @@ namespace UglyLang.Source.AST
             { "EXIT", new(TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE) },
             { "FINISH", new(TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR) },
             { "IF", new(TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR) },
+            { "IMPORT", new(TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.STRING) },
             { "INPUT", new(TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.NO, ParseOptions.After.EXPR) },
             { "LET", new(TriState.YES, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.EXPR) },
             { "LOOP", new(TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.OPTIONAL, ParseOptions.After.EXPR) },

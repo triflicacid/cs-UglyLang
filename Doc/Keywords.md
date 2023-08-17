@@ -18,6 +18,8 @@ The following document will describe each keyword, split up into appropriate sec
 | `ERROR` | none | none | Raises an error with a default message. |
 | `ERROR` | none | `expr` | Raises an error with the evaluated expression as the message. |
 | `EXIT` | none | none | Exits the current loop structure. |
+| `IMPORT` | none | `expr`| Imports the filepath provided and exports all symbols into the current scope. See `Runtime.md`. |
+| `IMPORT` | `symbol` | `expr`| Same as the above, but bundles all symbols into a namespace with the name of `symbol`. |
 | `INPUT` | `symbol_chain` | none | Prompts the user for input, storing the entered value in the given symbol/property. |
 | `LET` | `symbol` | `expr` | Creates a new symbol and initialises it to the given value. |
 | `PRINT` | none | `expr` | Prints the expression to the screen. Subsequent invocations of `PRINT[LN]` will print on the same line. |

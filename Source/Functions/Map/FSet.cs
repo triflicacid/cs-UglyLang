@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.Map
             : base(Arguments, Types.Type.EmptyT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 MapValue map = (MapValue)arguments[0];
                 string key = ((StringValue)arguments[1]).Value;

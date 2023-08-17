@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.List
             : base(Arguments, Types.Type.IntT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 IntValue value = new(((ListValue)arguments[0]).IndexOf(arguments[1]));
                 context.SetFunctionReturnValue(value);

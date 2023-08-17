@@ -88,7 +88,7 @@ namespace UglyLang.Source.Functions
         /// <summary>
         /// Call this overload.
         /// </summary>
-        public abstract Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters);
+        public abstract Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNumber, int colNumber);
     }
 
     public class UserFunctionOverload : FunctionOverload
@@ -103,7 +103,7 @@ namespace UglyLang.Source.Functions
             Body = body;
         }
 
-        public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+        public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNumber, int colNumber)
         {
             // Create variables for the parameters
             for (int i = 0; i < arguments.Count; i++)

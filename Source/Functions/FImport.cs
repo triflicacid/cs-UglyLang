@@ -4,34 +4,36 @@ using UglyLang.Source.Values;
 namespace UglyLang.Source.Functions
 {
     /// <summary>
-    /// Sleep the current thread for some milliseconds
+    /// Function to import and execute a file
     /// </summary>
-    public class FSleep : Function, IDefinedGlobally
+    public class FImport : Function, IDefinedGlobally
     {
-        public FSleep()
+        public FImport()
         {
             Overloads.Add(new OverloadOne());
         }
 
         public string GetDefinedName()
         {
-            return "SLEEP";
+            return "IMPORT";
         }
 
 
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { Types.Type.IntT };
+            private static readonly Types.Type[] Arguments = new Types.Type[] { new StringType() };
 
             public OverloadOne()
-            : base(Arguments, Types.Type.EmptyT)
+            : base(Arguments, new NamespaceType())
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                Thread.Sleep((int)((IntValue)arguments[0]).Value);
-                return Signal.NONE;
+                string filename = ((StringValue)arguments[0]).Value;
+                (Signal signal, NamespaceValue? ns) = context.Import(filename, lineNo, colNo);
+                if (ns != null) context.SetFunctionReturnValue(ns);
+                return signal;
             }
         }
     }

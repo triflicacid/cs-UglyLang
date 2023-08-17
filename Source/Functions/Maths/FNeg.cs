@@ -24,7 +24,7 @@ namespace UglyLang.Source.Functions.Maths
             : base(Arguments, Types.Type.FloatT)
             { }
 
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters)
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
                 FloatValue value = new(-((FloatValue)arguments[0]).Value);
                 context.SetFunctionReturnValue(value);
