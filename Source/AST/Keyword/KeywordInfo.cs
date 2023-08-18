@@ -29,7 +29,7 @@
         public static readonly List<KeywordInfo> List = new() {
             new("CAST", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.YES, ParseOptions.After.TYPE),
             new("DEF", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.EXPR),
-            new("DO", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
+            new("DO", TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR),
             new("ELSE", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),
             new("ELSEIF", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("END", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),

@@ -23,6 +23,11 @@
 
         public ISymbolValue GetSymbol(string symbol);
 
+        public virtual bool CanCreateSymbol(string name)
+        {
+            return true;
+        }
+
         public void CreateSymbol(string symbol, ISymbolValue value);
 
         public void SetSymbol(string symbol, ISymbolValue value);

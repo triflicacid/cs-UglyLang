@@ -1,0 +1,9 @@
+LET x: 3
+
+DO
+	PRINTLN: x ; => 3
+	LET x: 4
+	PRINTLN: x ; => 4
+END
+
+PRINTLN: x ; => 3

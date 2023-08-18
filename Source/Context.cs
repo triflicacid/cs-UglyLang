@@ -65,11 +65,24 @@ namespace UglyLang.Source
         }
 
         /// <summary>
+        /// Can the followig symbol be created?
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public bool CanCreateSymbol(string name)
+        {
+            return !Stack[^1].HasSymbol(name);
+        }
+
+        /// <summary>
         /// Creates a new symbol in the topmost scope and sets it
         /// </summary>
         public void CreateSymbol(string name, ISymbolValue value)
         {
-            Stack[^1].SetSymbol(name, value);
+            if (!CanCreateSymbol(name))
+                throw new InvalidOperationException(name);
+
+            Stack[^1].CreateSymbol(name, value);
         }
 
         private string GetSourceLine(string filename, int lineNumber)

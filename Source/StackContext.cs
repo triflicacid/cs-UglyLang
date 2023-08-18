@@ -6,7 +6,8 @@ namespace UglyLang.Source
     public enum StackContextType
     {
         File,
-        Function
+        Function,
+        DoBlock,
     }
 
     public abstract class AbstractStackContext : ISymbolContainer
@@ -46,9 +47,12 @@ namespace UglyLang.Source
                 case StackContextType.Function:
                     inside = "Function";
                     break;
+                case StackContextType.DoBlock:
+                    inside = "Do";
+                    break;
             }
 
-            return string.Format("{0} {1}, entered at line {2}, column {3}:", inside, Name, LineNumber + 1, ColNumber + 1);
+            return string.Format("{0}{1}, entered at line {2}, column {3}:", inside, Name.Length == 0 ? "" : " " + Name, LineNumber + 1, ColNumber + 1);
         }
     }
 

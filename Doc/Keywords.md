@@ -13,6 +13,7 @@ The following document will describe each keyword, split up into appropriate sec
 | Keyword | Before | After | Description |
 | - | - | - | - |
 | `CAST` | `symbol_chain` | `type` | Change the type of the given symbol/property. |
+| `DO` | none | none | Creates a do-block. Code execution proceeds as normal, but in a new scope, like a function. |
 | `DO` | none | `expr` | Evaluate the given expression. |
 | `END` | none | none | Marks the end of the previous loop/function block. |
 | `ERROR` | none | none | Raises an error with a default message. |

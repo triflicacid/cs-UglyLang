@@ -145,6 +145,8 @@ namespace UglyLang.Source
                 while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
                     colNumber++;
 
+                int startOfLineCol = colNumber;
+
                 // Is the line empty?
                 if (colNumber == line.Length)
                 {
@@ -515,7 +517,16 @@ namespace UglyLang.Source
                         }
                     case "DO":
                         {
-                            keywordNode = new DoKeywordNode((ExprNode)after);
+                            if (after == null)
+                            {
+                                keywordNode = new DoBlockKeywordNode();
+                                createNewNest = true;
+                            }
+                            else
+                            {
+                                keywordNode = new DoKeywordNode((ExprNode)after);
+                            }
+
                             break;
                         }
                     case "ELSE":
@@ -608,6 +619,10 @@ namespace UglyLang.Source
                                 else if (latest is NamespaceKeywordNode nsKeyword)
                                 {
                                     nsKeyword.Body = previousTree;
+                                }
+                                else if (latest is DoBlockKeywordNode dbKeyword)
+                                {
+                                    dbKeyword.Body = previousTree;
                                 }
                                 else
                                 {
@@ -737,6 +752,8 @@ namespace UglyLang.Source
                 if (keywordNode != null)
                 {
                     keywordNode.LineNumber = lineNumber;
+                    if (keywordNode.ColumnNumber == 0)
+                        keywordNode.ColumnNumber = startOfLineCol;
 
                     // Add keyword onto the current tree
                     trees.Peek().AddNode(keywordNode);

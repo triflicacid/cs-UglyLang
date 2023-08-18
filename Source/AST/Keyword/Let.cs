@@ -18,12 +18,7 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context, ISymbolContainer container)
         {
-            if (container.HasSymbol(Name))
-            {
-                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("\"{0}\" is already defined.", Name));
-                return Signal.ERROR;
-            }
-            else
+            if (container.CanCreateSymbol(Name))
             {
                 Value? evaldValue = Value.Evaluate(context, container);
                 if (evaldValue == null) // Propagate error?
@@ -33,6 +28,12 @@ namespace UglyLang.Source.AST.Keyword
 
                 container.CreateSymbol(Name, evaldValue);
                 return Signal.NONE;
+
+            }
+            else
+            {
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("\"{0}\" is already defined.", Name));
+                return Signal.ERROR;
             }
         }
     }
