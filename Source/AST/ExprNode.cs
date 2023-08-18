@@ -46,7 +46,8 @@ namespace UglyLang.Source.AST
             else if (Children.Count == 1)
             {
                 Value? value = Children[0].Evaluate(context, container);
-                if (value == null) return null;
+                if (value == null)
+                    return null;
 
                 Value? newValue = castTo == null ? value : value.To(castTo);
                 if (newValue == null)
@@ -65,7 +66,8 @@ namespace UglyLang.Source.AST
                 foreach (ASTNode child in Children)
                 {
                     value = child.Evaluate(context, container);
-                    if (value == null) return null;
+                    if (value == null)
+                        return null;
 
                     Value? newValue = value.To(new StringType());
                     if (newValue == null)

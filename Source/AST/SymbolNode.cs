@@ -64,7 +64,8 @@ namespace UglyLang.Source.AST
                         foreach (ExprNode expr in CallArguments)
                         {
                             Value? arg = expr.Evaluate(context, container);
-                            if (arg == null) return null;
+                            if (arg == null)
+                                return null;
                             if (context.Error != null)
                             {
                                 return null; // Propagate error

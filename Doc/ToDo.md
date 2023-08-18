@@ -33,4 +33,8 @@ The arguments of the constructor would correspond to each `FIELD` field, in orde
 - Allow multi-word keywords (key*phrases*)
 	- Add keyphrase `LOOP OVER <symbol>: <symbol>` where the first symbol is iterated over, each member being set to the second symbol.
 
+- `SCOPE` keyword which behaves like a normal code block except it creates a new scope.
+
+- Make errors an internal type. Create synonyms to the `try .. catch` blocks.
+
 - Create a basic text editor for this language with syntax highlighting. Either in a new repository or in this repository. If it is the latter, propose placing them in `Language` and `Editor` directories.

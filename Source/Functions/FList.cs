@@ -62,7 +62,8 @@ namespace UglyLang.Source.Functions
                 for (int i = 0; i < length; i++)
                 {
                     Value? value = type.ConstructNoArgs(context);
-                    if (value == null) return Signal.ERROR;
+                    if (value == null)
+                        return Signal.ERROR;
                     values.Add(value);
                 }
 

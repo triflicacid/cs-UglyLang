@@ -23,7 +23,8 @@ namespace UglyLang.Source.AST.Keyword
             else
             {
                 Value? value = ReturnOnExit.Evaluate(context, container);
-                if (value == null) return Signal.ERROR;
+                if (value == null)
+                    return Signal.ERROR;
 
                 context.SetFunctionReturnValue(value);
             }

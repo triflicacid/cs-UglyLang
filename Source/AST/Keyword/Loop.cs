@@ -20,7 +20,8 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context, ISymbolContainer container)
         {
-            if (Body == null) throw new NullReferenceException(); // Should not be the case
+            if (Body == null)
+                throw new NullReferenceException(); // Should not be the case
 
             // Define counter, or set existing variable to 0
             bool counterIsFloat = false;
@@ -67,7 +68,8 @@ namespace UglyLang.Source.AST.Keyword
                 Signal signal = Body.Evaluate(context, container);
                 if (signal != Signal.NONE)
                 {
-                    if (signal == Signal.EXIT_LOOP) return Signal.NONE; // Signal has been processed.
+                    if (signal == Signal.EXIT_LOOP)
+                        return Signal.NONE; // Signal has been processed.
                     return signal;
                 }
 

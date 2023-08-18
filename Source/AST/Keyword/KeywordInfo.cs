@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UglyLang.Source.AST.Keyword
+﻿namespace UglyLang.Source.AST.Keyword
 {
     public class KeywordInfo
     {

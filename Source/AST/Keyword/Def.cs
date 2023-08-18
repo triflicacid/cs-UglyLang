@@ -1,6 +1,5 @@
 ﻿using UglyLang.Source.Functions;
 using UglyLang.Source.Types;
-using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST.Keyword
 {
@@ -26,7 +25,8 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context, ISymbolContainer container)
         {
-            if (Body == null) throw new NullReferenceException();
+            if (Body == null)
+                throw new NullReferenceException();
 
             // Check if the function is already defined
             Function func;

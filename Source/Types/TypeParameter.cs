@@ -63,8 +63,10 @@
 
         public void SetParameter(string name, Type type)
         {
-            if (!HasParameter(name)) Dict.Add(name, type);
-            else Dict[name] = type;
+            if (!HasParameter(name))
+                Dict.Add(name, type);
+            else
+                Dict[name] = type;
         }
 
         public List<string> GetParamerNames()
@@ -131,7 +133,8 @@
                     {
                         t2s[i] = GetParameter(tp2.Symbol);
 
-                        if (t1.DoesMatch(t2s[i])) return true;
+                        if (t1.DoesMatch(t2s[i]))
+                            return true;
                     }
                     else
                     {

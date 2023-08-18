@@ -18,6 +18,7 @@
         public int ColumnNumber;
         public readonly Types Type;
         public readonly string Message;
+        public string AppendString = "";
 
         public Error(int lineNumber, int colNumber, Types type, string message)
         {

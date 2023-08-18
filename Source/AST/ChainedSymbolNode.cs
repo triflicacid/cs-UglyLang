@@ -25,7 +25,8 @@ namespace UglyLang.Source.AST
         /// </summary>
         private (ISymbolValue, Property?, Value?)? RetrieveValues(Context context, ISymbolContainer container)
         {
-            if (Symbols.Count == 0) throw new InvalidOperationException();
+            if (Symbols.Count == 0)
+                throw new InvalidOperationException();
 
             ISymbolValue? parent = null;
             Property? parentProperty = null;
@@ -127,7 +128,8 @@ namespace UglyLang.Source.AST
         public override Value? Evaluate(Context context, ISymbolContainer container)
         {
             var values = RetrieveValues(context, container);
-            if (values == null) return null; // Propagate
+            if (values == null)
+                return null; // Propagate
 
             (ISymbolValue value, Property? _, ISymbolValue? _) = values.Value;
 
@@ -140,11 +142,13 @@ namespace UglyLang.Source.AST
         public override bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false)
         {
             var values = RetrieveValues(context, container);
-            if (values == null) return false; // Propagate
+            if (values == null)
+                return false; // Propagate
 
             (ISymbolValue oldChild, Property? property, Value? parent) = values.Value;
 
-            if (parent == null || property == null) throw new NullReferenceException();
+            if (parent == null || property == null)
+                throw new NullReferenceException();
 
             // Is readonly?
             if (property.IsReadonly)
@@ -194,11 +198,13 @@ namespace UglyLang.Source.AST
         public override bool CastValue(Context context, ISymbolContainer container, Types.Type type)
         {
             var values = RetrieveValues(context, container);
-            if (values == null) return false; // Propagate
+            if (values == null)
+                return false; // Propagate
 
             (ISymbolValue child, Property? property, Value? parent) = values.Value;
 
-            if (parent == null || property == null) throw new NullReferenceException();
+            if (parent == null || property == null)
+                throw new NullReferenceException();
 
             // Is readonly?
             if (property.IsReadonly)

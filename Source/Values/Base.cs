@@ -44,10 +44,12 @@ namespace UglyLang.Source.Values
 
         public Property GetProperty(string name)
         {
-            if (!HasProperty(name)) throw new InvalidOperationException(name);
+            if (!HasProperty(name))
+                throw new InvalidOperationException(name);
 
             Property? prop = Type.GetProperties().ContainsKey(name) ? Type.GetProperties()[name] : GetPropertyExtra(name);
-            if (prop == null) throw new InvalidOperationException();
+            if (prop == null)
+                throw new InvalidOperationException();
             if (AreFunctionsContextual() && prop.GetValue() is Function func)
             {
                 prop.SetValue(new FunctionContext(func, this));

@@ -1,6 +1,4 @@
-﻿using UglyLang.Source.Values;
-
-namespace UglyLang.Source.Types
+﻿namespace UglyLang.Source.Types
 {
     public class UserType : Type, ISymbolValue
     {

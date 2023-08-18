@@ -1,4 +1,7 @@
-﻿namespace UglyLang.Source.AST.Keyword
+﻿using UglyLang.Source.Values;
+using static UglyLang.Source.ParseOptions;
+
+namespace UglyLang.Source.AST.Keyword
 {
     /// <summary>
     /// Keyword to import another resource
@@ -16,67 +19,61 @@
         }
 
         /// <summary>
-        /// Load the contents of the given filename in this.Content. Return (isOk, errorString).
+        /// Load the contents of the given filename in this.Content. Return isOk.
         /// </summary>
-        public (bool, string) Load(string baseDirectory, Dictionary<string, string> sources)
+        public bool Load(ParseOptions options)
         {
-            if (Content != null) throw new InvalidOperationException();
+            Parser p = new(options);
+            p.ParseFile(Filename, LineNumber, ColumnNumber);
 
-            string fullpath = Path.Join(baseDirectory, Filename);
-
-            // Does the source already exist?
-            if (sources.ContainsKey(Filename))
+            if (p.IsError())
             {
-                return (false, new Error(LineNumber, ColumnNumber, Error.Types.Import, string.Format("'{0}' has already been imported", fullpath)).ToString());
+                return false;
             }
 
-            // Attempt to locate the source
-            if (File.Exists(fullpath))
-            {
-                // Read the file
-                string source = File.ReadAllText(fullpath);
+            Content = p.GetAST();
 
-                // Attempt to parse the source
-                Parser p = new(baseDirectory);
-                p.Parse(Filename, source, sources);
-
-                // Assign the parsed AST
-                Content = p.AST;
-
-                if (p.Error == null)
-                {
-                    return (true, "");
-                }
-                else
-                {
-                    return (false, p.GetErrorString());
-                }
-            }
-            else
-            {
-                return (false, new Error(LineNumber, ColumnNumber, Error.Types.Import, string.Format("'{0}' cannot be found", fullpath)).ToString());
-            }
+            return true;
         }
 
         public override Signal Action(Context context, ISymbolContainer container)
         {
-            if (Content == null) throw new InvalidOperationException();
+            if (Content == null)
+                throw new InvalidOperationException();
 
-            // Push the new stack context
-            if (Namespace == null)
+            ImportCache cache = context.ParseOptions.FileSources[Filename];
+            NamespaceValue ns;
+            Signal s;
+
+            // Is the namespace cached? If not, evaluate it and cache the result.
+            if (cache.Namespace == null)
             {
-                context.PushProxyStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
+                // Push the new stack context
+                if (Namespace == null)
+                {
+                    context.PushProxyStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
+                }
+                else
+                {
+                    context.PushStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
+                }
+
+                s = Content.Evaluate(context, container);
+                if (s == Signal.ERROR)
+                    return s;
+
+                var oldContext = context.PopStackContext();
+
+                ns = ((StackContext)oldContext).ExportToNamespace();
+                cache.Namespace = ns;
             }
             else
             {
-                context.PushStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
+                ns = cache.Namespace;
+                s = Signal.NONE;
             }
 
-            Signal s = Content.Evaluate(context, container);
-            if (s == Signal.ERROR) return s;
-
-            var oldContext = context.PopStackContext();
-
+            // Bind namespace to a symbol
             if (Namespace != null)
             {
                 // Export into a namespace and create new variable
@@ -87,7 +84,7 @@
                 }
                 else
                 {
-                    container.CreateSymbol(Namespace.Symbol, ((StackContext)oldContext).ExportToNamespace());
+                    container.CreateSymbol(Namespace.Symbol, ns);
                 }
             }
 

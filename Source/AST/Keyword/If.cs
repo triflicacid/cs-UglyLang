@@ -13,16 +13,20 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context, ISymbolContainer container)
         {
-            if (Conditions.Count == 0) throw new NullReferenceException(); // Body should have been set
+            if (Conditions.Count == 0)
+                throw new NullReferenceException(); // Body should have been set
 
             // Iterate through each condition, executing that block's body if truthy
             foreach (var item in Conditions)
             {
-                if (item.Body == null) throw new NullReferenceException();
+                if (item.Body == null)
+                    throw new NullReferenceException();
 
                 Value? value = item.Condition.Evaluate(context, container);
-                if (value == null) return Signal.ERROR; // Propagate error
-                if (value.IsTruthy()) return item.Body.Evaluate(context, container);
+                if (value == null)
+                    return Signal.ERROR; // Propagate error
+                if (value.IsTruthy())
+                    return item.Body.Evaluate(context, container);
             }
 
             return Otherwise == null ? Signal.NONE : Otherwise.Evaluate(context, container);

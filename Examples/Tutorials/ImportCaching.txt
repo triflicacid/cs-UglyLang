@@ -1,0 +1,17 @@
+; Create a virtual file at runtime.. This is why we use the IMPORT function, as it operates at runtime.
+DO: CreateVirtualFile<"pi.txt", "LET pi: 3.14159265">
+
+; Import "pi.txt". The source, parsed structure, and returned namespace are cached.
+LET x: IMPORT<"pi.txt">
+PRINTLN: x.pi ; => 3.14159..
+SET x.pi: 3
+
+; Import "pi.txt". Alread imported, so the cached namespace is returned.
+LET y: IMPORT<"pi.txt">
+PRINTLN: y.pi ; => 3
+PRINTLN: EQ<x,y> ; => 1
+
+; Import "pi.txt". Already imported, so no need to re-parse. However, the flag is truthy, so the cached namespace is ignored and the file is re-executed.
+LET z: IMPORT<"pi.txt", 1>
+PRINTLN: z.pi ; => 3.14159..
+PRINTLN: EQ<x,z> ; => 0

@@ -26,17 +26,23 @@ namespace UglyLang.Source.Values
 
         public static IntValue From(Value value)
         {
-            if (value is IntValue ivalue) return new(ivalue.Value);
-            if (value is FloatValue fvalue) return new((long)fvalue.Value);
-            if (value is StringValue svalue) return new((long)StringToDouble(svalue.Value));
+            if (value is IntValue ivalue)
+                return new(ivalue.Value);
+            if (value is FloatValue fvalue)
+                return new((long)fvalue.Value);
+            if (value is StringValue svalue)
+                return new((long)StringToDouble(svalue.Value));
             throw new InvalidOperationException(value.Type.ToString());
         }
 
         public override Value? To(Types.Type type)
         {
-            if (type is Any or IntType) return new IntValue(Value);
-            if (type is FloatType) return new FloatValue(Value);
-            if (type is StringType) return new StringValue(Value.ToString());
+            if (type is Any or IntType)
+                return new IntValue(Value);
+            if (type is FloatType)
+                return new FloatValue(Value);
+            if (type is StringType)
+                return new StringValue(Value.ToString());
             return null;
         }
 

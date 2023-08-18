@@ -22,10 +22,14 @@ namespace UglyLang.Source.Values
 
         public override Value? To(Types.Type type)
         {
-            if (type is Any or EmptyType) return this;
-            if (type is IntType) return IntValue.Default();
-            if (type is FloatType) return FloatValue.Default();
-            if (type is StringType) return StringValue.Default();
+            if (type is Any or EmptyType)
+                return this;
+            if (type is IntType)
+                return IntValue.Default();
+            if (type is FloatType)
+                return FloatValue.Default();
+            if (type is StringType)
+                return StringValue.Default();
             return null;
         }
 

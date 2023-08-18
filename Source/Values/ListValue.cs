@@ -48,7 +48,8 @@ namespace UglyLang.Source.Values
                 foreach (Value member in Value)
                 {
                     Value? s = member.To(type);
-                    if (s == null) throw new InvalidOperationException(string.Format("Error converting {0} to STRING - this cast should be implemented", member.Type));
+                    if (s == null)
+                        throw new InvalidOperationException(string.Format("Error converting {0} to STRING - this cast should be implemented", member.Type));
                     Members.Add(((StringValue)s).Value);
                 }
 
@@ -64,7 +65,8 @@ namespace UglyLang.Source.Values
             {
                 for (int i = 0; i < Value.Count; i++)
                 {
-                    if (!Value[i].Equals(list.Value[i])) return false;
+                    if (!Value[i].Equals(list.Value[i]))
+                        return false;
                 }
                 return true;
             }
@@ -76,7 +78,8 @@ namespace UglyLang.Source.Values
         {
             for (int i = 0; i < Value.Count; i++)
             {
-                if (Value[i].Equals(value)) return true;
+                if (Value[i].Equals(value))
+                    return true;
             }
 
             return false;
@@ -86,7 +89,8 @@ namespace UglyLang.Source.Values
         {
             for (int i = 0; i < Value.Count; i++)
             {
-                if (Value[i].Equals(value)) return i;
+                if (Value[i].Equals(value))
+                    return i;
             }
 
             return -1;
@@ -120,7 +124,8 @@ namespace UglyLang.Source.Values
 
         protected override bool HasPropertyExtra(string name)
         {
-            if (name == MemberTypeProperty) return true;
+            if (name == MemberTypeProperty)
+                return true;
             if (double.TryParse(name, out double n) && n >= 0 && n < Value.Count)
             {
                 return true;
@@ -131,7 +136,8 @@ namespace UglyLang.Source.Values
 
         protected override Property? GetPropertyExtra(string name)
         {
-            if (name == MemberTypeProperty) return new Property(MemberTypeProperty, new TypeValue(((ListType)Type).Member), true);
+            if (name == MemberTypeProperty)
+                return new Property(MemberTypeProperty, new TypeValue(((ListType)Type).Member), true);
             if (double.TryParse(name, out double n) && n >= 0 && n < Value.Count)
             {
                 return new Property(name, Value[(int)n]);

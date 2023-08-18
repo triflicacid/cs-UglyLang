@@ -57,7 +57,8 @@ namespace UglyLang.Source.Types
 
         public override TypeParameterCollection MatchParametersAgainst(Type t)
         {
-            if (t is ListType list) return Member.MatchParametersAgainst(list.Member);
+            if (t is ListType list)
+                return Member.MatchParametersAgainst(list.Member);
             return new();
         }
 

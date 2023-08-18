@@ -11,7 +11,8 @@
 
         public ASTNode PeekNode()
         {
-            if (roots.Count == 0) throw new NullReferenceException();
+            if (roots.Count == 0)
+                throw new NullReferenceException();
             return roots[^1];
         }
 
@@ -25,7 +26,8 @@
             foreach (ASTNode root in roots)
             {
                 Signal signal = root.Action(context, container);
-                if (signal != Signal.NONE) return signal;
+                if (signal != Signal.NONE)
+                    return signal;
             }
             return Signal.NONE;
         }

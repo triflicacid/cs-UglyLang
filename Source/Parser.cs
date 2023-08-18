@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
+﻿using System.Text.RegularExpressions;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
 using UglyLang.Source.Types;
@@ -14,23 +12,123 @@ namespace UglyLang.Source
         private static readonly char BlockCommentChar = ':';
         private static readonly char TypeLiteralChar = '@';
 
-        public readonly string BaseDirectory;
-        public Error? Error = null;
-        public string? ErrorString = null;
-        public ASTStructure? AST = null;
-        public string Source = "";
+        private ASTStructure? AST = null;
+        private readonly ParseOptions Options;
 
-        public Parser(string baseDirectory)
+        public Parser(ParseOptions options)
         {
-            BaseDirectory = baseDirectory;
+            Options = options;
         }
 
-        public void Parse(string filename, string source, Dictionary<string, string> sources)
+        private void AddError(Error err)
+        {
+            Options.AddError(err);
+        }
+
+        /// <summary>
+        /// Parse the given file using this.Options. If OK, set this.AST.
+        /// </summary>
+        public void ParseFile(string filename, int lineNo, int colNo)
+        {
+            string fullpath = Path.Join(Options.GetCurrentDirectory(), filename);
+
+            // Does the source already exist?
+            if (Options.HasImportedFile(filename))
+            {
+                AddError(new(lineNo, colNo, Error.Types.Import, string.Format("'{0}' has already been imported", fullpath)));
+                return;
+            }
+
+            ParseOptions.ImportCache? cache;
+
+            // Already parsed?
+            if (Options.FileSources.TryGetValue(filename, out cache) && cache.AST != null)
+            {
+                AST = cache.AST;
+            }
+
+            // Attempt to locate the source
+            else if (cache != null || File.Exists(fullpath))
+            {
+                Options.AddImport(filename);
+
+                // Read the file/fetch the source
+                string source;
+                if (cache != null)
+                {
+                    source = cache.Source;
+                }
+                else
+                {
+                    source = File.ReadAllText(fullpath);
+                    cache = new(source);
+                    Options.FileSources.Add(filename, cache);
+                }
+
+                // Attempt to parse the source
+                Parse(filename, source);
+
+                if (!IsError())
+                {
+                    Options.PopImport();
+                    cache.AST ??= AST;
+                }
+
+                return;
+            }
+            else
+            {
+                Options.AddError(filename, new(lineNo, colNo, Error.Types.Import, string.Format("'{0}' cannot be found", fullpath)));
+            }
+        }
+
+        /// <summary>
+        /// Parse the given file using this.Options. If OK, set this.AST.
+        /// </summary>
+        public void ParseSource(string filename, string source, int entryLine = 0, int entryCol = 0)
+        {
+            // Does the source already exist?
+            if (Options.HasImportedFile(filename))
+            {
+                AddError(new(entryLine, entryCol, Error.Types.Import, string.Format("'{0}' has already been imported", Path.Join(Options.BaseDirectory, filename))));
+                return;
+            }
+
+            ParseOptions.ImportCache? cache = null;
+
+            // Set source
+            if (Options.FileSources.TryGetValue(filename, out cache))
+            {
+                if (cache.AST != null && source == cache.Source)
+                {
+                    AST = cache.AST;
+                    return;
+                }
+            }
+            else
+            {
+                cache = new(source);
+                Options.FileSources.Add(filename, cache);
+            }
+
+            Options.AddImport(filename);
+
+            // Attempt to parse the source
+            Parse(filename, source);
+            cache.AST = AST;
+
+            if (!IsError())
+            {
+                Options.PopImport();
+            }
+        }
+
+        /// <summary>
+        /// Parse the given file using this.Options. If OK, set this.AST.
+        /// </summary>
+        private void Parse(string filename, string source)
         {
             AST = null;
-            Error = null;
-            Source = source;
-            sources.Add(filename, source);
 
             // Nested structure
             Stack<ASTStructure> trees = new();
@@ -44,7 +142,8 @@ namespace UglyLang.Source
                 string line = lines[lineNumber];
 
                 // Eat whitespace
-                while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                    colNumber++;
 
                 // Is the line empty?
                 if (colNumber == line.Length)
@@ -83,12 +182,12 @@ namespace UglyLang.Source
                 // Check if the keyword exists
                 if (keyword.Length == 0)
                 {
-                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected keyword, got '{0}'", line[colNumber]));
+                    AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected keyword, got '{0}'", line[colNumber])));
                     break;
                 }
                 else if (!KeywordInfo.Lookup.ContainsKey(keyword)) // Is it a valid keyword?
                 {
-                    Error = new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("unknown keyword {0}", keyword));
+                    AddError(new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("unknown keyword {0}", keyword)));
                     break;
                 }
 
@@ -99,7 +198,7 @@ namespace UglyLang.Source
 
                     if (kwInfo.Allow != null && !kwInfo.Allow.Contains(keyword))
                     {
-                        Error = new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("keyword {0} is not permitted in a {1} context", keyword, kwInfo.Keyword));
+                        AddError(new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("keyword {0} is not permitted in a {1} context", keyword, kwInfo.Keyword)));
                         break;
                     }
                 }
@@ -111,33 +210,37 @@ namespace UglyLang.Source
                 if (keyword == "DEF")
                 {
                     // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                        colNumber++;
 
                     // Extract name
                     int beforeColNumber = colNumber;
-                    while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber])) colNumber++;
+                    while (colNumber < line.Length && char.IsLetterOrDigit(line[colNumber]))
+                        colNumber++;
                     string functionName = line[beforeColNumber..colNumber];
 
                     if (!IsValidSymbol(functionName))
                     {
-                        Error = new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", functionName));
+                        AddError(new(lineNumber, beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", functionName)));
                         break;
                     }
 
                     // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                        colNumber++;
 
                     // Should be a colon
                     if (colNumber == line.Length || line[colNumber] != ':')
                     {
                         string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
-                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ':', got {0}", got));
+                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ':', got {0}", got)));
                         break;
                     }
                     colNumber++;
 
                     // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                        colNumber++;
 
                     beforeColNumber = colNumber;
 
@@ -157,24 +260,26 @@ namespace UglyLang.Source
                     }
 
                     // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                        colNumber++;
 
                     // Expect angled bracket
                     beforeColNumber = colNumber;
                     if (colNumber == line.Length || line[colNumber] != '<')
                     {
                         string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
-                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected '<', got {0}", got));
+                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected '<', got {0}", got)));
                         break;
                     }
                     colNumber++;
 
                     // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                        colNumber++;
 
                     if (colNumber == line.Length)
                     {
-                        Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected '>' or symbol, got end of line");
+                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, "expected '>' or symbol, got end of line"));
                         break;
                     }
 
@@ -191,7 +296,7 @@ namespace UglyLang.Source
 
                         colNumber = beforeColNumber + endCol;
 
-                        if (Error != null)
+                        if (IsError())
                             break;
                     }
 
@@ -210,7 +315,7 @@ namespace UglyLang.Source
                         (constraints, int endCol) = ParseTypeConstraint(line[colNumber..], colNumber, lineNumber);
                         colNumber += endCol;
 
-                        if (Error != null)
+                        if (IsError())
                             break;
                     }
 
@@ -221,7 +326,7 @@ namespace UglyLang.Source
                     // Should be at the end of the line
                     if (colNumber < line.Length)
                     {
-                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected end of line, got '{0}'", line[colNumber]));
+                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected end of line, got '{0}'", line[colNumber])));
                         break;
                     }
 
@@ -237,7 +342,8 @@ namespace UglyLang.Source
                 int beforeCol = 0, afterCol = 0;
 
                 // Eat whitespace
-                while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber])) colNumber++;
+                while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                    colNumber++;
 
                 if (keywordInfo.Before == TriState.YES || keywordInfo.Before == TriState.OPTIONAL)
                 {
@@ -251,7 +357,7 @@ namespace UglyLang.Source
                             if (keywordInfo.Before == TriState.YES)
                             {
                                 string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
-                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected symbol, got {0}", got));
+                                AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected symbol, got {0}", got)));
                                 break;
                             }
                         }
@@ -270,7 +376,8 @@ namespace UglyLang.Source
                     else if (keywordInfo.BeforeItem == ParseOptions.Before.CHAINED_SYMBOL)
                     {
                         (before, int endCol) = ParseSymbol(line[colNumber..], lineNumber, colNumber);
-                        if (before == null) break; // Propagate
+                        if (before == null)
+                            break; // Propagate
                         colNumber += endCol;
                     }
                     else
@@ -289,7 +396,7 @@ namespace UglyLang.Source
                     {
                         if (keywordInfo.After == TriState.YES)
                         {
-                            Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected colon ':', got end of line");
+                            AddError(new(lineNumber, colNumber, Error.Types.Syntax, "expected colon ':', got end of line"));
                             break;
                         }
                     }
@@ -309,10 +416,10 @@ namespace UglyLang.Source
                             {
                                 if (keywordInfo.After == TriState.YES)
                                 {
-                                    if (Error == null)
+                                    if (!IsError())
                                     {
                                         string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
-                                        Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected expression, got {0}", got));
+                                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected expression, got {0}", got)));
                                     }
 
                                     break;
@@ -327,7 +434,8 @@ namespace UglyLang.Source
                         }
                         else if (keywordInfo.AfterItem == ParseOptions.After.TYPE) // : Type
                         {
-                            while (colNumber < line.Length && ParseNameChar.IsMatch(line[colNumber].ToString())) colNumber++;
+                            while (colNumber < line.Length && ParseNameChar.IsMatch(line[colNumber].ToString()))
+                                colNumber++;
 
                             string s = line[afterCol..colNumber];
                             if (s.Length == 0)
@@ -335,7 +443,7 @@ namespace UglyLang.Source
                                 if (keywordInfo.After == TriState.YES)
                                 {
                                     string got = line.Length == colNumber ? "end of line" : line[colNumber].ToString();
-                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected type, got '{0}'", got));
+                                    AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected type, got '{0}'", got)));
                                 }
 
                                 break;
@@ -351,7 +459,7 @@ namespace UglyLang.Source
 
                                 if (end == -1)
                                 {
-                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, "unterminated string literal");
+                                    AddError(new(lineNumber, colNumber, Error.Types.Syntax, "unterminated string literal"));
                                     break;
                                 }
 
@@ -365,7 +473,7 @@ namespace UglyLang.Source
                             else
                             {
                                 string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
-                                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected string literal, got " + got);
+                                AddError(new(lineNumber, colNumber, Error.Types.Syntax, "expected string literal, got " + got));
                                 break;
                             }
                         }
@@ -378,18 +486,19 @@ namespace UglyLang.Source
                     {
                         if (keywordInfo.After == TriState.YES)
                         {
-                            Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected colon ':', got '{0}'", line[colNumber]));
+                            AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected colon ':', got '{0}'", line[colNumber])));
                             break;
                         }
                     }
                 }
 
-                if (Error != null) break;
+                if (IsError())
+                    break;
 
                 // Must be at end of line
                 if (colNumber < line.Length)
                 {
-                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected end of line, got '{0}'", line[colNumber]));
+                    AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected end of line, got '{0}'", line[colNumber])));
                     break;
                 }
 
@@ -413,7 +522,7 @@ namespace UglyLang.Source
                         {
                             if (trees.Count < 2) // Nothing to close!
                             {
-                                Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                                AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword)));
                             }
                             else
                             {
@@ -427,7 +536,7 @@ namespace UglyLang.Source
                                 }
                                 else
                                 {
-                                    Error = new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                                    AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("mismatched {0}", keyword)));
                                 }
 
                                 createNewNest = true;
@@ -439,7 +548,7 @@ namespace UglyLang.Source
                         {
                             if (trees.Count < 2) // Nothing to close!
                             {
-                                Error = new(lineNumber, keywordCol, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                                AddError(new(lineNumber, keywordCol, Error.Types.Syntax, string.Format("mismatched {0}", keyword)));
                             }
                             else
                             {
@@ -453,7 +562,7 @@ namespace UglyLang.Source
                                 }
                                 else
                                 {
-                                    Error = new(lineNumber, keywordCol, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                                    AddError(new(lineNumber, keywordCol, Error.Types.Syntax, string.Format("mismatched {0}", keyword)));
                                 }
 
                                 createNewNest = true;
@@ -465,7 +574,7 @@ namespace UglyLang.Source
                         {
                             if (trees.Count < 2) // Nothing to close!
                             {
-                                Error = new(lineNumber, keywordCol, Error.Types.Syntax, string.Format("mismatched {0}", keyword));
+                                AddError(new(lineNumber, keywordCol, Error.Types.Syntax, string.Format("mismatched {0}", keyword)));
                             }
                             else
                             {
@@ -485,7 +594,7 @@ namespace UglyLang.Source
                                     }
                                     else
                                     {
-                                        Error = new(lineNumber, colNumber, Error.Types.Syntax, keyword);
+                                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, keyword));
                                     }
                                 }
                                 else if (latest is LoopKeywordNode loopKeyword)
@@ -518,7 +627,7 @@ namespace UglyLang.Source
                         {
                             if (trees.Count < 2)
                             {
-                                Error = new(lineNumber, keywordCol, Error.Types.Syntax, keyword);
+                                AddError(new(lineNumber, keywordCol, Error.Types.Syntax, keyword));
                             }
                             else
                             {
@@ -530,7 +639,7 @@ namespace UglyLang.Source
                         {
                             if (trees.Count < 2)
                             {
-                                Error = new(lineNumber, keywordCol, Error.Types.Syntax, keyword);
+                                AddError(new(lineNumber, keywordCol, Error.Types.Syntax, keyword));
                             }
                             else
                             {
@@ -550,15 +659,16 @@ namespace UglyLang.Source
                         {
                             string path = ((StringNode)after).Value;
                             ImportKeywordNode importNode = new(path, before == null ? null : (SymbolNode)before);
-                            (bool isOk, string err) = importNode.Load(BaseDirectory, sources);
-                            
-                            if (!isOk)
-                            {
-                                Error = new(lineNumber, 0, Error.Types.Import, string.Format("in file '{0}', whilst parsing '{1}'", filename, path));
-                                ErrorString = err;
-                            }
+                            bool isOk = importNode.Load(Options);
 
-                            keywordNode = importNode;
+                            if (isOk)
+                            {
+                                keywordNode = importNode;
+                            }
+                            else
+                            {
+                                Options.InsertError(filename, new(lineNumber, 0, Error.Types.Import, string.Format("whilst parsing '{0}'", path)));
+                            }
                             break;
                         }
                     case "INPUT":
@@ -621,7 +731,8 @@ namespace UglyLang.Source
                         throw new InvalidOperationException(keyword);
                 }
 
-                if (Error != null) return;
+                if (IsError())
+                    return;
 
                 if (keywordNode != null)
                 {
@@ -638,12 +749,13 @@ namespace UglyLang.Source
                 }
             }
 
-            if (Error != null) return;
+            if (IsError())
+                return;
 
             // End - should not be nested anymore
             if (trees.Count > 1)
             {
-                Error = new(lines.Length, 0, Error.Types.Syntax, "expected END, got end of input");
+                AddError(new(lines.Length, 0, Error.Types.Syntax, "expected END, got end of input"));
             }
             else
             {
@@ -662,7 +774,7 @@ namespace UglyLang.Source
             if (col == str.Length || str[col] != '<')
             {
                 string got = col == str.Length ? "end of line" : str[col].ToString();
-                Error = new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected '>', got {0}", got));
+                AddError(new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected '>', got {0}", got)));
                 return (arguments, col);
             }
             col++;
@@ -682,7 +794,7 @@ namespace UglyLang.Source
 
                 if (!IsValidSymbol(argName))
                 {
-                    Error = new(lineNumber, colStart + beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", argName));
+                    AddError(new(lineNumber, colStart + beforeColNumber, Error.Types.Syntax, string.Format("invalid symbol \"{0}\"", argName)));
                     break;
                 }
 
@@ -691,11 +803,11 @@ namespace UglyLang.Source
                 {
                     if (iArgName == argName)
                     {
-                        Error = new(lineNumber, colStart + beforeColNumber, Error.Types.Name, string.Format("duplicate name '{0}' in argument list", argName));
+                        AddError(new(lineNumber, colStart + beforeColNumber, Error.Types.Name, string.Format("duplicate name '{0}' in argument list", argName)));
                         break;
                     }
                 }
-                if (Error != null)
+                if (IsError())
                     break;
 
                 // Eat whitespace
@@ -706,7 +818,7 @@ namespace UglyLang.Source
                 if (col == str.Length || str[col] != ':')
                 {
                     string got = col == str.Length ? "end of line" : str[col].ToString();
-                    Error = new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected ':', got {0}", got));
+                    AddError(new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected ':', got {0}", got)));
                     break;
                 }
                 col++;
@@ -731,7 +843,7 @@ namespace UglyLang.Source
                 if (col == str.Length || (str[col] != '>' && str[col] != ','))
                 {
                     string got = col == str.Length ? "end of line" : str[col].ToString();
-                    Error = new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected ',' or '>', got {0}", got));
+                    AddError(new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected ',' or '>', got {0}", got)));
                     break;
                 }
 
@@ -748,7 +860,7 @@ namespace UglyLang.Source
 
                 if (col == str.Length)
                 {
-                    Error = new(lineNumber, colStart + col, Error.Types.Syntax, "expected ',' or '>', got end of line");
+                    AddError(new(lineNumber, colStart + col, Error.Types.Syntax, "expected ',' or '>', got end of line"));
                     break;
                 }
 
@@ -784,7 +896,7 @@ namespace UglyLang.Source
                 string paramString = str[startPos..col];
                 if (paramString.Length == 0)
                 {
-                    Error = new(lineNumber, col + colStart, Error.Types.Syntax, "expected type parameter");
+                    AddError(new(lineNumber, col + colStart, Error.Types.Syntax, "expected type parameter"));
                     break;
                 }
 
@@ -792,7 +904,7 @@ namespace UglyLang.Source
                 // TODO may be used to stack?
                 if (constraintDict.ContainsKey(paramString))
                 {
-                    Error = new(lineNumber, colStart + startPos, Error.Types.Type, string.Format("type {0} is already contrained", paramString));
+                    AddError(new(lineNumber, colStart + startPos, Error.Types.Type, string.Format("type {0} is already contrained", paramString)));
                     break;
                 }
 
@@ -804,7 +916,7 @@ namespace UglyLang.Source
                 if (col == str.Length || str[col] != ':')
                 {
                     string got = col == str.Length ? "end of line" : str[col].ToString();
-                    Error = new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected ':', got {0}", got));
+                    AddError(new(lineNumber, colStart + col, Error.Types.Syntax, string.Format("expected ':', got {0}", got)));
                     break;
                 }
                 col++;
@@ -823,7 +935,7 @@ namespace UglyLang.Source
                     string typeString = str[startPos..col];
                     if (typeString.Length == 0)
                     {
-                        Error = new(lineNumber, colStart + col, Error.Types.Syntax, "expected type in constraint clause for " + paramString);
+                        AddError(new(lineNumber, colStart + col, Error.Types.Syntax, "expected type in constraint clause for " + paramString));
                         break;
                     }
                     options.Add(new(typeString));
@@ -838,7 +950,7 @@ namespace UglyLang.Source
                     col++;
                 }
 
-                if (Error != null)
+                if (IsError())
                     break;
 
                 constraintDict.Add(paramString, options);
@@ -866,6 +978,7 @@ namespace UglyLang.Source
         private static readonly Regex FloatRegex = new("^(?<number>-?(0|[1-9]\\d*)(\\.\\d+)?)");
         private static readonly Regex IntegerRegex = new("^(?<integer>-?(0|[1-9]\\d*))");
         private static readonly Regex ParseNameChar = new("[A-Za-z\\[\\]0-9]");
+        public static readonly Regex NonWhitespaceRegex = new("[^\\s]");
 
         /// <summary>
         /// Extract the leading symbol from the given string
@@ -926,7 +1039,7 @@ namespace UglyLang.Source
 
                 if (col == str.Length)
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line");
+                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '>', got end of line"));
                     return (null, col);
                 }
                 else if (str[col] == '>')
@@ -935,7 +1048,7 @@ namespace UglyLang.Source
                 }
                 else
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", str[col]));
+                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '>', got {0}", str[col])));
                     return (null, col);
                 }
             }
@@ -954,7 +1067,7 @@ namespace UglyLang.Source
             string symbol = ExtractSymbolFromString(expr);
             if (symbol.Length == 0)
             {
-                Error = new(lineNumber, colNumber, Error.Types.Syntax, "expected symbol, got " + expr[col]);
+                AddError(new(lineNumber, colNumber, Error.Types.Syntax, "expected symbol, got " + expr[col]));
                 return (null, col);
             }
 
@@ -1010,7 +1123,7 @@ namespace UglyLang.Source
                         if (symbol.Length == 0)
                         {
                             string got = col == expr.Length ? "end of line" : expr[col].ToString();
-                            Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected symbol, got " + got);
+                            AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "expected symbol, got " + got));
                             return (null, col);
                         }
 
@@ -1055,14 +1168,15 @@ namespace UglyLang.Source
             ExprNode exprNode = new();
 
             // Eat whitespace
-            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+            while (col < expr.Length && char.IsWhiteSpace(expr[col]))
+                col++;
 
             while (true)
             {
                 // Is end of the line?
                 if (col == expr.Length)
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
+                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line"));
                     return (null, col);
                 }
 
@@ -1076,7 +1190,7 @@ namespace UglyLang.Source
 
                     if (end == -1)
                     {
-                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unterminated string literal");
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unterminated string literal"));
                         return (null, col);
                     }
 
@@ -1113,7 +1227,7 @@ namespace UglyLang.Source
 
                     if (col == expr.Length)
                     {
-                        Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line"));
                         return (null, col);
                     }
 
@@ -1131,12 +1245,14 @@ namespace UglyLang.Source
                 {
                     // Extract symbol, then extract all until whitespace
                     startPos = col;
-                    while (col < expr.Length && ParseNameChar.IsMatch(expr[col].ToString())) col++;
+                    while (col < expr.Length && ParseNameChar.IsMatch(expr[col].ToString()))
+                        col++;
                     string str = expr[startPos..col];
                     bool isTypeless = str.Length == 0; // If typeless, assume list
 
                     // Eat whitespace
-                    while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+                    while (col < expr.Length && char.IsWhiteSpace(expr[col]))
+                        col++;
 
                     // If there is a brace, it is a type constructor, else it is a symbol
                     if (col < expr.Length && expr[col] == '{')
@@ -1148,14 +1264,15 @@ namespace UglyLang.Source
                         startPos = col;
 
                         // Eat whitespace
-                        while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+                        while (col < expr.Length && char.IsWhiteSpace(expr[col]))
+                            col++;
 
                         // End?
                         if (col < expr.Length && expr[col] == '}')
                         {
                             if (isTypeless) // We cannot determine the type as no arguments where provided
                             {
-                                Error = new(lineNumber, colNumber + startPos, Error.Types.Syntax, "expected type name, got '{'");
+                                AddError(new(lineNumber, colNumber + startPos, Error.Types.Syntax, "expected type name, got '{'"));
                                 return (null, col);
                             }
 
@@ -1176,14 +1293,15 @@ namespace UglyLang.Source
                                 {
                                     col += end;
                                     typeNode.Arguments.Add(argExpr);
-                                    if (expr[col] == '}') break;
+                                    if (expr[col] == '}')
+                                        break;
                                     col++;
                                 }
                             }
 
                             if (col == expr.Length)
                             {
-                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '}', got end of line");
+                                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '}', got end of line"));
                                 return (null, col);
                             }
                             else if (expr[col] == '}')
@@ -1192,7 +1310,7 @@ namespace UglyLang.Source
                             }
                             else
                             {
-                                Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}}', got {0}", expr[col]));
+                                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}}', got {0}", expr[col])));
                                 return (null, col);
                             }
                         }
@@ -1203,13 +1321,15 @@ namespace UglyLang.Source
                     else
                     {
                         (node, int endCol) = ParseSymbol(expr[startPos..], lineNumber, colNumber + startPos);
-                        if (node == null) return (null, endCol);
+                        if (node == null)
+                            return (null, endCol);
                         col = startPos + endCol;
                     }
                 }
 
                 // Eat whitespace
-                while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+                while (col < expr.Length && char.IsWhiteSpace(expr[col]))
+                    col++;
 
                 if (node != null)
                 {
@@ -1218,8 +1338,10 @@ namespace UglyLang.Source
                 }
 
                 // Stop if: Reached the end of the line? Comment? Bracket? Met and ending character?
-                if (col == expr.Length || col < expr.Length && (expr[col] == '(' || (endChar != null && endChar.Contains(expr[col])))) break;
-                if (expr[col] == CommentChar) return (exprNode, expr.Length);
+                if (col == expr.Length || col < expr.Length && (expr[col] == '(' || (endChar != null && endChar.Contains(expr[col]))))
+                    break;
+                if (expr[col] == CommentChar)
+                    return (exprNode, expr.Length);
             }
 
             // Type casting?
@@ -1228,7 +1350,7 @@ namespace UglyLang.Source
                 int end = GetMatchingClosingItem(expr[col..], '(', ')');
                 if (end == -1)
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("unterminated bracket '{0}'", expr[col]));
+                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("unterminated bracket '{0}'", expr[col])));
                     return (null, col);
                 }
 
@@ -1239,7 +1361,8 @@ namespace UglyLang.Source
             }
 
             // Eat whitespace
-            while (col < expr.Length && char.IsWhiteSpace(expr[col])) col++;
+            while (col < expr.Length && char.IsWhiteSpace(expr[col]))
+                col++;
 
             // The input string should end with `endChar` or a comment
             if (col < expr.Length)
@@ -1250,7 +1373,7 @@ namespace UglyLang.Source
                 }
                 else if (endChar == null)
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col]));
+                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected end of line, got {0}", expr[col])));
                     return (null, col);
                 }
                 else if (endChar.Contains(expr[col]))
@@ -1259,7 +1382,7 @@ namespace UglyLang.Source
                 }
                 else
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected {0}, got {1}", string.Join(" or ", endChar.Select(a => a == null ? "end of line" : a.ToString())), expr[col]));
+                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected {0}, got {1}", string.Join(" or ", endChar.Select(a => a == null ? "end of line" : a.ToString())), expr[col])));
                     return (null, col);
                 }
             }
@@ -1267,7 +1390,7 @@ namespace UglyLang.Source
             {
                 if (endChar != null && !endChar.Contains(null))
                 {
-                    Error = new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line");
+                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected end of line"));
                     return (null, col);
                 }
             }
@@ -1321,37 +1444,19 @@ namespace UglyLang.Source
             }
         }
 
-        public string GetErrorString()
+        public bool IsError()
         {
-            return Error == null ? "" : ErrorToString(Error);
+            return Options.IsError();
         }
 
-        private static readonly Regex NonWhitespaceRegex = new("[^\\s]");
-
-        /// <summary>
-        /// Given an error, return the error as a string
-        /// </summary>
-        private string ErrorToString(Error error)
+        public string GetErrorString()
         {
-            string str = error.ToString() + Environment.NewLine;
+            return Options.GetErrorString();
+        }
 
-            string[] lines = Source.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            string line = lines[error.LineNumber];
-            int origLength = line.Length;
-            line = line.TrimStart();
-            string lineNumberS = (error.LineNumber + 1).ToString();
-            int colIdx = error.ColumnNumber - (origLength - line.Length);
-
-            str += Environment.NewLine + (error.LineNumber + 1) + " | " + line;
-            string pre = new(' ', lineNumberS.Length);
-            string before = NonWhitespaceRegex.Replace(line[..colIdx], " ");
-            string after = NonWhitespaceRegex.Replace(line[colIdx..], " ");
-            str += Environment.NewLine + pre + "   " + before + "^" + after;
-
-            // If error string, append it
-            if (ErrorString != null) str += Environment.NewLine + ErrorString;
-
-            return str;
+        public ASTStructure GetAST()
+        {
+            return AST ?? throw new NullReferenceException();
         }
     }
 }

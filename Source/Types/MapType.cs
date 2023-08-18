@@ -52,7 +52,8 @@ namespace UglyLang.Source.Types
 
         public override TypeParameterCollection MatchParametersAgainst(Type t)
         {
-            if (t is MapType map) return ValueType.MatchParametersAgainst(map.ValueType);
+            if (t is MapType map)
+                return ValueType.MatchParametersAgainst(map.ValueType);
             return new();
         }
 

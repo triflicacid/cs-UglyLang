@@ -26,8 +26,10 @@ namespace UglyLang.Source.Values
 
         public override Value? To(Types.Type type)
         {
-            if (type is Any or TypeType) return new TypeValue(Value);
-            if (type is StringType) return new StringValue(Value.ToString());
+            if (type is Any or TypeType)
+                return new TypeValue(Value);
+            if (type is StringType)
+                return new StringValue(Value.ToString());
             return null;
         }
 

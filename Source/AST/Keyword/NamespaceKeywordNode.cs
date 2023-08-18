@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UglyLang.Source.Values;
+﻿using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST.Keyword
 {
@@ -20,7 +15,8 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context, ISymbolContainer container)
         {
-            if (Body == null) throw new NullReferenceException();
+            if (Body == null)
+                throw new NullReferenceException();
 
             if (container.HasSymbol(Name))
             {

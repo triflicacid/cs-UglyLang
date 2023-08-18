@@ -38,13 +38,15 @@ namespace UglyLang.Source.Values
 
         protected override bool HasPropertyExtra(string name)
         {
-            if (Value.ContainsKey(name)) return true;
+            if (Value.ContainsKey(name))
+                return true;
             return false;
         }
 
         protected override Property? GetPropertyExtra(string name)
         {
-            if (Value.ContainsKey(name)) return new(name, Value[name]);
+            if (Value.ContainsKey(name))
+                return new(name, Value[name]);
             return null;
         }
 

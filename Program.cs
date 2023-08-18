@@ -21,13 +21,13 @@ if (File.Exists(fullFilePath))
 
     var watch = System.Diagnostics.Stopwatch.StartNew();
 
-    Parser p = new(baseDir);
-    Dictionary<string, string> sources = new();
-    p.Parse(filepath, program, sources);
+    ParseOptions options = new(baseDir);
+    Parser p = new(options);
+    p.ParseSource(filepath, program);
     watch.Stop();
     long parsedTime = watch.ElapsedMilliseconds;
 
-    if (p.Error != null)
+    if (p.IsError())
     {
         Console.WriteLine("An error occured whilst parsing:");
         Console.WriteLine(p.GetErrorString());
@@ -36,12 +36,10 @@ if (File.Exists(fullFilePath))
     {
         watch.Reset();
 
-        Context ctx = new(baseDir, filepath);
-        foreach (string filename in sources.Keys) ctx.AddSource(filename, sources[filename]);
-
-
+        Context ctx = new(options, filepath);
         ctx.InitialiseGlobals();
-        Signal sig = p.AST.Evaluate(ctx);
+
+        Signal sig = p.GetAST().Evaluate(ctx);
         watch.Stop();
         long executionTime = watch.ElapsedMilliseconds;
         Console.WriteLine(string.Format("Program terminated with signal {0} ({1}) after {2} ms ({3} ms parsing, {4} ms execution)", (int)sig, sig.ToString(), parsedTime + executionTime, parsedTime, executionTime));

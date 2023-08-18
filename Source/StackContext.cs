@@ -71,7 +71,8 @@ namespace UglyLang.Source
 
         public override ISymbolValue GetSymbol(string symbol)
         {
-            if (!HasSymbol(symbol)) throw new Exception(string.Format("Failed to get variable: name '{0}' could not be found", symbol));
+            if (!HasSymbol(symbol))
+                throw new Exception(string.Format("Failed to get variable: name '{0}' could not be found", symbol));
             return Symbols[symbol];
         }
 

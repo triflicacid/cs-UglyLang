@@ -1,39 +1,23 @@
-﻿using System.Text.RegularExpressions;
-using UglyLang.Source.AST;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using static UglyLang.Source.ParseOptions;
 
 namespace UglyLang.Source
 {
     public class Context : ISymbolContainer
     {
-        public string BaseDirectory;
         private readonly List<AbstractStackContext> Stack;
-        public readonly Dictionary<string, string[]> Sources = new(); // Map filenames to their respective sources.
         public Error? Error = null;
+        public readonly ParseOptions ParseOptions;
 
         /// <summary>
-        /// Create a new execution context. Firstly, provide the filename of the entry file, then provide the ABSOLUTE path to the base directory (used for imports).
+        /// Create a new execution context. Provide the ParseOptions instance used to parse the file, then provide the filename of the entry file.
         /// </summary>
-        public Context(string baseDirectory, string filename)
+        public Context(ParseOptions options, string filename)
         {
             Stack = new() { new StackContext(0, 0, StackContextType.File, filename) };
-            BaseDirectory = baseDirectory;
-            CreateSymbol("_BaseDir", new StringValue(BaseDirectory));
-        }
-
-        /// <summary>
-        /// Add a file's source code so that it may be referenced if needed.
-        /// </summary>
-        public void AddSource(string sourceName, string source)
-        {
-            string[] lines = source.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            Sources.Add(sourceName, lines);
-        }
-
-        public void RemoveSource(string sourceName)
-        {
-            Sources.Remove(sourceName);
+            ParseOptions = options;
+            CreateSymbol("_BaseDir", new StringValue(options.BaseDirectory));
         }
 
         /// <summary>
@@ -43,7 +27,8 @@ namespace UglyLang.Source
         {
             foreach (var d in Stack)
             {
-                if (d.HasSymbol(name)) return true;
+                if (d.HasSymbol(name))
+                    return true;
             }
             return false;
         }
@@ -55,7 +40,8 @@ namespace UglyLang.Source
         {
             for (int i = Stack.Count - 1; i >= 0; i--)
             {
-                if (Stack[i].HasSymbol(name)) return Stack[i].GetSymbol(name);
+                if (Stack[i].HasSymbol(name))
+                    return Stack[i].GetSymbol(name);
             }
 
             throw new Exception(string.Format("Failed to get variable: name '{0}' could not be found", name));
@@ -90,7 +76,7 @@ namespace UglyLang.Source
         {
             try
             {
-                return Sources[filename][lineNumber];
+                return ParseOptions.FileSources[filename].GetSourceLines()[lineNumber];
             }
             catch
             {
@@ -121,8 +107,6 @@ namespace UglyLang.Source
             return Error == null ? "" : ErrorToString(Error);
         }
 
-        private static readonly Regex NonWhitespaceRegex = new("[^\\s]");
-
         private string GetLineError(int stackIdx, int lineNumber, int colNumber)
         {
             string line = GetSourceLine(stackIdx, lineNumber);
@@ -133,8 +117,8 @@ namespace UglyLang.Source
 
             string str = Environment.NewLine + (lineNumber + 1) + " | " + line;
             string pre = new(' ', lineNumberS.Length);
-            string before = NonWhitespaceRegex.Replace(line[..colIdx], " ");
-            string after = NonWhitespaceRegex.Replace(line[colIdx..], " ");
+            string before = Parser.NonWhitespaceRegex.Replace(line[..colIdx], " ");
+            string after = Parser.NonWhitespaceRegex.Replace(line[colIdx..], " ");
             str += Environment.NewLine + pre + "   " + before + "^" + after + Environment.NewLine;
 
             return str;
@@ -157,6 +141,9 @@ namespace UglyLang.Source
 
             str += error.ToString();
             str += Environment.NewLine + GetLineError(Stack.Count - 1, error.LineNumber, error.ColumnNumber);
+
+            if (error.AppendString.Length > 0)
+                str += error.AppendString;
 
             return str;
         }
@@ -182,7 +169,8 @@ namespace UglyLang.Source
         /// </summary>
         public AbstractStackContext PopStackContext()
         {
-            if (Stack.Count < 2) throw new InvalidOperationException();
+            if (Stack.Count < 2)
+                throw new InvalidOperationException();
             AbstractStackContext peek = Stack[^1];
             Stack.RemoveAt(Stack.Count - 1);
             return peek;
@@ -221,61 +209,55 @@ namespace UglyLang.Source
         }
 
         /// <summary>
-        /// Import a new file, read the contents and execute it. If `source` is provided, do not read the file and use this parameter instead.
+        /// Import a new file, read the contents and execute it. If `source` is provided, do not read the file and use this parameter instead. The boolean indicates whether the cached Namespace for the import should be replaced.
         /// </summary>
-        public (Signal, NamespaceValue?) Import(string path, int entryLine = 0, int entryColumn = 0, string? source = null)
+        public (Signal, NamespaceValue?) Import(string path, int entryLine = 0, int entryColumn = 0, bool replaceCachedNamespace = false, string? source = null)
         {
-            string fullpath = Path.Join(BaseDirectory, path);
-
-            // Does the source already exist?
-            if (Sources.ContainsKey(path))
+            // Parse the source
+            Parser p = new(ParseOptions);
+            if (source == null)
             {
-                Error = new(entryLine, entryColumn, Error.Types.Import, string.Format("'{0}' has already been imported", fullpath));
-                return (Signal.ERROR, null);
-            }
-
-            // Attempt to locate the source
-            if (source != null || File.Exists(fullpath))
-            {
-                PushStackContext(entryLine, entryColumn, StackContextType.File, path);
-
-                // Read the file
-                source ??= File.ReadAllText(fullpath);
-                AddSource(path, source);
-
-                Signal signal;
-
-                // Attempt to parse the source
-                Parser p = new(BaseDirectory);
-                Dictionary<string, string> sources = new();
-                p.Parse(path, source, sources);
-
-                if (p.Error == null)
-                {
-                    signal = p.AST.Evaluate(this);
-                    signal = signal == Signal.ERROR || signal == Signal.EXIT_PROG ? signal : Signal.NONE;
-                }
-                else
-                {
-                    Error = p.Error;
-                    signal = Signal.ERROR;
-                }
-
-                NamespaceValue? ns = null;
-                if (signal != Signal.ERROR)
-                {
-                    RemoveSource(path);
-                    StackContext oldContext = (StackContext)PopStackContext();
-                    ns = oldContext.ExportToNamespace();
-                }
-                
-                return (signal, ns);
+                p.ParseFile(path, entryLine, entryColumn);
             }
             else
             {
-                Error = new(entryLine, entryColumn, Error.Types.Import, string.Format("'{0}' cannot be found", fullpath));
+                p.ParseSource(path, source, entryLine, entryColumn);
+            }
+
+            // Was there an error during parsing?
+            if (p.IsError())
+            {
+                Error = new(entryLine, entryColumn, Error.Types.Import, string.Format("whilst importing '{0}'", path))
+                {
+                    AppendString = p.GetErrorString()
+                };
                 return (Signal.ERROR, null);
             }
+
+            ImportCache cache = ParseOptions.FileSources[path];
+            NamespaceValue ns;
+            Signal s;
+
+            // Is the namespace cached? If not, evaluate it and cache the result.
+            if (replaceCachedNamespace || cache.Namespace == null)
+            {
+                // Push the new stack context
+                PushStackContext(entryLine, entryColumn, StackContextType.File, path);
+
+                s = p.GetAST().Evaluate(this);
+                if (s == Signal.ERROR)
+                    return (s, null);
+
+                ns = ((StackContext)PopStackContext()).ExportToNamespace();
+                cache.Namespace = ns;
+            }
+            else
+            {
+                ns = cache.Namespace;
+                s = Signal.NONE;
+            }
+
+            return (s == Signal.EXIT_PROG ? s : Signal.NONE, ns);
         }
 
         public void InitialiseGlobals()

@@ -32,10 +32,14 @@ Returns a casted to type t.
 Note that this is different to the CAST keyword.~~
 - `CONCAT<a: ANY, b: ANY> -> STRING`
 Convert a and b to strings and concatenate them.
+- `CreateVirtualFile<name: STRING, contents: STRING>`
+Creates a virtual file at runtime. Say that one creates a virtual file `eg.txt`. Then `IMPORT: "eg.txt"` will still fail as the keyword operated at compile-time, but `LET x: IMPORT<"eg.txt">` will work as the function operates at runtime.
 - `ID<x: a> -> a`
 Returns the provided argument.
 - `IMPORT<path: STRING> -> NAMESPACE`
-Imports the given file and returns the bundles namespace. Behaviour of `LET name: IMPORT<path>` is similar to `IMPORT name: path`.
+Imports the given file and returns the bundled namespace. Behaviour of `LET name: IMPORT<path>` is similar to `IMPORT name: path`.
+- `IMPORT<path: STRING, reEval: INT> -> NAMESPACE`
+Imports the given file and returns the bundled namespace. If reEval is truthy, forces re-evaluation even if the namespace is cached.
 - `LIST<a: TYPE, [len: INT]> -> ANY[]`
 Creates a new list instance containing type a. If a length is provided, populates the list with instances of type (must be able to be condtructed without any arguments).
 - `NEW<a: TYPE> -> ANY`
