@@ -13,6 +13,7 @@ namespace UglyLang.Source.Functions.Types
         {
             Overloads.Add(new OverloadOne());
             Overloads.Add(new OverloadTwo());
+            Overloads.Add(new OverloadThree());
         }
 
         public string GetDefinedName()
@@ -21,12 +22,24 @@ namespace UglyLang.Source.Functions.Types
         }
 
 
-
         internal class OverloadOne : FunctionOverload
+        {
+            public OverloadOne()
+            : base(Array.Empty<Type>(), Type.TypeT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
+            {
+                context.SetFunctionReturnValue(new TypeValue(Type.List(Type.AnyT)));
+                return Signal.NONE;
+            }
+        }
+
+        internal class OverloadTwo : FunctionOverload
         {
             private static readonly Type[] Arguments = new Type[] { new TypeType() };
 
-            public OverloadOne()
+            public OverloadTwo()
             : base(Arguments, new ListType(new Any()))
             { }
 
@@ -38,11 +51,11 @@ namespace UglyLang.Source.Functions.Types
             }
         }
 
-        internal class OverloadTwo : FunctionOverload
+        internal class OverloadThree : FunctionOverload
         {
             private static readonly Type[] Arguments = new Type[] { new TypeType(), Type.IntT };
 
-            public OverloadTwo()
+            public OverloadThree()
             : base(Arguments, new ListType(new Any()))
             { }
 

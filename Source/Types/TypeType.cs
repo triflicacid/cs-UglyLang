@@ -1,4 +1,6 @@
-﻿namespace UglyLang.Source.Types
+﻿using UglyLang.Source.Values;
+
+namespace UglyLang.Source.Types
 {
     /// <summary>
     /// A type which identifies a type
@@ -38,6 +40,11 @@
         public override string ToString()
         {
             return "TYPE";
+        }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return v.Type is TypeType;
         }
     }
 }

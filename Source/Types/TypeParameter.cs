@@ -1,4 +1,6 @@
-﻿namespace UglyLang.Source.Types
+﻿using UglyLang.Source.Values;
+
+namespace UglyLang.Source.Types
 {
     public class TypeParameter : Type
     {
@@ -44,6 +46,11 @@
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
             return col.HasParameter(Symbol) ? col.GetParameter(Symbol) : this;
+        }
+
+        public override bool IsTypeOf(Value v)
+        {
+            throw new InvalidOperationException();
         }
     }
 

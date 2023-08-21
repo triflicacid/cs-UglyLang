@@ -77,6 +77,11 @@ namespace UglyLang.Source.Types
         {
             return "INT";
         }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return v.Type is IntType;
+        }
     }
 
     public class FloatType : PrimitiveType
@@ -124,6 +129,11 @@ namespace UglyLang.Source.Types
         public static string AsString()
         {
             return "FLOAT";
+        }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return v.Type is FloatType;
         }
     }
 
@@ -190,6 +200,11 @@ namespace UglyLang.Source.Types
         public static string AsString()
         {
             return "STRING";
+        }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return v.Type is StringType;
         }
     }
 }

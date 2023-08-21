@@ -76,5 +76,10 @@ namespace UglyLang.Source.Types
         {
             return Properties;
         }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return v.Type is MapType map && (ValueType is Any || ValueType.Equals(map.ValueType));
+        }
     }
 }

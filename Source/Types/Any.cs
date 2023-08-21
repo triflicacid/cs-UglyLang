@@ -1,4 +1,6 @@
-﻿namespace UglyLang.Source.Types
+﻿using UglyLang.Source.Values;
+
+namespace UglyLang.Source.Types
 {
     /// <summary>
     /// A loose type wrapper representing any type
@@ -38,6 +40,11 @@
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
             return this;
+        }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return true;
         }
     }
 }

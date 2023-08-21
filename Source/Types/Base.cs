@@ -80,6 +80,11 @@ namespace UglyLang.Source.Types
             return true;
         }
 
+        /// <summary>
+        /// Return whether the given type is type of this type.
+        /// </summary>
+        public abstract bool IsTypeOf(Value v);
+
         public static readonly Type AnyT = new Any();
         public static readonly Type EmptyT = new EmptyType();
         public static readonly Type IntT = new IntType();

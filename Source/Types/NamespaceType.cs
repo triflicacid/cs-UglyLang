@@ -1,4 +1,6 @@
-﻿namespace UglyLang.Source.Types
+﻿using UglyLang.Source.Values;
+
+namespace UglyLang.Source.Types
 {
     /// <summary>
     /// A type representing a namespaced, used in imports
@@ -38,6 +40,11 @@
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
             return this;
+        }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return v.Type is NamespaceType;
         }
     }
 }

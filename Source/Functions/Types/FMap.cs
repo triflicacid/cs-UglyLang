@@ -12,6 +12,7 @@ namespace UglyLang.Source.Functions.Types
         public FMap()
         {
             Overloads.Add(new OverloadOne());
+            Overloads.Add(new OverloadTwo());
         }
 
         public string GetDefinedName()
@@ -20,12 +21,24 @@ namespace UglyLang.Source.Functions.Types
         }
 
 
-
         internal class OverloadOne : FunctionOverload
+        {
+            public OverloadOne()
+            : base(Array.Empty<Type>(), Type.TypeT)
+            { }
+
+            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
+            {
+                context.SetFunctionReturnValue(new TypeValue(Type.Map(Type.AnyT)));
+                return Signal.NONE;
+            }
+        }
+
+        internal class OverloadTwo : FunctionOverload
         {
             private static readonly Type[] Arguments = new Type[] { new TypeType() };
 
-            public OverloadOne()
+            public OverloadTwo()
             : base(Arguments, new MapType(new Any()))
             { }
 

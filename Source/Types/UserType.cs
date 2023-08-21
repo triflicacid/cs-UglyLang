@@ -1,4 +1,6 @@
-﻿namespace UglyLang.Source.Types
+﻿using UglyLang.Source.Values;
+
+namespace UglyLang.Source.Types
 {
     public class UserType : Type, ISymbolValue
     {
@@ -37,6 +39,12 @@
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
             return this;
+        }
+
+        public override bool IsTypeOf(Value v)
+        {
+            // TODO
+            throw new NotImplementedException();
         }
     }
 }

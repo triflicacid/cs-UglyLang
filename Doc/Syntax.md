@@ -21,7 +21,7 @@ Each unit is one of:
 - A string literal, which is enclosed by quotation marks `" ... "`.
 - A number, a string of digits optionally followed by a decimal point and another string of digits. If there is a decimal point, the type is `FLOAT`, else it is assumed to be `INTEGER`.
 - A type name followed by arguments in brace `{ ... }` will attempts to construct said type with the given arguments.
-- An at symbol followed by a type name is called a type literal and may be used to represent that type.
+- An at (`@`) symbol followed by a type name is called a type literal and may be used to represent that type.
 - A symbol name. The symbol may be followed by angled brackets `< ... >`. If present, these are passed to the symbol as arguments to a function. The arguments are seperated by commas. If the symbol is function, it is called with provided arguments, or called with none if no arguments are provided.
 
 If a symbol name is followed by a `.`, a property name is expected. This may be a symbol or a numeric literal, and may be used as a function, in which case it will be called before the next property is accessed - e.g., `numbers.Reverse<>.Get<1>`. The topic of properties is covered in `Types.md`.

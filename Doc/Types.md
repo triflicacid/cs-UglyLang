@@ -20,8 +20,10 @@ Note that integers are used to represent Booleans, with 0 representing False and
 **Compound Types**
 - `a[]`. Represents a list of type `a`.
 	- Property `.MemberType: TYPE` contains the type of the members (`a`).
+	- A list of any type may be referenced using `@LIST`.
 - `MAP[a]`. Represents a map between `STRING` keys and values of type `a`.
 	- Property `.ValueType: TYPE` contains the type of the values (`a`).
+	- A map of any type may be referenced using `@MAP`.
 - `NAMESPACE`. Represents a collection of symbols. Primarily used when importing a file.
 	- It **cannot** be constructed.
 	- It contains symbols which can be accessed as properties.

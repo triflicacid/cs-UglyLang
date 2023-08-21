@@ -100,5 +100,10 @@ namespace UglyLang.Source.Types
         {
             return Properties;
         }
+
+        public override bool IsTypeOf(Value v)
+        {
+            return v.Type is ListType list && (Member is Any || Member.Equals(list.Member));
+        }
     }
 }

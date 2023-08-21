@@ -35,6 +35,9 @@
                 return null;
 
             // Map?
+            if (value == "MAP")
+                return new MapType(Type.AnyT);
+
             if (value.StartsWith("MAP[") && value[^1] == ']')
             {
                 Type? member = Resolve(container, value[4..^1]);
@@ -42,6 +45,9 @@
             }
 
             // List?
+            if (value == "LIST")
+                return new ListType(Type.AnyT);
+
             if (value.Length > 2 && value[^1] == ']' && value[^2] == '[')
             {
                 Type? member = Resolve(container, value[..^2]);
