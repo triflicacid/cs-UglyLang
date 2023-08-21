@@ -1,7 +1,8 @@
 ﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using Type = UglyLang.Source.Types.Type;
 
-namespace UglyLang.Source.Functions
+namespace UglyLang.Source.Functions.Types
 {
     /// <summary>
     /// Function to create a list of said type
@@ -23,7 +24,7 @@ namespace UglyLang.Source.Functions
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { new TypeType() };
+            private static readonly Type[] Arguments = new Type[] { new TypeType() };
 
             public OverloadOne()
             : base(Arguments, new ListType(new Any()))
@@ -31,7 +32,7 @@ namespace UglyLang.Source.Functions
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                Types.Type type = ((TypeValue)arguments[0]).Value;
+                Type type = ((TypeValue)arguments[0]).Value;
                 context.SetFunctionReturnValue(new ListValue(type));
                 return Signal.NONE;
             }
@@ -39,7 +40,7 @@ namespace UglyLang.Source.Functions
 
         internal class OverloadTwo : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { new TypeType(), Types.Type.IntT };
+            private static readonly Type[] Arguments = new Type[] { new TypeType(), Type.IntT };
 
             public OverloadTwo()
             : base(Arguments, new ListType(new Any()))
@@ -47,7 +48,7 @@ namespace UglyLang.Source.Functions
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                Types.Type type = ((TypeValue)arguments[0]).Value;
+                Type type = ((TypeValue)arguments[0]).Value;
                 int length = (int)((IntValue)arguments[1]).Value;
 
                 // Can the type be constructed?

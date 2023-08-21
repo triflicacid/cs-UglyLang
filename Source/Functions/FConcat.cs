@@ -1,5 +1,6 @@
 ﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using Type = UglyLang.Source.Types.Type;
 
 namespace UglyLang.Source.Functions
 {
@@ -22,7 +23,7 @@ namespace UglyLang.Source.Functions
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { new Any(), new Any() };
+            private static readonly Type[] Arguments = new Type[] { Type.AnyT, Type.AnyT };
 
             public OverloadOne()
             : base(Arguments, new StringType())

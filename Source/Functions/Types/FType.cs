@@ -2,50 +2,50 @@
 using UglyLang.Source.Values;
 using Type = UglyLang.Source.Types.Type;
 
-namespace UglyLang.Source.Functions.List
+namespace UglyLang.Source.Functions.Types
 {
     /// <summary>
-    /// Function to add an item to the list
+    /// Returns the type of the argument as a string
     /// </summary>
-    public class FAdd : Function
+    public class FType : Function, IDefinedGlobally
     {
-        private static readonly TypeParameter TypeParam = new("a"); // For convenience of repetition below
-
-        public FAdd()
+        public FType()
         {
             Overloads.Add(new OverloadOne());
             Overloads.Add(new OverloadTwo());
         }
 
+        public string GetDefinedName()
+        {
+            return "TYPE";
+        }
+
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Type[] Arguments = new Type[] { Type.List(TypeParam), TypeParam };
-
             public OverloadOne()
-            : base(Arguments, Type.EmptyT)
+            : base(Array.Empty<Type>(), Type.TypeT)
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                ListValue list = (ListValue)arguments[0];
-                list.Value.Add(arguments[1]);
+                context.SetFunctionReturnValue(new TypeValue(Type.TypeT));
                 return Signal.NONE;
             }
         }
 
         internal class OverloadTwo : FunctionOverload
         {
-            private static readonly Type[] Arguments = new Type[] { Type.List(TypeParam), TypeParam, Type.IntT };
+            private static readonly Type[] Arguments = new Type[] { Type.AnyT };
 
             public OverloadTwo()
-            : base(Arguments, Type.EmptyT)
+            : base(Arguments, Type.TypeT)
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                ListValue list = (ListValue)arguments[0];
-                list.Value.Insert((int)((IntValue)arguments[2]).Value, arguments[1]);
+                TypeValue value = new(arguments[0].Type);
+                context.SetFunctionReturnValue(value);
                 return Signal.NONE;
             }
         }

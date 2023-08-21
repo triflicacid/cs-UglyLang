@@ -1,3 +1,0 @@
-PRINTLN: "integer = " INT {}
-PRINTLN: "float = " FLOAT {}
-PRINTLN: "string = " STRING {}

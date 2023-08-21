@@ -1,5 +1,6 @@
 ﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using Type = UglyLang.Source.Types.Type;
 
 namespace UglyLang.Source.Functions.String
 {
@@ -17,10 +18,10 @@ namespace UglyLang.Source.Functions.String
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { Types.Type.StringT, Types.Type.IntT };
+            private static readonly Type[] Arguments = new Type[] { Type.StringT, Type.IntT };
 
             public OverloadOne()
-            : base(Arguments, Types.Type.StringT)
+            : base(Arguments, Type.StringT)
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
@@ -35,10 +36,10 @@ namespace UglyLang.Source.Functions.String
 
         internal class OverloadTwo : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { Types.Type.StringT, Types.Type.IntT, Types.Type.IntT };
+            private static readonly Type[] Arguments = new Type[] { Type.StringT, Type.IntT, Type.IntT };
 
             public OverloadTwo()
-            : base(Arguments, Types.Type.StringT)
+            : base(Arguments, Type.StringT)
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)

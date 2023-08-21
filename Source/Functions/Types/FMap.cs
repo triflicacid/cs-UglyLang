@@ -1,37 +1,38 @@
 ﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using Type = UglyLang.Source.Types.Type;
 
-namespace UglyLang.Source.Functions
+namespace UglyLang.Source.Functions.Types
 {
     /// <summary>
-    /// Returns the type of the argument as a string
+    /// Function to create a map of said type
     /// </summary>
-    public class FType : Function, IDefinedGlobally
+    public class FMap : Function, IDefinedGlobally
     {
-        public FType()
+        public FMap()
         {
             Overloads.Add(new OverloadOne());
         }
 
         public string GetDefinedName()
         {
-            return "TYPE";
+            return "MAP";
         }
 
 
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { Types.Type.AnyT };
+            private static readonly Type[] Arguments = new Type[] { new TypeType() };
 
             public OverloadOne()
-            : base(Arguments, Types.Type.TypeT)
+            : base(Arguments, new MapType(new Any()))
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                TypeValue value = new(arguments[0].Type);
-                context.SetFunctionReturnValue(value);
+                Type type = ((TypeValue)arguments[0]).Value;
+                context.SetFunctionReturnValue(new MapValue(type));
                 return Signal.NONE;
             }
         }

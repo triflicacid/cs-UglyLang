@@ -27,8 +27,7 @@ namespace UglyLang.Source.Values
         {
             if (type is ListType list)
             {
-                ListType lType = (ListType)Type;
-                if (Type.Equals(list))
+                if (Type is Any || Type.Equals(list))
                     return this;
 
                 ListValue newList = new(list.Member);

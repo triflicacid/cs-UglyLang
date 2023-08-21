@@ -1,7 +1,8 @@
 ﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using Type = UglyLang.Source.Types.Type;
 
-namespace UglyLang.Source.Functions
+namespace UglyLang.Source.Functions.Types
 {
     /// <summary>
     /// Function to construct a new type *without any arguments*
@@ -22,15 +23,15 @@ namespace UglyLang.Source.Functions
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { new TypeType() };
+            private static readonly Type[] Arguments = new Type[] { Type.TypeT };
 
             public OverloadOne()
-            : base(Arguments, new Any())
+            : base(Arguments, Type.AnyT)
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                Types.Type type = ((TypeValue)arguments[0]).Value;
+                Type type = ((TypeValue)arguments[0]).Value;
 
                 // Can the type be constructed?
                 if (!type.CanConstruct())

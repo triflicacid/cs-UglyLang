@@ -58,7 +58,7 @@ namespace UglyLang.Source
 
     public class StackContext : AbstractStackContext
     {
-        public readonly Dictionary<string, ISymbolValue> Symbols;
+        private readonly Dictionary<string, ISymbolValue> Symbols;
         private readonly TypeParameterCollection TypeParams;
 
         public StackContext(int line, int col, StackContextType type, string name, TypeParameterCollection? tParams = null)

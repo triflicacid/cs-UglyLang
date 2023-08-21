@@ -27,9 +27,6 @@ Returns a number, 0 or 1, depending on if a <= b.
 
 ## Generic Functions
 
-- ~~`CAST<a,t>`
-Returns a casted to type t.
-Note that this is different to the CAST keyword.~~
 - `CONCAT<a: ANY, b: ANY> -> STRING`
 Convert a and b to strings and concatenate them.
 - `CreateVirtualFile<name: STRING, contents: STRING>`
@@ -40,16 +37,10 @@ Returns the provided argument.
 Imports the given file and returns the bundled namespace. Behaviour of `LET name: IMPORT<path>` is similar to `IMPORT name: path`.
 - `IMPORT<path: STRING, reEval: INT> -> NAMESPACE`
 Imports the given file and returns the bundled namespace. If reEval is truthy, forces re-evaluation even if the namespace is cached.
-- `LIST<a: TYPE, [len: INT]> -> ANY[]`
-Creates a new list instance containing type a. If a length is provided, populates the list with instances of type (must be able to be condtructed without any arguments).
-- `NEW<a: TYPE> -> ANY`
-Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
 - `RANDOM -> FLOAT` / `RANDOM<max: FLOAT> -> FLOAT` / `RANDOM<min: FLOAT, max: FLOAT> -> FLOAT`
 Returns random number in the range: [0,1) / [0,max) / [min,max).
 - `SLEEP<t: FLOAT>`
 Suspend execution for t milliseconds.
-- `TYPE<a: ANY> -> TYPE`
-Returns the type of a after evaluation.
 
 ## List Functions
 
@@ -127,6 +118,7 @@ Returns a - b.
 Returns the successor of integer a.
 
 ## String Functions
+These functions are properties of any `STRING` instance.
 
 - `Length -> INT`
 Returns the length of the string.
@@ -142,3 +134,24 @@ Splits the string by the given seperator. If the seperator if `""`, split by eac
 Returns the string in title case.
 - `Upper -> STRING`
 Returns the string in uppercase.
+ 
+## Type Functions
+
+- `INT -> TYPE`
+Returns the int type.
+- `INT<x: ANY> -> INT`
+Casts the argument to an integer.
+- `FLOAT -> TYPE`
+Returns the float type.
+- `FLOAT<x: ANY> -> FLOAT`
+Casts the argument to a float.
+- `LIST<a: TYPE, [len: INT]> -> ANY[]`
+Creates a new list instance containing type a. If a length is provided, populates the list with instances of type (must be able to be condtructed without any arguments).
+- `MAP<a: TYPE> -> MAP[ANY]`
+Creates a new map instance containing type a.
+- `NEW<a: TYPE> -> ANY`
+Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
+- `TYPE -> TYPE`
+Returns the type type.
+- `TYPE<a: ANY> -> TYPE`
+Returns the type of a after evaluation.

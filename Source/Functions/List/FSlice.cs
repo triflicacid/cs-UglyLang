@@ -1,5 +1,6 @@
 ﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using Type = UglyLang.Source.Types.Type;
 
 namespace UglyLang.Source.Functions.List
 {
@@ -8,7 +9,7 @@ namespace UglyLang.Source.Functions.List
     /// </summary>
     public class FSlice : Function
     {
-        private static readonly Types.Type List = Types.Type.List(new TypeParameter("a"));
+        private static readonly Type List = Type.List(new TypeParameter("a"));
 
         public FSlice()
         {
@@ -19,7 +20,7 @@ namespace UglyLang.Source.Functions.List
 
         internal class OverloadOne : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT };
+            private static readonly Type[] Arguments = new Type[] { List, Type.IntT };
 
             public OverloadOne()
             : base(Arguments, List)
@@ -43,7 +44,7 @@ namespace UglyLang.Source.Functions.List
 
         internal class OverloadTwo : FunctionOverload
         {
-            private static readonly Types.Type[] Arguments = new Types.Type[] { List, Types.Type.IntT, Types.Type.IntT };
+            private static readonly Type[] Arguments = new Type[] { List, Type.IntT, Type.IntT };
 
             public OverloadTwo()
             : base(Arguments, List)

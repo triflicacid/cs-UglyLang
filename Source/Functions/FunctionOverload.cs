@@ -2,7 +2,7 @@
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
-namespace UglyLang.Source.Functions
+namespace UglyLang.Source.Types
 {
     /// <summary>
     /// An overload of a function.

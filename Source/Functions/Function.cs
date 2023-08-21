@@ -1,5 +1,6 @@
 ﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using Type = UglyLang.Source.Types.Type;
 
 namespace UglyLang.Source.Functions
 {
@@ -43,7 +44,7 @@ namespace UglyLang.Source.Functions
         /// <summary>
         /// Does this function contain an overload which matches the given signature
         /// </summary>
-        public bool DoesOverloadExist(Types.Type[] argumentTypes, Types.Type returnType)
+        public bool DoesOverloadExist(Type[] argumentTypes, Type returnType)
         {
             // TODO
             /*foreach (FunctionOverload overload in Overloads)
@@ -68,7 +69,7 @@ namespace UglyLang.Source.Functions
         /// </summary>
         public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber)
         {
-            List<Types.Type> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
+            List<Type> receivedArgumentTypes = arguments.Select(a => a.Type).ToList();
 
             FunctionOverload? chosenOverload = null;
             TypeParameterCollection typeParameters = new();
@@ -102,12 +103,12 @@ namespace UglyLang.Source.Functions
             }
 
             // Resolve argument types of parameterisations
-            Types.Type[] argumentTypes = new Types.Type[chosenOverload.ArgumentTypes.Length];
+            Type[] argumentTypes = new Type[chosenOverload.ArgumentTypes.Length];
             for (int i = 0; i < chosenOverload.ArgumentTypes.Length; i++)
             {
                 if (chosenOverload.ArgumentTypes[i].IsParameterised())
                 {
-                    Types.Type resolved = chosenOverload.ArgumentTypes[i].ResolveParametersAgainst(typeParameters);
+                    Type resolved = chosenOverload.ArgumentTypes[i].ResolveParametersAgainst(typeParameters);
 
                     if (resolved.IsParameterised())
                     {
@@ -156,7 +157,7 @@ namespace UglyLang.Source.Functions
 
             // Check against the return type
             Value returnedValue = context.GetFunctionReturnValue() ?? new EmptyValue();
-            Types.Type returnType = chosenOverload.ReturnType; // NOTE that this is the expected rteurn type, NOT the type of returnedValue
+            Type returnType = chosenOverload.ReturnType; // NOTE that this is the expected rteurn type, NOT the type of returnedValue
 
             if (returnType.IsParameterised()) // If it is parameterised, resolve it. If it is still parameterised, something went wrong.
             {
@@ -165,12 +166,12 @@ namespace UglyLang.Source.Functions
                 // Results MUST match up with typeParameters
                 foreach (string p in result.GetParamerNames())
                 {
-                    Types.Type? pType = result.GetParameter(p);
+                    Type? pType = result.GetParameter(p);
 
                     // Make sure that they're equal, otherwise we have a contradiction in the type parameters
                     if (typeParameters.HasParameter(p))
                     {
-                        Types.Type oType = typeParameters.GetParameter(p);
+                        Type oType = typeParameters.GetParameter(p);
                         if (!oType.Equals(pType)) // BAD
                         {
                             context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0}: expected {1}, got {2}", p, oType, pType));

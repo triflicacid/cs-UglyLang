@@ -20,7 +20,7 @@ namespace UglyLang.Source.Values
 
         public override Value? To(Types.Type type)
         {
-            if (type is MapType map && map.Equals((MapType)Type))
+            if (type is MapType map && (map.ValueType is Any || ((MapType)Type).ValueType is Any || map.Equals((MapType)Type)))
                 return this;
             if (type is StringType)
             {
