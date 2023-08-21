@@ -13,6 +13,7 @@ The following document will describe each keyword, split up into appropriate sec
 | Keyword | Before | After | Description |
 | - | - | - | - |
 | `CAST` | `symbol_chain` | `type` | Change the type of the given symbol/property. |
+| `DEC` | `symbol_chain` | none | Decrement the given numerical symbol. |
 | `DO` | none | none | Creates a do-block. Code execution proceeds as normal, but in a new scope, like a function. |
 | `DO` | none | `expr` | Evaluate the given expression. |
 | `END` | none | none | Marks the end of the previous loop/function block. |
@@ -21,6 +22,7 @@ The following document will describe each keyword, split up into appropriate sec
 | `EXIT` | none | none | Exits the current loop structure. |
 | `IMPORT` | none | `expr`| Imports the filepath provided and exports all symbols into the current scope. See `Runtime.md`. |
 | `IMPORT` | `symbol` | `expr`| Same as the above, but bundles all symbols into a namespace with the name of `symbol`. |
+| `INC` | `symbol_chain` | none | Increment the given numerical symbol. |
 | `INPUT` | `symbol_chain` | none | Prompts the user for input, storing the entered value in the given symbol/property. |
 | `LET` | `symbol` | `expr` | Creates a new symbol and initialises it to the given value. |
 | `NAMESPACE` | `symbol` | none | Declares a new namespace. Only definitions are allowed in said namespace (`DEF`, `LET` etc). |

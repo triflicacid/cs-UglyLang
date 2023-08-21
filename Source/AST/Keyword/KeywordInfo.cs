@@ -28,6 +28,7 @@
 
         public static readonly List<KeywordInfo> List = new() {
             new("CAST", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.YES, ParseOptions.After.TYPE),
+            new("DEC", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.NO, ParseOptions.After.NONE),
             new("DEF", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.EXPR),
             new("DO", TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR),
             new("ELSE", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),
@@ -38,6 +39,7 @@
             new("FINISH", TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR),
             new("IF", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("IMPORT", TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.STRING),
+            new("INC", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.NO, ParseOptions.After.NONE),
             new("INPUT", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.NO, ParseOptions.After.EXPR),
             new("LET", TriState.YES, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.EXPR),
             new("LOOP", TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.OPTIONAL, ParseOptions.After.EXPR),

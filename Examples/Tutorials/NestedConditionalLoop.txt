@@ -1,11 +1,9 @@
 LET n: 0
 LET m: 0
-LOOP: LT<n,5>
+LOOP n: LT<n,5>
 	PRINTLN: "n=" n
 	SET m: 0
-	LOOP: LT<m,n>
+	LOOP m: LT<m,n>
 		PRINTLN: " m=" m
-		SET m: SUCC<m>
 	END
-	SET n: SUCC<n>
 END

@@ -8,7 +8,7 @@ DEF FIB: INT <n: INT>
 		SET tmp: a
 		SET a: ADD<a,b>
 		SET b: tmp
-		SET i: SUCC<i>
+		INC i
 	END
 
 	FINISH: a

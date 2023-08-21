@@ -19,6 +19,11 @@ namespace UglyLang.Source.AST
         public abstract bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false);
 
         /// <summary>
+        /// Attempt to update the symbol's value. Return whether this was a success - see context.Error.
+        /// </summary>
+        public abstract bool UpdateValue(Context context, ISymbolContainer container, Func<Context, Value, Value?> transformer, bool forceCast = false);
+
+        /// <summary>
         /// Attempt to cast this symbol to the given type. Return whether this was a success - see context.Error.
         /// </summary>
         public abstract bool CastValue(Context context, ISymbolContainer container, Types.Type type);
@@ -151,6 +156,53 @@ namespace UglyLang.Source.AST
             {
                 container.CreateSymbol(Symbol, value);
                 return true;
+            }
+        }
+
+        public override bool UpdateValue(Context context, ISymbolContainer container, Func<Context, Value, Value?> transformer, bool forceCast = false)
+        {
+            // Make sure that the types line up
+            if (container.HasSymbol(Symbol))
+            {
+                ISymbolValue oldSymbolValue = container.GetSymbol(Symbol);
+
+                if (oldSymbolValue is Value oldValue)
+                {
+                    // Transform the old value to new
+                    Value? value = transformer(context, oldValue);
+                    if (value == null) return false;
+
+                    // Cast to match?
+                    if (forceCast || oldValue.Type.DoesMatch(value.Type))
+                    {
+                        Value? newValue = value.To(oldValue.Type);
+                        if (newValue == null)
+                        {
+                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", Symbol, oldValue.Type));
+                            return false;
+                        }
+                        else
+                        {
+                            container.SetSymbol(Symbol, newValue);
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot match {0} with {1} (in assignment to {2})", value.Type.ToString(), oldValue.Type.ToString(), Symbol));
+                        return false;
+                    }
+                }
+                else
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot set symbol {0}", Symbol));
+                    return false;
+                }
+            }
+            else
+            {
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, Symbol);
+                return false;
             }
         }
 

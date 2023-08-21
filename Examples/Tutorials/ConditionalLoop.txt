@@ -1,7 +1,7 @@
 LET n: 0
 LOOP: LT<n,5>
 	PRINTLN: "n=" n
-	SET n: SUCC<n>
+	INC n
 END
 PRINTLN: "final n=" n
 

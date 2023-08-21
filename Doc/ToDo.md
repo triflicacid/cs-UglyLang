@@ -6,7 +6,7 @@
 
 The following section contains ideas for the language. The bullets are not listed in any particular order.
 
-- Record a value's definition location
+- Record a symbol's definition location
 
 - Add user-defined types. Example syntax:
 

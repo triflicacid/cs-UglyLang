@@ -515,6 +515,11 @@ namespace UglyLang.Source
                             keywordNode = new CastKeywordNode((AbstractSymbolNode)before, new UnresolvedType(((SymbolNode)after).Symbol));
                             break;
                         }
+                    case "DEC":
+                        {
+                            keywordNode = new DecKeywordNode((AbstractSymbolNode)before);
+                            break;
+                        }
                     case "DO":
                         {
                             if (after == null)
@@ -689,6 +694,11 @@ namespace UglyLang.Source
                     case "INPUT":
                         {
                             keywordNode = new InputKeywordNode((AbstractSymbolNode)before);
+                            break;
+                        }
+                    case "INC":
+                        {
+                            keywordNode = new IncKeywordNode((AbstractSymbolNode)before);
                             break;
                         }
                     case "LET":

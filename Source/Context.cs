@@ -44,7 +44,7 @@ namespace UglyLang.Source
                     return Stack[i].GetSymbol(name);
             }
 
-            throw new Exception(string.Format("Failed to get variable: name '{0}' could not be found", name));
+            throw new ArgumentException(name);
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace UglyLang.Source
                 if (Stack[i].HasSymbol(name))
                 {
                     Stack[i].SetSymbol(name, value);
-                    break;
+                    return;
                 }
             }
 

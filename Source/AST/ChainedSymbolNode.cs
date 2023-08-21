@@ -224,7 +224,6 @@ namespace UglyLang.Source.AST
 
             if (child is Value oldValue)
             {
-
                 // Cast the old value
                 Value? newValue = oldValue.To(type);
                 if (newValue == null)
@@ -251,6 +250,66 @@ namespace UglyLang.Source.AST
             }
 
             throw new NotImplementedException();
+        }
+
+        public override bool UpdateValue(Context context, ISymbolContainer container, Func<Context, Value, Value?> transformer, bool forceCast = false)
+        {
+            var values = RetrieveValues(context, container);
+            if (values == null)
+                return false; // Propagate
+
+            (ISymbolValue oldChild, Property? property, Value? parent) = values.Value;
+
+            if (parent == null || property == null)
+                throw new NullReferenceException();
+
+            // Is readonly?
+            if (property.IsReadonly)
+            {
+                SymbolNode symbol = Symbols[^1];
+                context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), symbol.Symbol));
+                return false;
+            }
+
+            // Make sure that the types line up
+            if (property.GetValue() is Value && oldChild is Value oldValue)
+            {
+                // Transform value
+                Value? value = transformer(context, oldValue);
+                if (value == null) return false;
+
+                if (forceCast || oldValue.Type.DoesMatch(value.Type))
+                {
+                    Value? newValue = value.To(oldValue.Type);
+                    if (newValue == null)
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", GetSymbolString(), oldValue.Type));
+                        return false;
+                    }
+                    else
+                    {
+                        // Update the property
+                        bool isOk = parent.SetProperty(property.GetName(), value);
+                        if (!isOk)
+                        {
+                            SymbolNode symbol = Symbols[^1];
+                            context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", symbol.Symbol));
+                        }
+
+                        return isOk;
+                    }
+                }
+                else
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot match {0} with {1} (in assignment to {2})", value.Type.ToString(), oldValue.Type.ToString(), GetSymbolString()));
+                    return false;
+                }
+            }
+            else
+            {
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("cannot set {0}", GetSymbolString()));
+                return false;
+            }
         }
     }
 }

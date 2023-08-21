@@ -2,7 +2,7 @@ DEF FAC: INT <n: INT>
 	LET x: n
 	LOOP: GT<n,1>
 		SET x: MUL<x,PRED<n>>
-		SET n: PRED<n>
+		DEC n
 	END
 	FINISH: x
 END
