@@ -8,7 +8,7 @@
         public ExitKeywordNode()
         { }
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
             return Signal.EXIT_LOOP;
         }

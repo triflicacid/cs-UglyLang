@@ -116,6 +116,8 @@ Returns the predecessor of integer a.
 Returns a - b.
 - `SUCC<a: INT> -> INT`
 Returns the successor of integer a.
+- `SQRT<a: FLOAT> -> FLOAT`
+Calculates the square root of a.
 
 ## String Functions
 These functions are properties of any `STRING` instance.

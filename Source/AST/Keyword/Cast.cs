@@ -16,16 +16,16 @@ namespace UglyLang.Source.AST.Keyword
             CastType = type;
         }
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
-            Types.Type? type = CastType.Resolve(container);
+            Types.Type? type = CastType.Resolve(context);
             if (type == null)
             {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", CastType));
+                context.Error = new(0, 0, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", CastType.Value.GetSymbolString()));
                 return Signal.ERROR;
             }
 
-            return Symbol.CastValue(context, container, type) ? Signal.NONE : Signal.ERROR;
+            return Symbol.CastValue(context, type) ? Signal.NONE : Signal.ERROR;
         }
     }
 }

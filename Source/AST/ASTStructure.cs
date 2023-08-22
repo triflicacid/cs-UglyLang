@@ -18,14 +18,9 @@
 
         public Signal Evaluate(Context context)
         {
-            return Evaluate(context, context);
-        }
-
-        public Signal Evaluate(Context context, ISymbolContainer container)
-        {
             foreach (ASTNode root in roots)
             {
-                Signal signal = root.Action(context, container);
+                Signal signal = root.Action(context);
                 if (signal != Signal.NONE)
                     return signal;
             }

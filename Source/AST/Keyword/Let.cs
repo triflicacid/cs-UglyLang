@@ -16,17 +16,17 @@ namespace UglyLang.Source.AST.Keyword
             Value = value;
         }
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
-            if (container.CanCreateSymbol(Name))
+            if (context.CanCreateSymbol(Name))
             {
-                Value? evaldValue = Value.Evaluate(context, container);
+                Value? evaldValue = Value.Evaluate(context);
                 if (evaldValue == null) // Propagate error?
                 {
                     return Signal.ERROR;
                 }
 
-                container.CreateSymbol(Name, evaldValue);
+                context.CreateSymbol(Name, evaldValue);
                 return Signal.NONE;
 
             }

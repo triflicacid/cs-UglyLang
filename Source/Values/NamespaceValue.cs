@@ -61,6 +61,11 @@ namespace UglyLang.Source.Values
             return false;
         }
 
+        public override bool AreFunctionsContextual()
+        {
+            return false;
+        }
+
         public bool HasSymbol(string symbol)
         {
             return Value.ContainsKey(symbol);
@@ -79,11 +84,6 @@ namespace UglyLang.Source.Values
         public void SetSymbol(string symbol, ISymbolValue value)
         {
             Value[symbol] = value;
-        }
-
-        public override bool AreFunctionsContextual()
-        {
-            return false;
         }
     }
 }

@@ -7,7 +7,7 @@ namespace UglyLang.Source.AST
     /// </summary>
     public abstract class KeywordNode : ASTNode
     {
-        public override Value Evaluate(Context context, ISymbolContainer container)
+        public override Value Evaluate(Context context)
         {
             throw new NotImplementedException();
         }

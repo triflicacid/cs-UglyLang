@@ -98,7 +98,7 @@ namespace UglyLang.Source.Functions
                 error += Environment.NewLine + "  Received: <" + string.Join(", ", receivedArgumentTypes.Select(a => a.ToString()).ToArray()) + ">";
                 error += Environment.NewLine + "  Expected: " + string.Join(" | ", Overloads.Select(o => "<" + string.Join(", ", o.ArgumentTypes.Select(b => b.ToString())) + ">"));
 
-                context.Error = new(0, 0, Error.Types.Type, error);
+                context.Error = new(lineNumber, colNumber, Error.Types.Type, error);
                 return Signal.ERROR;
             }
 
@@ -112,7 +112,7 @@ namespace UglyLang.Source.Functions
 
                     if (resolved.IsParameterised())
                     {
-                        context.Error = new(0, 0, Error.Types.Type, string.Format("cannot resolve parameterised type '{0}' (partially resolved to {1})", chosenOverload.ArgumentTypes[i], resolved));
+                        context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("cannot resolve parameterised type '{0}' (partially resolved to {1})", chosenOverload.ArgumentTypes[i], resolved));
                         return Signal.ERROR;
                     }
 
@@ -133,7 +133,7 @@ namespace UglyLang.Source.Functions
                     Value? casted = arguments[i].To(argumentTypes[i]);
                     if (casted == null)
                     {
-                        context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arguments[i].Type, argumentTypes[i]));
+                        context.Error = new(lineNumber, colNumber, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arguments[i].Type, argumentTypes[i]));
                         return Signal.ERROR;
                     }
 
@@ -174,14 +174,14 @@ namespace UglyLang.Source.Functions
                         Type oType = typeParameters.GetParameter(p);
                         if (!oType.Equals(pType)) // BAD
                         {
-                            context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0}: expected {1}, got {2}", p, oType, pType));
+                            context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("type parameter {0}: expected {1}, got {2}", p, oType, pType));
                             return Signal.ERROR;
                         }
                     }
                     else
                     {
                         // Unknown parameter
-                        context.Error = new(0, 0, Error.Types.Type, string.Format("unbound type parameter '{0}'", p));
+                        context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("unbound type parameter '{0}'", p));
                         return Signal.ERROR;
                     }
                 }
@@ -189,13 +189,13 @@ namespace UglyLang.Source.Functions
                 returnType = returnType.ResolveParametersAgainst(typeParameters);
                 if (returnType.IsParameterised()) // If the return type is still paramerised, we have a problem
                 {
-                    context.Error = new(0, 0, Error.Types.Type, string.Format("parameterised type {0} cannot be resolved", returnType));
+                    context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("parameterised type {0} cannot be resolved", returnType));
                     return Signal.ERROR;
                 }
             }
             else if (!returnType.DoesMatch(returnedValue.Type))
             {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("expected return value to be {0}, got {1}", returnType, returnedValue.Type));
+                context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("expected return value to be {0}, got {1}", returnType, returnedValue.Type));
                 return Signal.ERROR;
             }
 
@@ -206,13 +206,30 @@ namespace UglyLang.Source.Functions
                 Value? casted = returnedValue.To(returnType);
                 if (casted == null)
                 {
-                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", returnedValue.Type, returnType));
+                    context.Error = new(lineNumber, colNumber, Error.Types.Cast, string.Format("cannot cast {0} to {1}", returnedValue.Type, returnType));
                     return Signal.ERROR;
                 }
             }
 
             // All is good; the return type matches.
             return Signal.NONE;
+        }
+
+        public class Method : ICallable, ISymbolValue
+        {
+            public readonly Function Func;
+            public readonly UserValue Owner;
+
+            public Method(Function func, UserValue owner)
+            {
+                Func = func;
+                Owner = owner;
+            }
+
+            public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber)
+            {
+                return Func.Call(context, arguments, lineNumber, colNumber);
+            }
         }
     }
 }

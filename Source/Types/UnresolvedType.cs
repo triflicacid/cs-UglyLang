@@ -1,13 +1,21 @@
-﻿namespace UglyLang.Source.Types
+﻿using UglyLang.Source.AST;
+using UglyLang.Source.Values;
+
+namespace UglyLang.Source.Types
 {
     /// <summary>
     /// Wraps a string which will be resolved to a type
     /// </summary>
     public class UnresolvedType
     {
-        public readonly string Value;
+        public readonly AbstractSymbolNode Value;
 
         public UnresolvedType(string value)
+        {
+            Value = new SymbolNode(value);
+        }
+
+        public UnresolvedType(AbstractSymbolNode value)
         {
             Value = value;
         }
@@ -15,53 +23,70 @@
         /// <summary>
         /// Resolve said type, or return NULL if error.
         /// </summary>
-        public virtual Type? Resolve(ISymbolContainer container)
+        public virtual Type? Resolve(Context context)
         {
-            return Resolve(container, Value);
+            return Resolve(context, Value);
         }
 
-        public static Type? Resolve(ISymbolContainer container, string value)
+        public static Type? Resolve(Context context, AbstractSymbolNode node)
         {
-            // Primitives?
-            if (value == IntType.AsString())
-                return new IntType();
-            if (value == FloatType.AsString())
-                return new FloatType();
-            if (value == StringType.AsString())
-                return new StringType();
-
-            // Namespace? Hide it from public viewing.
-            if (value == "NAMESPACE")
-                return null;
-
-            // Map?
-            if (value == "MAP")
-                return new MapType(Type.AnyT);
-
-            if (value.StartsWith("MAP[") && value[^1] == ']')
+            if (node is SymbolNode symbolNode)
             {
-                Type? member = Resolve(container, value[4..^1]);
-                return member == null ? null : new MapType(member);
+                string value = symbolNode.Symbol;
+
+                // Primitives?
+                if (value == IntType.AsString())
+                    return new IntType();
+                if (value == FloatType.AsString())
+                    return new FloatType();
+                if (value == StringType.AsString())
+                    return new StringType();
+                if (value == TypeType.AsString())
+                    return new TypeType();
+
+                // Namespace? Hide it from public viewing.
+                if (value == "NAMESPACE")
+                    return null;
+
+                // Map?
+                if (value == "MAP")
+                    return new MapType(Type.AnyT);
+
+                if (value.StartsWith("MAP[") && value[^1] == ']')
+                {
+                    Type? member = Resolve(context, new SymbolNode(value[4..^1]));
+                    return member == null ? null : new MapType(member);
+                }
+
+                // List?
+                if (value == "LIST")
+                    return new ListType(Type.AnyT);
+
+                if (value.Length > 2 && value[^1] == ']' && value[^2] == '[')
+                {
+                    Type? member = Resolve(context, new SymbolNode(value[..^2]));
+                    return member == null ? null : new ListType(member);
+                }
+
+                // User type?
+                if (context.HasSymbol(value) && context.GetSymbol(value) is UserType t)
+                {
+                    return t;
+                }
+
+                // Assume it is a type parameter
+                return new TypeParameter(value);
             }
-
-            // List?
-            if (value == "LIST")
-                return new ListType(Type.AnyT);
-
-            if (value.Length > 2 && value[^1] == ']' && value[^2] == '[')
+            else if (node is ChainedSymbolNode chain)
             {
-                Type? member = Resolve(container, value[..^2]);
-                return member == null ? null : new ListType(member);
+                // Property access, so must be a UserType (or nothing)
+                Value? value = chain.Evaluate(context);
+                return value is TypeValue tval ? tval.Value : null;
             }
-
-            // User type?
-            if (container.HasSymbol(value) && container.GetSymbol(value) is UserType t)
+            else
             {
-                return t;
+                throw new NotSupportedException();
             }
-
-            // Assume it is a type parameter
-            return new TypeParameter(value);
         }
     }
 
@@ -77,7 +102,7 @@
             ResolveTo = type;
         }
 
-        public override Type? Resolve(ISymbolContainer container)
+        public override Type? Resolve(Context context)
         {
             return ResolveTo;
         }

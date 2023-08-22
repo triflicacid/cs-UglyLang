@@ -36,7 +36,7 @@ namespace UglyLang.Source.AST.Keyword
             return true;
         }
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
             if (Content == null)
                 throw new InvalidOperationException();
@@ -58,7 +58,7 @@ namespace UglyLang.Source.AST.Keyword
                     context.PushStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
                 }
 
-                s = Content.Evaluate(context, container);
+                s = Content.Evaluate(context);
                 if (s == Signal.ERROR)
                     return s;
 
@@ -77,14 +77,14 @@ namespace UglyLang.Source.AST.Keyword
             if (Namespace != null)
             {
                 // Export into a namespace and create new variable
-                if (container.HasSymbol(Namespace.Symbol))
+                if (context.HasSymbol(Namespace.Symbol))
                 {
                     context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("{0} is already defined", Namespace.Symbol));
                     return Signal.ERROR;
                 }
                 else
                 {
-                    container.CreateSymbol(Namespace.Symbol, ns);
+                    context.CreateSymbol(Namespace.Symbol, ns);
                 }
             }
 

@@ -30,7 +30,25 @@ Note that integers are used to represent Booleans, with 0 representing False and
 
 # User-Defined Types
 
-*In progress*
+Custom types may be created using the `TYPE` keyword. A type consists of fields, introduced using the `FIELD` keyword, and methods, defined using the `DEF` keyword. For example,
+
+```
+TYPE Vec
+	FIELD x: INT
+	FIELD y: INT
+
+	DEF Repr: STRING <>
+		FINISH: "<" x "," y ">"
+	END
+END
+```
+
+This defines a new type, `Vec`, which contains two fields and one method. Custom types may be constructed using no arguments, or any number of arguments that doesn't exceed the number of fields. In this case, the values passed to the constructor will be assigned to the type's fields in order of definition. Fields for which no value was applies will be instantiated using no arguments (or raise an error if this cannot be done). For example, the result of calling `Vec:Repr` on the following values:
+- `Vec { }` -> `<0,0>`
+- `Vec { 1 }` -> `<1,0>`
+- `Vec { 1, 2 }` -> `<1,2>`
+
+When methods are called, the containing type instance resides in the stack. As such, all fields are accessible seemingly as normal variables and may be updated as such.
 
 # Constructing Types
 

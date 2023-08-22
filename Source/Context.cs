@@ -6,7 +6,7 @@ namespace UglyLang.Source
 {
     public class Context : ISymbolContainer
     {
-        private readonly List<AbstractStackContext> Stack;
+        private readonly List<ISymbolContainer> Stack; // Stack of pushed contexts. It can be any symbol container, but at runtime it is always an AbstractStackContext.
         public Error? Error = null;
         public readonly ParseOptions ParseOptions;
 
@@ -102,11 +102,15 @@ namespace UglyLang.Source
             string? filename = null;
             for (int i = stackIndex; i >= 0; i--)
             {
-                if (Stack[i].Type == StackContextType.File)
+                if (Stack[i] is AbstractStackContext frame)
                 {
-                    filename = Stack[i].Name;
-                    break;
+                    if (frame.Type == StackContextType.File)
+                    {
+                        filename = frame.Name;
+                        break;
+                    }
                 }
+
             }
 
             if (filename == null)
@@ -145,11 +149,15 @@ namespace UglyLang.Source
             string str = "";
             for (int i = 0; i < Stack.Count; i++)
             {
-                // Error information
-                str += Stack[i].ToString() + Environment.NewLine;
+                if (Stack[i] is AbstractStackContext frame)
+                {
+                    // Error information
+                    str += frame.ToString() + Environment.NewLine;
 
-                if (i != 0)
-                    str += GetLineError(i == 0 ? 0 : i - 1, Stack[i].LineNumber, Stack[i].ColNumber);
+                    if (i != 0)
+                        str += GetLineError(i == 0 ? 0 : i - 1, frame.LineNumber, frame.ColNumber);
+                }
+
             }
 
             str += error.ToString();
@@ -162,6 +170,14 @@ namespace UglyLang.Source
         }
 
         /// <summary>
+        /// Push a new item on to the stack
+        /// </summary>
+        public void PushStack(ISymbolContainer container)
+        {
+            Stack.Add(container);
+        }
+
+        /// <summary>
         /// Push a new stack context
         /// </summary>
         public void PushStackContext(int line, int col, StackContextType type, string name, TypeParameterCollection? typeParams = null)
@@ -170,11 +186,29 @@ namespace UglyLang.Source
         }
 
         /// <summary>
+        /// Push a new method stack context
+        /// </summary>
+        public void PushMethodStackContext(int line, int col, string name, UserValue owner)
+        {
+            Stack.Add(new MethodStackContext(line, col, name, owner));
+        }
+
+        /// <summary>
         /// Push a new proxy stack context forthe latest stack context
         /// </summary>
         public void PushProxyStackContext(int line, int col, StackContextType type, string name)
         {
-            Stack.Add(new ProxyStackContext(line, col, type, name, Stack[^1]));
+            Stack.Add(new ProxyStackContext(line, col, type, name, (AbstractStackContext)Stack[^1]));
+        }
+
+        public AbstractStackContext PeekStackContext()
+        {
+            return (AbstractStackContext)Stack[^1];
+        }
+
+        public ISymbolContainer PeekStack()
+        {
+            return Stack[^1];
         }
 
         /// <summary>
@@ -182,22 +216,30 @@ namespace UglyLang.Source
         /// </summary>
         public AbstractStackContext PopStackContext()
         {
+            return (AbstractStackContext)PopStack();
+        }
+
+        /// <summary>
+        /// Pop the latest item from the stack
+        /// </summary>
+        public ISymbolContainer PopStack()
+        {
             if (Stack.Count < 2)
                 throw new InvalidOperationException();
-            AbstractStackContext peek = Stack[^1];
+            ISymbolContainer peek = Stack[^1];
             Stack.RemoveAt(Stack.Count - 1);
             return peek;
         }
 
         public void SetFunctionReturnValue(Value value)
         {
-            var context = Stack[^1];
+            var context = (AbstractStackContext)Stack[^1];
             context.FunctionReturnValue = value;
         }
 
         public Value? GetFunctionReturnValue()
         {
-            return Stack[^1].FunctionReturnValue;
+            return ((AbstractStackContext)Stack[^1]).FunctionReturnValue;
         }
 
         /// <summary>
@@ -205,7 +247,7 @@ namespace UglyLang.Source
         /// </summary>
         public void MergeTypeParams(TypeParameterCollection c)
         {
-            Stack[^1].GetTypeParameters().MergeWith(c);
+            ((AbstractStackContext)Stack[^1]).GetTypeParameters().MergeWith(c);
         }
 
         /// <summary>
@@ -214,9 +256,10 @@ namespace UglyLang.Source
         public TypeParameterCollection GetBoundTypeParams()
         {
             TypeParameterCollection c = new();
-            foreach (AbstractStackContext context in Stack)
+            foreach (ISymbolContainer context in Stack)
             {
-                c.MergeWith(context.GetTypeParameters());
+                if (context is AbstractStackContext stackContext)
+                    c.MergeWith(stackContext.GetTypeParameters());
             }
             return c;
         }

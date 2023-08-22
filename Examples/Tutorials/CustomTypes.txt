@@ -1,0 +1,22 @@
+TYPE Vec
+	FIELD x: INT
+	FIELD y: INT
+
+	DEF Repr: STRING <>
+		FINISH: "<" x "," y ">"
+	END
+
+	DEF Length: FLOAT <>
+		FINISH: SQRT<ADD<MUL<x,x>, MUL<y,y>>>
+	END
+END
+
+DEF Fn: <v: Vec>
+	PRINTLN: "Vector " v.Repr " has length " v.Length
+END
+
+SET v: Vec { 3, 4 }
+DO: Fn<v>
+SET v.x: 4.3
+DO: Fn<v>
+

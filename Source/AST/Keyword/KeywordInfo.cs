@@ -13,16 +13,20 @@
         public readonly ParseOptions.After AfterItem;
 
         /// Which keywords are permitted under this keyword. If null, allow all keywords.
-        public readonly string[]? Allow;
+        public readonly string[]? AllowUnder;
 
-        public KeywordInfo(string keyword, TriState before, ParseOptions.Before beforeItem, TriState after, ParseOptions.After afterItem, string[]? allow = null)
+        /// Which keywords are permitted to be above this? If null, allow all keywords.
+        public readonly string[]? AllowAbove;
+
+        public KeywordInfo(string keyword, TriState before, ParseOptions.Before beforeItem, TriState after, ParseOptions.After afterItem, string[]? allowUnder = null, string[]? allowAbove = null)
         {
             Keyword = keyword;
             After = after;
             Before = before;
             BeforeItem = beforeItem;
             AfterItem = afterItem;
-            Allow = allow;
+            AllowUnder = allowUnder;
+            AllowAbove = allowAbove;
         }
 
 
@@ -36,6 +40,7 @@
             new("END", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),
             new("ERROR", TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR),
             new("EXIT", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),
+            new("FIELD", TriState.YES, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.TYPE, null, new string[] { "TYPE" }),
             new("FINISH", TriState.NO, ParseOptions.Before.NONE, TriState.OPTIONAL, ParseOptions.After.EXPR),
             new("IF", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("IMPORT", TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.STRING),
@@ -43,11 +48,12 @@
             new("INPUT", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.NO, ParseOptions.After.EXPR),
             new("LET", TriState.YES, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.EXPR),
             new("LOOP", TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.OPTIONAL, ParseOptions.After.EXPR),
-            new("NAMESPACE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "NAMESPACE", "DEF", "LET", "END" }),
+            new("NAMESPACE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "NAMESPACE", "DEF", "LET", "TYPE", "END" }),
             new("PRINT", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("PRINTLN", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("SET", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.YES, ParseOptions.After.EXPR),
             new("STOP", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),
+            new("TYPE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "DEF", "FIELD", "END" }),
         };
 
         public static readonly Dictionary<string, KeywordInfo> Lookup = new();

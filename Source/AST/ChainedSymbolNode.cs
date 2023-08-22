@@ -1,6 +1,7 @@
 ﻿using UglyLang.Source.Functions;
 using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using static UglyLang.Source.Functions.Function;
 
 namespace UglyLang.Source.AST
 {
@@ -23,7 +24,7 @@ namespace UglyLang.Source.AST
         /// <summary>
         /// Get the values of this symbol chain. Return (value, valueProperty, valuesParent), or null if error (see context.Error).
         /// </summary>
-        private (ISymbolValue, Property?, Value?)? RetrieveValues(Context context, ISymbolContainer container)
+        private (ISymbolValue, Property?, Value?)? RetrieveValues(Context context)
         {
             if (Symbols.Count == 0)
                 throw new InvalidOperationException();
@@ -36,7 +37,7 @@ namespace UglyLang.Source.AST
             {
                 if (parent == null)
                 {
-                    parent = symbol.Evaluate(context, container);
+                    parent = symbol.Evaluate(context);
                     if (parent == null)
                         return null;
                 }
@@ -55,7 +56,14 @@ namespace UglyLang.Source.AST
                             if (parent is ICallable func)
                             {
                                 // Push new stack context
-                                context.PushStackContext(symbol.LineNumber, symbol.ColumnNumber, StackContextType.Function, symbol.Symbol);
+                                if (func is Method method)
+                                {
+                                    context.PushMethodStackContext(symbol.LineNumber, symbol.ColumnNumber, symbol.Symbol, method.Owner);
+                                }
+                                else
+                                {
+                                    context.PushStackContext(symbol.LineNumber, symbol.ColumnNumber, StackContextType.Function, symbol.Symbol);
+                                }
 
                                 // Evaluate arguments
                                 List<Value> arguments = new();
@@ -63,7 +71,7 @@ namespace UglyLang.Source.AST
                                 {
                                     foreach (ExprNode expr in symbol.CallArguments)
                                     {
-                                        Value? arg = expr.Evaluate(context, container);
+                                        Value? arg = expr.Evaluate(context);
                                         if (arg == null || context.Error != null)
                                             return null;
 
@@ -75,12 +83,6 @@ namespace UglyLang.Source.AST
                                 Signal signal = func.Call(context, arguments, symbol.LineNumber, symbol.ColumnNumber);
                                 if (signal == Signal.ERROR)
                                 {
-                                    if (context.Error != null)
-                                    {
-                                        context.Error.LineNumber = symbol.LineNumber;
-                                        context.Error.ColumnNumber = symbol.ColumnNumber + symbol.Symbol.Length;
-                                    }
-
                                     return null;
                                 }
 
@@ -98,9 +100,13 @@ namespace UglyLang.Source.AST
                                     return null;
                                 }
                             }
+                            else if (parent is Types.Type tValue)
+                            {
+                                parent = new TypeValue(tValue);
+                            }
                             else
                             {
-                                throw new InvalidOperationException();
+                                throw new InvalidOperationException(parent.ToString());
                             }
                         }
                         else
@@ -125,9 +131,9 @@ namespace UglyLang.Source.AST
             return new(parent, parentProperty, grandparent);
         }
 
-        public override Value? Evaluate(Context context, ISymbolContainer container)
+        public override Value? Evaluate(Context context)
         {
-            var values = RetrieveValues(context, container);
+            var values = RetrieveValues(context);
             if (values == null)
                 return null; // Propagate
 
@@ -135,13 +141,15 @@ namespace UglyLang.Source.AST
 
             if (value is Value val)
                 return val;
+            if (value is Types.Type t)
+                return new TypeValue(t);
 
-            throw new InvalidOperationException(); // Should not happen.
+            throw new InvalidOperationException(value.ToString()); // Should not happen.
         }
 
-        public override bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false)
+        public override bool SetValue(Context context, Value value, bool forceCast = false)
         {
-            var values = RetrieveValues(context, container);
+            var values = RetrieveValues(context);
             if (values == null)
                 return false; // Propagate
 
@@ -172,7 +180,7 @@ namespace UglyLang.Source.AST
                     else
                     {
                         // Update the property
-                        bool isOk = parent.SetProperty(property.GetName(), value);
+                        bool isOk = parent.SetProperty(property.GetName(), newValue);
                         if (!isOk)
                         {
                             SymbolNode symbol = Symbols[^1];
@@ -195,9 +203,9 @@ namespace UglyLang.Source.AST
             }
         }
 
-        public override bool CastValue(Context context, ISymbolContainer container, Types.Type type)
+        public override bool CastValue(Context context, Types.Type type)
         {
-            var values = RetrieveValues(context, container);
+            var values = RetrieveValues(context);
             if (values == null)
                 return false; // Propagate
 
@@ -252,9 +260,9 @@ namespace UglyLang.Source.AST
             throw new NotImplementedException();
         }
 
-        public override bool UpdateValue(Context context, ISymbolContainer container, Func<Context, Value, Value?> transformer, bool forceCast = false)
+        public override bool UpdateValue(Context context, Func<Context, Value, Value?> transformer, bool forceCast = false)
         {
-            var values = RetrieveValues(context, container);
+            var values = RetrieveValues(context);
             if (values == null)
                 return false; // Propagate
 

@@ -49,7 +49,7 @@ namespace UglyLang.Source.Values
 
             Property? prop = Type.GetProperties().ContainsKey(name) ? Type.GetProperties()[name] : GetPropertyExtra(name);
             if (prop == null)
-                throw new InvalidOperationException();
+                throw new NullReferenceException();
             if (AreFunctionsContextual() && prop.GetValue() is Function func)
             {
                 prop.SetValue(new FunctionContext(func, this));

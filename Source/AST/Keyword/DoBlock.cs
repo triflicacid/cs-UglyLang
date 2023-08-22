@@ -7,14 +7,14 @@
     {
         public ASTStructure? Body;
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
             if (Body == null)
                 throw new NullReferenceException();
 
             context.PushStackContext(LineNumber, ColumnNumber, StackContextType.DoBlock, "");
 
-            Signal s = Body.Evaluate(context, container);
+            Signal s = Body.Evaluate(context);
             if (s == Signal.ERROR)
                 return s;
 

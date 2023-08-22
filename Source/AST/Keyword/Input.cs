@@ -14,12 +14,12 @@ namespace UglyLang.Source.AST.Keyword
             Symbol = symbol;
         }
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
             // Prompt user for input
             string raw = Console.ReadLine() ?? "";
 
-            return Symbol.SetValue(context, container, new StringValue(raw), true)
+            return Symbol.SetValue(context, new StringValue(raw), true)
                 ? Signal.NONE
                 : Signal.ERROR;
         }

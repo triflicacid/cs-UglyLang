@@ -1,5 +1,7 @@
 ﻿using UglyLang.Source.Functions;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using static UglyLang.Source.Functions.Function;
 
 namespace UglyLang.Source.AST
 {
@@ -16,17 +18,17 @@ namespace UglyLang.Source.AST
         /// <summary>
         /// Attempt to set this symbol to the given value in the given context. Cast only if the types match, or if forceCast is truthy. Return whether this was a success - see context.Error.
         /// </summary>
-        public abstract bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false);
+        public abstract bool SetValue(Context context, Value value, bool forceCast = false);
 
         /// <summary>
         /// Attempt to update the symbol's value. Return whether this was a success - see context.Error.
         /// </summary>
-        public abstract bool UpdateValue(Context context, ISymbolContainer container, Func<Context, Value, Value?> transformer, bool forceCast = false);
+        public abstract bool UpdateValue(Context context, Func<Context, Value, Value?> transformer, bool forceCast = false);
 
         /// <summary>
         /// Attempt to cast this symbol to the given type. Return whether this was a success - see context.Error.
         /// </summary>
-        public abstract bool CastValue(Context context, ISymbolContainer container, Types.Type type);
+        public abstract bool CastValue(Context context, Types.Type type);
     }
 
     /// <summary>
@@ -50,17 +52,24 @@ namespace UglyLang.Source.AST
             return Symbol;
         }
 
-        public override Value? Evaluate(Context context, ISymbolContainer container)
+        public override Value? Evaluate(Context context)
         {
-            if (container.HasSymbol(Symbol))
+            if (context.HasSymbol(Symbol))
             {
-                ISymbolValue variable = container.GetSymbol(Symbol);
+                ISymbolValue variable = context.GetSymbol(Symbol);
                 Value value;
 
                 if (variable is ICallable func)
                 {
                     // Push new stack context
-                    context.PushStackContext(LineNumber, ColumnNumber, StackContextType.Function, Symbol);
+                    if (func is Method method)
+                    {
+                        context.PushMethodStackContext(LineNumber, ColumnNumber, Symbol, method.Owner);
+                    }
+                    else
+                    {
+                        context.PushStackContext(LineNumber, ColumnNumber, StackContextType.Function, Symbol);
+                    }
 
                     // Evaluate arguments
                     List<Value> arguments = new();
@@ -68,7 +77,7 @@ namespace UglyLang.Source.AST
                     {
                         foreach (ExprNode expr in CallArguments)
                         {
-                            Value? arg = expr.Evaluate(context, container);
+                            Value? arg = expr.Evaluate(context);
                             if (arg == null)
                                 return null;
                             if (context.Error != null)
@@ -103,6 +112,10 @@ namespace UglyLang.Source.AST
 
                     value = val;
                 }
+                else if (variable is UserType userType)
+                {
+                    value = new TypeValue(userType);
+                }
                 else
                 {
                     throw new InvalidOperationException();
@@ -117,12 +130,12 @@ namespace UglyLang.Source.AST
             }
         }
 
-        public override bool SetValue(Context context, ISymbolContainer container, Value value, bool forceCast = false)
+        public override bool SetValue(Context context, Value value, bool forceCast = false)
         {
             // Make sure that the types line up
-            if (container.HasSymbol(Symbol))
+            if (context.HasSymbol(Symbol))
             {
-                ISymbolValue oldSymbolValue = container.GetSymbol(Symbol);
+                ISymbolValue oldSymbolValue = context.GetSymbol(Symbol);
 
                 if (oldSymbolValue is Value oldValue)
                 {
@@ -136,7 +149,7 @@ namespace UglyLang.Source.AST
                         }
                         else
                         {
-                            container.SetSymbol(Symbol, newValue);
+                            context.SetSymbol(Symbol, newValue);
                             return true;
                         }
                     }
@@ -154,17 +167,17 @@ namespace UglyLang.Source.AST
             }
             else
             {
-                container.CreateSymbol(Symbol, value);
+                context.CreateSymbol(Symbol, value);
                 return true;
             }
         }
 
-        public override bool UpdateValue(Context context, ISymbolContainer container, Func<Context, Value, Value?> transformer, bool forceCast = false)
+        public override bool UpdateValue(Context context, Func<Context, Value, Value?> transformer, bool forceCast = false)
         {
             // Make sure that the types line up
-            if (container.HasSymbol(Symbol))
+            if (context.HasSymbol(Symbol))
             {
-                ISymbolValue oldSymbolValue = container.GetSymbol(Symbol);
+                ISymbolValue oldSymbolValue = context.GetSymbol(Symbol);
 
                 if (oldSymbolValue is Value oldValue)
                 {
@@ -183,7 +196,7 @@ namespace UglyLang.Source.AST
                         }
                         else
                         {
-                            container.SetSymbol(Symbol, newValue);
+                            context.SetSymbol(Symbol, newValue);
                             return true;
                         }
                     }
@@ -206,11 +219,11 @@ namespace UglyLang.Source.AST
             }
         }
 
-        public override bool CastValue(Context context, ISymbolContainer container, Types.Type type)
+        public override bool CastValue(Context context, Types.Type type)
         {
-            if (container.HasSymbol(Symbol))
+            if (context.HasSymbol(Symbol))
             {
-                ISymbolValue sValue = container.GetSymbol(Symbol);
+                ISymbolValue sValue = context.GetSymbol(Symbol);
                 if (sValue is Value value)
                 {
                     Value? newValue = value.To(type);
@@ -221,7 +234,7 @@ namespace UglyLang.Source.AST
                     }
                     else
                     {
-                        container.SetSymbol(Symbol, newValue);
+                        context.SetSymbol(Symbol, newValue);
                         return true;
                     }
                 }

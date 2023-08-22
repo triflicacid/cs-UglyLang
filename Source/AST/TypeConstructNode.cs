@@ -14,14 +14,14 @@ namespace UglyLang.Source.AST
             Arguments = new();
         }
 
-        public override Value? Evaluate(Context context, ISymbolContainer container)
+        public override Value? Evaluate(Context context)
         {
             // Evaluate each argument
             List<Value> evaldArguments = new();
             Value? value;
             foreach (ExprNode node in Arguments)
             {
-                value = node.Evaluate(context, container);
+                value = node.Evaluate(context);
                 if (value == null)
                     return null; // Propagate error
                 evaldArguments.Add(value);
@@ -46,11 +46,11 @@ namespace UglyLang.Source.AST
             }
             else
             {
-                rawType = Construct.Resolve(container);
+                rawType = Construct.Resolve(context);
 
                 if (rawType == null)
                 {
-                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", Construct.Value));
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", Construct.Value.GetSymbolString()));
                     return null;
                 }
             }

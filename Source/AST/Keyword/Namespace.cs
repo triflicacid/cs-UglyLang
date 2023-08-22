@@ -13,21 +13,24 @@ namespace UglyLang.Source.AST.Keyword
             Body = null;
         }
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
             if (Body == null)
                 throw new NullReferenceException();
 
-            if (container.HasSymbol(Name))
+            if (!context.CanCreateSymbol(Name))
             {
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("{0} is already defined", Name));
                 return Signal.ERROR;
             }
 
-            // Create and execute the body of the namespace. Passing the namespace as the 2nd argument means that any symbol created on evaluation will be created in the namespace.
+            // Execute in a new scope, then export to a namespace
             NamespaceValue ns = new();
-            Body.Evaluate(context, ns);
-            container.CreateSymbol(Name, ns);
+            context.PushStack(ns);
+            Signal s = Body.Evaluate(context);
+            if (s == Signal.ERROR) return s;
+            context.PopStack();
+            context.CreateSymbol(Name, ns);
 
             return Signal.NONE;
         }

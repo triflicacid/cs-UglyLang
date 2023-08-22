@@ -35,6 +35,7 @@ if (File.Exists(fullFilePath))
     else
     {
         watch.Reset();
+        watch.Start();
 
         Context ctx = new(options, filepath);
         ctx.InitialiseGlobals();

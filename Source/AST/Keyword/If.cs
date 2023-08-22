@@ -11,7 +11,7 @@ namespace UglyLang.Source.AST.Keyword
         public ASTStructure? Otherwise = null;
         public bool MetElseKeyword = false;
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
             if (Conditions.Count == 0)
                 throw new NullReferenceException(); // Body should have been set
@@ -22,14 +22,14 @@ namespace UglyLang.Source.AST.Keyword
                 if (item.Body == null)
                     throw new NullReferenceException();
 
-                Value? value = item.Condition.Evaluate(context, container);
+                Value? value = item.Condition.Evaluate(context);
                 if (value == null)
                     return Signal.ERROR; // Propagate error
                 if (value.IsTruthy())
-                    return item.Body.Evaluate(context, container);
+                    return item.Body.Evaluate(context);
             }
 
-            return Otherwise == null ? Signal.NONE : Otherwise.Evaluate(context, container);
+            return Otherwise == null ? Signal.NONE : Otherwise.Evaluate(context);
         }
     }
 

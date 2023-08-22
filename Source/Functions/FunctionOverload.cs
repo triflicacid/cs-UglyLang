@@ -1,5 +1,4 @@
 ﻿using UglyLang.Source.AST;
-using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types

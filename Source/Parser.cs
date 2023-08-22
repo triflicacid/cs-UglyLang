@@ -193,20 +193,31 @@ namespace UglyLang.Source
                     break;
                 }
 
+                // Fetch keyword information - this will tell us what to parse.
+                var keywordInfo = KeywordInfo.Lookup[keyword];
+
                 // Check if the keyword is allowed here
                 if (infoStack.Count > 0)
                 {
                     (KeywordNode _, KeywordInfo kwInfo) = infoStack.Peek();
 
-                    if (kwInfo.Allow != null && !kwInfo.Allow.Contains(keyword))
+                    if (kwInfo.AllowUnder != null && !kwInfo.AllowUnder.Contains(keyword))
+                    {
+                        AddError(new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("keyword {0} is not permitted in a {1} context", keyword, kwInfo.Keyword)));
+                        break;
+                    }
+
+                    else if (keywordInfo.AllowAbove != null && !keywordInfo.AllowAbove.Contains(kwInfo.Keyword))
                     {
                         AddError(new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("keyword {0} is not permitted in a {1} context", keyword, kwInfo.Keyword)));
                         break;
                     }
                 }
-
-                // Fetch keyword information - this will tell us what to parse.
-                var keywordInfo = KeywordInfo.Lookup[keyword];
+                else if (keywordInfo.AllowAbove != null)
+                {
+                    AddError(new(lineNumber, colNumber - keyword.Length, Error.Types.Syntax, string.Format("keyword {0} is not permitted outside of a context", keyword)));
+                    break;
+                }
 
                 // Is define keyword? This one needs special parsing.
                 if (keyword == "DEF")
@@ -629,6 +640,10 @@ namespace UglyLang.Source
                                 {
                                     dbKeyword.Body = previousTree;
                                 }
+                                else if (latest is TypeKeywordNode tKeyword)
+                                {
+                                    tKeyword.Body = previousTree;
+                                }
                                 else
                                 {
                                     // Should never be the case
@@ -653,6 +668,11 @@ namespace UglyLang.Source
                             {
                                 keywordNode = new ExitKeywordNode();
                             }
+                            break;
+                        }
+                    case "FIELD":
+                        {
+                            keywordNode = new FieldKeywordNode(((SymbolNode)before).Symbol, new UnresolvedType(((SymbolNode)after).Symbol));
                             break;
                         }
                     case "FINISH":
@@ -750,6 +770,12 @@ namespace UglyLang.Source
                     case "STOP":
                         {
                             keywordNode = new StopKeywordNode();
+                            break;
+                        }
+                    case "TYPE":
+                        {
+                            keywordNode = new TypeKeywordNode(((SymbolNode)before).Symbol);
+                            createNewNest = true;
                             break;
                         }
                     default:
@@ -1270,12 +1296,15 @@ namespace UglyLang.Source
                 // Extract the next word and proceed from there
                 else
                 {
-                    // Extract symbol, then extract all until whitespace
-                    startPos = col;
-                    while (col < expr.Length && ParseNameChar.IsMatch(expr[col].ToString()))
-                        col++;
-                    string str = expr[startPos..col];
-                    bool isTypeless = str.Length == 0; // If typeless, assume list
+                    AbstractSymbolNode? symbol = null;
+
+                    if (col < expr.Length && expr[col] != '{')
+                    {
+                        // Parse symbol. If null, typeless.
+                        (symbol, int endCol) = ParseSymbol(expr[col..], lineNumber, col + colNumber);
+                        col += endCol;
+                        if (IsError()) return (null, col);
+                    }
 
                     // Eat whitespace
                     while (col < expr.Length && char.IsWhiteSpace(expr[col]))
@@ -1284,8 +1313,10 @@ namespace UglyLang.Source
                     // If there is a brace, it is a type constructor, else it is a symbol
                     if (col < expr.Length && expr[col] == '{')
                     {
-                        TypeConstructNode typeNode = new(isTypeless ? null : new(str));
-                        typeNode.ColumnNumber = colNumber + startPos;
+                        TypeConstructNode typeNode = new(symbol == null ? null : new(symbol))
+                        {
+                            ColumnNumber = colNumber + startPos
+                        };
 
                         col++;
                         startPos = col;
@@ -1297,7 +1328,7 @@ namespace UglyLang.Source
                         // End?
                         if (col < expr.Length && expr[col] == '}')
                         {
-                            if (isTypeless) // We cannot determine the type as no arguments where provided
+                            if (symbol == null) // We cannot determine the type as no arguments where provided
                             {
                                 AddError(new(lineNumber, colNumber + startPos, Error.Types.Syntax, "expected type name, got '{'"));
                                 return (null, col);

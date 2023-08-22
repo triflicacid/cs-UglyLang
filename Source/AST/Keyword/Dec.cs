@@ -14,9 +14,9 @@ namespace UglyLang.Source.AST.Keyword
             Symbol = symbol;
         }
 
-        public override Signal Action(Context context, ISymbolContainer container)
+        public override Signal Action(Context context)
         {
-            return Symbol.UpdateValue(context, container, Increment, true) ? Signal.NONE : Signal.ERROR;
+            return Symbol.UpdateValue(context, Increment, true) ? Signal.NONE : Signal.ERROR;
         }
 
         private Value? Increment(Context context, Value value)

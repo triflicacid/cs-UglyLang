@@ -37,9 +37,14 @@ namespace UglyLang.Source.Types
             return this;
         }
 
-        public override string ToString()
+        public static string AsString()
         {
             return "TYPE";
+        }
+
+        public override string ToString()
+        {
+            return AsString();
         }
 
         public override bool IsTypeOf(Value v)

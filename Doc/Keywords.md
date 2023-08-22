@@ -55,3 +55,9 @@ The following document will describe each keyword, split up into appropriate sec
 | `FINISH` | none | none | Exits the current function, yielding the return value of `EMPTY`. |
 | `FINISH` | none | `expr` | Exits the current function, yielding the return value of the result of `expr`. |
 
+## Types
+
+| Keyword | Before | After | Description |
+| - | - | - | - |
+| `FIELD` | `symbol` | `type` | Creates a new property (only valid inside a `TYPE` definition). |
+| `TYPE` | `symbol` | none | Initialises a new custom type definition. |

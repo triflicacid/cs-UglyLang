@@ -13,11 +13,6 @@ namespace UglyLang.Source.Types
 
         public abstract bool DoesMatch(Type other, TypeParameterCollection coll);
 
-        public override string ToString()
-        {
-            throw new InvalidOperationException();
-        }
-
         /// <summary>
         /// Return whether or not this type is parameterised
         /// </summary>
