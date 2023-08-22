@@ -9,14 +9,13 @@ namespace UglyLang.Source.Types
 
         public readonly int Id;
         public readonly string Name;
-        private readonly Dictionary<string, Type> Fields; // Contains the fields of an instance
-        private readonly Dictionary<string, Function> Methods; // Contains methods
+        private readonly Dictionary<string, Type> Fields = new(); // Contains the fields of an instance
+        private readonly Dictionary<string, Function> Methods = new(); // Contains methods
+        public NamespaceValue Statics = new(); // Store static members
 
         public UserType(string name)
         {
             Name = name;
-            Fields = new();
-            Methods = new();
             Id = GlobalId++;
         }
 
@@ -193,6 +192,16 @@ namespace UglyLang.Source.Types
             }
 
             return value;
+        }
+
+        public override bool HasStaticProperty(string name)
+        {
+            return Statics.HasSymbol(name);
+        }
+
+        public override Property? GetStaticProperty(string name)
+        {
+            return new(name, Statics.GetSymbol(name), true);
         }
 
         public override bool IsTypeOf(Value v)

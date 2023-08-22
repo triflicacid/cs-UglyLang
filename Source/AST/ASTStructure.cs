@@ -26,5 +26,10 @@
             }
             return Signal.NONE;
         }
+
+        public IEnumerator<ASTNode> GetEnumerator()
+        {
+            return roots.GetEnumerator();
+        }
     }
 }

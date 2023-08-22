@@ -59,12 +59,25 @@ namespace UglyLang.Source.Types
             return null;
         }
 
-        /// <summary>
-        /// Return properties attached to this type. By default, this is empty.
-        /// </summary>
         public virtual Dictionary<string, Property> GetProperties()
         {
             return new();
+        }
+
+        /// <summary>
+        /// Determine whether this type has a static property.
+        /// </summary>
+        public virtual bool HasStaticProperty(string name)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Get a static property, or null if it cannot be retrieved.
+        /// </summary>
+        public virtual Property? GetStaticProperty(string name)
+        {
+            return null;
         }
 
         /// <summary>

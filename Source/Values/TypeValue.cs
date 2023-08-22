@@ -37,5 +37,15 @@ namespace UglyLang.Source.Values
         {
             return value is TypeValue t && Value.Equals(t.Value);
         }
+
+        protected override bool HasPropertyExtra(string name)
+        {
+            return Value.HasStaticProperty(name);
+        }
+
+        protected override Property? GetPropertyExtra(string name)
+        {
+            return Value.GetStaticProperty(name);
+        }
     }
 }

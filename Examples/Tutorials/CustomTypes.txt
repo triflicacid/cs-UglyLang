@@ -9,6 +9,8 @@ TYPE Vec
 	DEF Length: FLOAT <>
 		FINISH: SQRT<ADD<MUL<x,x>, MUL<y,y>>>
 	END
+
+	LET Unit: Vec { 1, 0 }
 END
 
 DEF Fn: <v: Vec>
@@ -19,4 +21,5 @@ SET v: Vec { 3, 4 }
 DO: Fn<v>
 SET v.x: 4.3
 DO: Fn<v>
+PRINTLN: Vec.Unit.Repr
 

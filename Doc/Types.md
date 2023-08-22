@@ -40,6 +40,9 @@ TYPE Vec
 	DEF Repr: STRING <>
 		FINISH: "<" x "," y ">"
 	END
+
+	LET i: Vec { 1, 0 }
+	LET j: Vec { 0, 1 }
 END
 ```
 
@@ -49,6 +52,8 @@ This defines a new type, `Vec`, which contains two fields and one method. Custom
 - `Vec { 1, 2 }` -> `<1,2>`
 
 When methods are called, the containing type instance resides in the stack. As such, all fields are accessible seemingly as normal variables and may be updated as such.
+
+`LET` statements are used to create static properties. Such properties exist on the type itself, so `Vec.i`, not one any one instance.
 
 # Constructing Types
 

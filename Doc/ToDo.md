@@ -9,7 +9,6 @@ The following section contains ideas for the language. The bullets are not liste
 - Record a symbol's definition location
 
 - ~~Add user-defined types.~~
-	- Static properties on types using the `LET` keyword
 	- Add inheritance
 
 - Type constraints: add option to allow an instance of a type. Either make this the behaviour by default (equl to or instance of), or add a new symbol such as `'`.
@@ -19,5 +18,7 @@ The following section contains ideas for the language. The bullets are not liste
 	- Namespaces and Types: read-only modifier.
 
 - Make errors an internal type. Create synonyms to the `try .. catch` blocks.
+
+- Expressions: add parenthesis `[ ... ]` for precedence.
 
 - Create a basic text editor for this language with syntax highlighting. Either in a new repository or in this repository. If it is the latter, propose placing them in `Language` and `Editor` directories.

@@ -242,8 +242,17 @@ namespace UglyLang.Source
                     while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
                         colNumber++;
 
-                    // Should be a colon
-                    if (colNumber == line.Length || line[colNumber] != ':')
+                    // Should be a colon or end of line
+                    if (colNumber == line.Length)
+                    {
+                        // Create keyword node and add to tree structure
+                        DefKeywordNode defNode = new(functionName, new(), ResolvedType.Empty);
+                        trees.Peek().AddNode(defNode);
+                        trees.Push(new());
+                        infoStack.Push((defNode, keywordInfo));
+                        continue;
+                    }
+                    else if (line[colNumber] != ':')
                     {
                         string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
                         AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected ':', got {0}", got)));
@@ -261,7 +270,7 @@ namespace UglyLang.Source
                     UnresolvedType returnType;
                     if (colNumber < line.Length && line[colNumber] == '<')
                     {
-                        returnType = new ResolvedType(new EmptyType()); // No return type
+                        returnType = ResolvedType.Empty; // No return type
                     }
                     else
                     {
@@ -276,60 +285,69 @@ namespace UglyLang.Source
                     while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
                         colNumber++;
 
+                    // Variables to store function arguments and type constraints
+                    List<(string, UnresolvedType)> argumentPairs;
+                    Dictionary<string, List<UnresolvedType>>? constraints = null;
+
                     // Expect angled bracket
                     beforeColNumber = colNumber;
-                    if (colNumber == line.Length || line[colNumber] != '<')
+                    if (colNumber == line.Length)
+                    {
+                        // No arguments
+                        argumentPairs = new();
+                    }
+                    else if (line[colNumber] != '<')
                     {
                         string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
                         AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected '<', got {0}", got)));
                         break;
                     }
-                    colNumber++;
-
-                    // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
-                        colNumber++;
-
-                    if (colNumber == line.Length)
-                    {
-                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, "expected '>' or symbol, got end of line"));
-                        break;
-                    }
-
-
-                    List<(string, UnresolvedType)> argumentPairs;
-                    if (line[colNumber] == '>')
-                    {
-                        colNumber++;
-                        argumentPairs = new();
-                    }
                     else
                     {
-                        (argumentPairs, int endCol) = ParseArgumentDeclaration(line[beforeColNumber..], beforeColNumber, lineNumber);
-
-                        colNumber = beforeColNumber + endCol;
-
-                        if (IsError())
-                            break;
-                    }
-
-                    // Eat whitespace
-                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
                         colNumber++;
 
-                    // "WHERE" contraint clause?
-                    Dictionary<string, List<UnresolvedType>>? constraints = null;
-                    if (line[colNumber..].StartsWith("WHERE"))
-                    {
-                        // Eat non-whitespace to skip keyword
-                        while (colNumber < line.Length && !char.IsWhiteSpace(line[colNumber]))
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
                             colNumber++;
 
-                        (constraints, int endCol) = ParseTypeConstraint(line[colNumber..], colNumber, lineNumber);
-                        colNumber += endCol;
-
-                        if (IsError())
+                        if (colNumber == line.Length)
+                        {
+                            AddError(new(lineNumber, colNumber, Error.Types.Syntax, "expected '>' or symbol, got end of line"));
                             break;
+                        }
+
+                        if (line[colNumber] == '>')
+                        {
+                            colNumber++;
+                            argumentPairs = new();
+                        }
+                        else
+                        {
+                            (argumentPairs, int endCol) = ParseArgumentDeclaration(line[beforeColNumber..], beforeColNumber, lineNumber);
+
+                            colNumber = beforeColNumber + endCol;
+
+                            if (IsError())
+                                break;
+                        }
+
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                            colNumber++;
+
+                        // "WHERE" contraint clause?
+                        if (line[colNumber..].StartsWith("WHERE"))
+                        {
+                            // Eat non-whitespace to skip keyword
+                            while (colNumber < line.Length && !char.IsWhiteSpace(line[colNumber]))
+                                colNumber++;
+
+                            (constraints, int endCol) = ParseTypeConstraint(line[colNumber..], colNumber, lineNumber);
+                            colNumber += endCol;
+
+                            if (IsError())
+                                break;
+                        }
                     }
 
                     // Create keyword node and add to tree structure

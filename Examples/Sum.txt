@@ -1,0 +1,8 @@
+LET S: 0
+LET iters: 10000
+
+LOOP n: LT<n, iters>
+	SET S: ADD<S,n>
+END
+
+PRINTLN: "Sum of the first " iters " integers is " S

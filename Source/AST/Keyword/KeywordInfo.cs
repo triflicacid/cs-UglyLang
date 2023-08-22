@@ -53,7 +53,7 @@
             new("PRINTLN", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("SET", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.YES, ParseOptions.After.EXPR),
             new("STOP", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),
-            new("TYPE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "DEF", "FIELD", "END" }),
+            new("TYPE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "DEF", "LET", "FIELD", "END" }),
         };
 
         public static readonly Dictionary<string, KeywordInfo> Lookup = new();

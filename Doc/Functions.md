@@ -5,8 +5,9 @@ Functions may be defined with the following syntax:
 ```DEF <symbol>: [<type>] <<arg1: type1>, <arg2: type2>, ...>```
 
 This will create a symbol `symbol` in the topmost scope and bind it to the defined function.
-
-If the return type is present, the function **must** return an instance of said type using the `FINISH` keyword. The type may be omitted, in which case the function returns an instance of `EMPTY`.
+- If a return type is given, the function must return an instance of this type (using the `FINISH` keyword). If there is no return type, the function returns `EMPTY`.
+- If the function takes no arguments, `< ... >` may be omitted.
+- If the function takes no arguments and returns no value, the colon and everything after it may be omitted.
 
 Functions are called by referencing their name. If the function accepts arguments they must be present in the defined order inside angular brackets, otherwise they are called with no arguments.
 
