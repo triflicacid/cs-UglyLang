@@ -12,6 +12,25 @@ Functions are called by referencing their name. If the function accepts argument
 
 # Built-In Functions
 
+## Bitwise Functions
+
+- `BITAND<a: INT, b: INT> -> INT`
+Calculate the bitwise and of a and b.
+- `BITNOT<a: INT> -> INT`
+Calculate the bitwise inverse of a.
+- `BITOR<a: INT, b: INT> -> INT`
+Calculate the bitwise or of a and b.
+- `SHL<a: INT> -> INT`
+Shift a left by one places.
+- `SHL<a: INT, b: INT> -> INT`
+Shift a left by b places.
+- `SHR<a: INT> -> INT`
+Shift a right by one places.
+- `SHR<a: INT, b: INT> -> INT`
+Shift a right by b places.
+- `BITXOR<a: INT, b: INT> -> INT`
+Calculate the bitwise exclusive-or of a and b.
+
 ## Comparative Functions
 
 - `EQ<a: ANY, b: ANY> -> INT`
@@ -33,6 +52,8 @@ Convert a and b to strings and concatenate them.
 Creates a virtual file at runtime. Say that one creates a virtual file `eg.txt`. Then `IMPORT: "eg.txt"` will still fail as the keyword operated at compile-time, but `LET x: IMPORT<"eg.txt">` will work as the function operates at runtime.
 - `ID<x: a> -> a`
 Returns the provided argument.
+- `IF<p: ANY, t: a, f: a> -> a`
+Returns t of f depending on whether p is tru of false, respectively.
 - `IMPORT<path: STRING> -> NAMESPACE`
 Imports the given file and returns the bundled namespace. Behaviour of `LET name: IMPORT<path>` is similar to `IMPORT name: path`.
 - `IMPORT<path: STRING, reEval: INT> -> NAMESPACE`

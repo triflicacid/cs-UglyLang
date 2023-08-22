@@ -1,0 +1,21 @@
+LET BOARD_CAP: 100
+LET board: LIST<INT, BOARD_CAP>
+DO: board.Set<SUB<BOARD_CAP, 2>, 1>
+
+LET bcm1: PRED<BOARD_CAP>
+LET bcm2: PRED<bcm1>
+LET str: ""
+LET pattern: 0
+
+LOOP i: LT<i, bcm2>
+    SET str: ""
+    LOOP j: LT<j, BOARD_CAP>
+        SET str: str IF<board.Get<j>, "*", " ">
+    END
+    PRINTLN: str
+    SET pattern: BITOR<SHL<board.0>, board.1>
+    LOOP j: LT<j, bcm2>
+        SET pattern: BITOR<BITAND<SHL<pattern>, 7>, board.Get<ADD<j, 2>>>
+        DO: board.Set<SUCC<j>, BITAND<SHR<110, pattern>, 1>>
+    END
+END
