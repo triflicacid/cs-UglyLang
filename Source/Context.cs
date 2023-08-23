@@ -134,9 +134,17 @@ namespace UglyLang.Source
 
             string str = Environment.NewLine + (lineNumber + 1) + " | " + line;
             string pre = new(' ', lineNumberS.Length);
-            string before = Parser.NonWhitespaceRegex.Replace(line[..colIdx], " ");
-            string after = Parser.NonWhitespaceRegex.Replace(line[colIdx..], " ");
-            str += Environment.NewLine + pre + "   " + before + "^" + after + Environment.NewLine;
+            if (colIdx >= line.Length)
+            {
+                //Console.WriteLine($"BEFORE: #{lineNumber} '{line}' ({line.Length}) {colNumber} {origLength} {colIdx}'");
+                throw new ArgumentOutOfRangeException("colIdx=" + colIdx);
+            }
+            else
+            {
+                string before = Parser.NonWhitespaceRegex.Replace(line[..colIdx], " ");
+                string after = Parser.NonWhitespaceRegex.Replace(line[colIdx..], " ");
+                str += Environment.NewLine + pre + "   " + before + "^" + after + Environment.NewLine;
+            }
 
             return str;
         }

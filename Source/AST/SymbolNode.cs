@@ -1,5 +1,4 @@
 ﻿using UglyLang.Source.Functions;
-using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 using static UglyLang.Source.Functions.Function;
 
@@ -57,6 +56,7 @@ namespace UglyLang.Source.AST
             if (context.HasSymbol(Symbol))
             {
                 ISymbolValue variable = context.GetSymbol(Symbol);
+                if (variable is Types.Type t) variable = new TypeValue(t);
                 Value value;
 
                 if (variable is ICallable func)
@@ -112,13 +112,9 @@ namespace UglyLang.Source.AST
 
                     value = val;
                 }
-                else if (variable is UserType userType)
-                {
-                    value = new TypeValue(userType);
-                }
                 else
                 {
-                    throw new InvalidOperationException();
+                    throw new InvalidOperationException(variable.GetType().Name);
                 }
 
                 return value;
@@ -144,7 +140,7 @@ namespace UglyLang.Source.AST
                         Value? newValue = value.To(oldValue.Type);
                         if (newValue == null)
                         {
-                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} to type {1}", Symbol, oldValue.Type));
+                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} of type {1} to type {2}", Symbol, value.Type, oldValue.Type));
                             return false;
                         }
                         else

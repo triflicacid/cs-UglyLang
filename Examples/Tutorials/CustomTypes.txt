@@ -10,16 +10,25 @@ TYPE Vec
 		FINISH: SQRT<ADD<MUL<x,x>, MUL<y,y>>>
 	END
 
-	LET Unit: Vec { 1, 0 }
+	LET i: Vec { 1, 0 }
+	LET j: Vec { 0, 1 }
 END
 
 DEF Fn: <v: Vec>
 	PRINTLN: "Vector " v.Repr " has length " v.Length
 END
 
+DEF ADD: Vec <a: Vec, b: Vec>
+	FINISH: Vec { ADD<a.x, b.x>, ADD<a.y, b.y> }
+END
+
 SET v: Vec { 3, 4 }
 DO: Fn<v>
 SET v.x: 4.3
 DO: Fn<v>
-PRINTLN: Vec.Unit.Repr
+
+PRINTLN: Vec.i.Repr
+PRINTLN: Vec.j.Repr
+SET v: ADD<Vec.i, Vec.j>
+PRINTLN: v.Repr
 

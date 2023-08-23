@@ -10,46 +10,72 @@ namespace UglyLang.Source.AST
     /// </summary>
     public class ChainedSymbolNode : AbstractSymbolNode
     {
-        public readonly List<SymbolNode> Symbols = new();
+        public readonly List<ASTNode> Components = new();
 
         public override string GetSymbolString()
         {
-            return string.Join('.', Symbols.Select(s => s.GetSymbolString()));
+            return string.Join('.', Components.Select(s => s is AbstractSymbolNode asn ? asn.GetSymbolString() : "[..]"));
         }
 
         // Override position properties
-        public new int LineNumber => Symbols[0].LineNumber;
-        public new int ColumnNumber => Symbols[0].ColumnNumber;
+        public new int LineNumber => Components[0].LineNumber;
+        public new int ColumnNumber => Components[0].ColumnNumber;
 
         /// <summary>
         /// Get the values of this symbol chain. Return (value, valueProperty, valuesParent), or null if error (see context.Error).
         /// </summary>
         private (ISymbolValue, Property?, Value?)? RetrieveValues(Context context)
         {
-            if (Symbols.Count == 0)
+            if (Components.Count == 0)
                 throw new InvalidOperationException();
 
             ISymbolValue? parent = null;
             Property? parentProperty = null;
             Value? grandparent = null;
 
-            foreach (SymbolNode symbol in Symbols)
+            foreach (ASTNode component in Components)
             {
                 if (parent == null)
                 {
-                    parent = symbol.Evaluate(context);
+                    parent = component.Evaluate(context);
                     if (parent == null)
                         return null;
                 }
                 else
                 {
+                    string propertyName;
+                    if (component is SymbolNode symbolNode)
+                    {
+                        propertyName = symbolNode.Symbol;
+                    }
+                    else
+                    {
+                        Value? rawValue = component.Evaluate(context);
+                        if (rawValue == null)
+                            return null;
+                        if (rawValue.Type is not PrimitiveType)
+                        {
+                            context.Error = new(component.LineNumber, component.ColumnNumber, Error.Types.Type, string.Format("invalid propery type {0}", rawValue.Type));
+                            return null;
+                        }
+
+                        Value? strValue = rawValue.To(Types.Type.StringT);
+                        if (strValue == null)
+                        {
+                            context.Error = new(component.LineNumber, component.ColumnNumber, Error.Types.Cast, string.Format("casting {0} to {1}", rawValue.Type, "STRING"));
+                            return null;
+                        }
+
+                        propertyName = ((StringValue)strValue).Value;
+                    }
+
                     if (parent is Value parentValue)
                     {
                         grandparent = parentValue;
-                        if (parentValue.HasProperty(symbol.Symbol))
+                        if (parentValue.HasProperty(propertyName))
                         {
                             // Get the property
-                            parentProperty = parentValue.GetProperty(symbol.Symbol);
+                            parentProperty = parentValue.GetProperty(propertyName);
                             parent = parentProperty.GetValue();
 
                             // if it is a function, call it
@@ -58,16 +84,16 @@ namespace UglyLang.Source.AST
                                 // Push new stack context
                                 if (func is Method method)
                                 {
-                                    context.PushMethodStackContext(symbol.LineNumber, symbol.ColumnNumber, symbol.Symbol, method.Owner);
+                                    context.PushMethodStackContext(component.LineNumber, component.ColumnNumber, propertyName, method.Owner);
                                 }
                                 else
                                 {
-                                    context.PushStackContext(symbol.LineNumber, symbol.ColumnNumber, StackContextType.Function, symbol.Symbol);
+                                    context.PushStackContext(component.LineNumber, component.ColumnNumber, StackContextType.Function, propertyName);
                                 }
 
                                 // Evaluate arguments
                                 List<Value> arguments = new();
-                                if (symbol.CallArguments != null)
+                                if (component is SymbolNode symbol && symbol.CallArguments != null)
                                 {
                                     foreach (ExprNode expr in symbol.CallArguments)
                                     {
@@ -80,11 +106,9 @@ namespace UglyLang.Source.AST
                                 }
 
                                 // Call function with given arguments
-                                Signal signal = func.Call(context, arguments, symbol.LineNumber, symbol.ColumnNumber);
+                                Signal signal = func.Call(context, arguments, component.LineNumber, component.ColumnNumber);
                                 if (signal == Signal.ERROR)
-                                {
                                     return null;
-                                }
 
                                 // Fetch return value
                                 parent = context.GetFunctionReturnValue() ?? new EmptyValue();
@@ -94,9 +118,9 @@ namespace UglyLang.Source.AST
                             }
                             else if (parent is Value pValue)
                             {
-                                if (symbol.CallArguments != null && symbol.CallArguments.Count != 0)
+                                if (component is SymbolNode symbol && symbol.CallArguments != null && symbol.CallArguments.Count != 0)
                                 {
-                                    context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Syntax, string.Format("value of type {0} is not callable", pValue.Type));
+                                    context.Error = new(component.LineNumber, component.ColumnNumber, Error.Types.Syntax, string.Format("value of type {0} is not callable", pValue.Type));
                                     return null;
                                 }
                             }
@@ -111,13 +135,13 @@ namespace UglyLang.Source.AST
                         }
                         else
                         {
-                            context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Type, string.Format("cannot get property {0} of type {1}", symbol.Symbol, parentValue.Type));
+                            context.Error = new(component.LineNumber, component.ColumnNumber, Error.Types.Type, string.Format("cannot get property {0} of type {1}", propertyName, parentValue.Type));
                             return null;
                         }
                     }
                     else
                     {
-                        context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Type, "cannot get property of non-value");
+                        context.Error = new(component.LineNumber, component.ColumnNumber, Error.Types.Type, "cannot get property of non-value");
                         return null;
                     }
                 }
@@ -161,8 +185,8 @@ namespace UglyLang.Source.AST
             // Is readonly?
             if (property.IsReadonly)
             {
-                SymbolNode symbol = Symbols[^1];
-                context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), symbol.Symbol));
+                ASTNode latest = Components[^1];
+                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), property.GetName()));
                 return false;
             }
 
@@ -183,8 +207,8 @@ namespace UglyLang.Source.AST
                         bool isOk = parent.SetProperty(property.GetName(), newValue);
                         if (!isOk)
                         {
-                            SymbolNode symbol = Symbols[^1];
-                            context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", symbol.Symbol));
+                            ASTNode latest = Components[^1];
+                            context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", property.GetName()));
                         }
 
                         return isOk;
@@ -217,15 +241,15 @@ namespace UglyLang.Source.AST
             // Is readonly?
             if (property.IsReadonly)
             {
-                SymbolNode symbol = Symbols[^1];
-                context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("cannot cast {0} to {1} as property {2} is read-only", GetSymbolString(), type, symbol.Symbol));
+                ASTNode latest = Components[^1];
+                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot cast {0} to {1} as property {2} is read-only", GetSymbolString(), type, property.GetName()));
                 return false;
             }
 
             // If the parent has rigid property types, DO NOT allow casting, even if the types are equal
             if (parent.Type.HasRigidPropertyTypes())
             {
-                SymbolNode symbol = Symbols[^1];
+                ASTNode symbol = Components[^1];
                 context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Type, string.Format("cannot cast {0} to {1} as properties of type {2} are rigid, so their types cannot change", GetSymbolString(), type, parent.Type));
                 return false;
             }
@@ -244,8 +268,8 @@ namespace UglyLang.Source.AST
                     bool isOk = parent.SetProperty(property.GetName(), newValue);
                     if (!isOk)
                     {
-                        SymbolNode symbol = Symbols[^1];
-                        context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be cast", symbol.Symbol));
+                        ASTNode latest = Components[^1];
+                        context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be cast", property.GetName()));
                     }
 
                     return isOk;
@@ -274,8 +298,8 @@ namespace UglyLang.Source.AST
             // Is readonly?
             if (property.IsReadonly)
             {
-                SymbolNode symbol = Symbols[^1];
-                context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), symbol.Symbol));
+                ASTNode latest = Components[^1];
+                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), property.GetName()));
                 return false;
             }
 
@@ -300,8 +324,8 @@ namespace UglyLang.Source.AST
                         bool isOk = parent.SetProperty(property.GetName(), value);
                         if (!isOk)
                         {
-                            SymbolNode symbol = Symbols[^1];
-                            context.Error = new(symbol.LineNumber, symbol.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", symbol.Symbol));
+                            ASTNode latest = Components[^1];
+                            context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", property.GetName()));
                         }
 
                         return isOk;

@@ -23,7 +23,8 @@ Each unit is one of:
 - A type name followed by arguments in brace `{ ... }` will attempts to construct said type with the given arguments.
 - An at (`@`) symbol followed by a type name is called a type literal and may be used to represent that type.
 - A symbol name. The symbol may be followed by angled brackets `< ... >`. If present, these are passed to the symbol as arguments to a function. The arguments are seperated by commas. If the symbol is function, it is called with provided arguments, or called with none if no arguments are provided.
+- A square bracket, `[`, which creates a precedence group. Such as group is evaluated in its entirety, taking evaluation precedence. For example, `{ "A", "B" }.[IF<LT<RANDOM, 0.5>, 0, 1>]`.
 
-If a symbol name is followed by a `.`, a property name is expected. This may be a symbol or a numeric literal, and may be used as a function, in which case it will be called before the next property is accessed - e.g., `numbers.Reverse<>.Get<1>`. The topic of properties is covered in `Types.md`.
+If a symbol name is followed by a `.`, a property name is expected. This may be a symbol, numeric literal, or precedence group. Each property and may be used as a function, in which case it will be called before the next property is accessed - e.g., `numbers.Reverse<>.Get<1>`. The topic of properties is covered in `Types.md`.
 
 If there is a singular unit, this unit is evaluated and is the result of the expression. If there are multiple units, each unit will be evaluated, cast into a string, and concatenated together. Finally, if `type` is present, the entire result will be cast into the specified type.

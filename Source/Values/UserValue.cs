@@ -24,6 +24,7 @@ namespace UglyLang.Source.Values
         public override Value? To(Types.Type type)
         {
             if (type is Any) return this;
+            if (type is UserType ut && ((UserType)Type).Id == ut.Id) return this;
             if (type is StringType) return new StringValue("<TYPE " + ((UserType)Type).Name + ">");
             return null;
         }

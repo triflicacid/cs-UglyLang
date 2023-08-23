@@ -19,6 +19,4 @@ The following section contains ideas for the language. The bullets are not liste
 
 - Make errors an internal type. Create synonyms to the `try .. catch` blocks.
 
-- Expressions: add parenthesis `[ ... ]` for precedence.
-
 - Create a basic text editor for this language with syntax highlighting. Either in a new repository or in this repository. If it is the latter, propose placing them in `Language` and `Editor` directories.

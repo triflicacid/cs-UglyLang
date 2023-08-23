@@ -48,24 +48,25 @@ namespace UglyLang.Source.Types
                 if (value == "NAMESPACE")
                     return null;
 
-                // Map?
+                // Generis list and map types?
                 if (value == "MAP")
                     return new MapType(Type.AnyT);
 
-                if (value.StartsWith("MAP[") && value[^1] == ']')
-                {
-                    Type? member = Resolve(context, new SymbolNode(value[4..^1]));
-                    return member == null ? null : new MapType(member);
-                }
-
-                // List?
                 if (value == "LIST")
                     return new ListType(Type.AnyT);
 
+                // List of a type?
                 if (value.Length > 2 && value[^1] == ']' && value[^2] == '[')
                 {
                     Type? member = Resolve(context, new SymbolNode(value[..^2]));
                     return member == null ? null : new ListType(member);
+                }
+
+                // Map of a type
+                if (value.StartsWith("MAP[") && value[^1] == ']')
+                {
+                    Type? member = Resolve(context, new SymbolNode(value[4..^1]));
+                    return member == null ? null : new MapType(member);
                 }
 
                 // User type?

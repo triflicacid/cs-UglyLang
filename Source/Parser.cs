@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Data.Common;
+using System.Text.RegularExpressions;
+using System.Xml.Xsl;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
 using UglyLang.Source.Types;
@@ -1128,7 +1130,7 @@ namespace UglyLang.Source
         }
 
         /// <summary>
-        /// Parse a symbol. Could be either a single symbol (SymbolNode), or an access chain (ChainedSymbolNode).
+        /// Parse a symbol. Could be either a single symbol (SymbolNode), or an access chain (ChainedSymbolNode). Unlike in expressions, each property cannot be an expression itself.
         /// </summary>
         private (AbstractSymbolNode?, int) ParseSymbol(string expr, int lineNumber = 0, int colNumber = 0)
         {
@@ -1168,7 +1170,7 @@ namespace UglyLang.Source
             if (col < expr.Length && expr[col] == '.')
             {
                 ChainedSymbolNode chainNode = new();
-                chainNode.Symbols.Add(baseSymbolNode);
+                chainNode.Components.Add(baseSymbolNode);
 
                 while (col < expr.Length && expr[col] == '.')
                 {
@@ -1219,7 +1221,7 @@ namespace UglyLang.Source
                         childNode.CallArguments = arguments;
                     }
 
-                    chainNode.Symbols.Add(childNode);
+                    chainNode.Components.Add(childNode);
                 }
 
                 return (chainNode, col);
@@ -1230,13 +1232,26 @@ namespace UglyLang.Source
             }
         }
 
+        private class NestedExpr
+        {
+            public ExprNode Expr = new();
+            public bool UpdatedPropertyAccess = false; // Have we updated EncounteredPropertyAccess this iteration?
+            public bool EncounteredPropertyAccess; // Encountered a dot '.'?
+
+            public NestedExpr(bool encounteredPropertyAccess)
+            {
+                EncounteredPropertyAccess = encounteredPropertyAccess;
+            }
+        }
+
         /// <summary>
         /// Parse a string as an expresion. Return the expression node and the ending index. The expression must terminate with any character in endChar (NULL means that the line must end)
         /// </summary>
         private (ExprNode?, int) ParseExpression(string expr, int lineNumber = 0, int colNumber = 0, char?[]? endChar = null)
         {
             int col = 0;
-            ExprNode exprNode = new();
+            Stack<NestedExpr> exprStack = new();
+            exprStack.Push(new(false));
 
             // Eat whitespace
             while (col < expr.Length && char.IsWhiteSpace(expr[col]))
@@ -1244,6 +1259,9 @@ namespace UglyLang.Source
 
             while (true)
             {
+                exprStack.Peek().UpdatedPropertyAccess = false;
+                int startLoopPos = col;
+
                 // Is end of the line?
                 if (col == expr.Length)
                 {
@@ -1251,7 +1269,7 @@ namespace UglyLang.Source
                     return (null, col);
                 }
 
-                ASTNode? node;
+                ASTNode? node = null;
                 int startPos = col;
 
                 // Is a string literal?
@@ -1265,8 +1283,11 @@ namespace UglyLang.Source
                         return (null, col);
                     }
 
-                    node = new ValueNode(new StringValue(str));
-                    node.ColumnNumber = colNumber + col;
+                    node = new ValueNode(new StringValue(str))
+                    {
+                        LineNumber = lineNumber,
+                        ColumnNumber = colNumber + col
+                    };
                     col += end + 1;
                 }
 
@@ -1286,9 +1307,20 @@ namespace UglyLang.Source
                         value = new FloatValue(number);
                     }
 
-                    node = new ValueNode(value);
-                    node.ColumnNumber = colNumber + col;
+                    node = new ValueNode(value)
+                    {
+                        LineNumber = lineNumber,
+                        ColumnNumber = colNumber + col
+                    };
                     col += str.Length;
+
+                    NestedExpr latest = exprStack.Peek();
+                    if (latest.EncounteredPropertyAccess)
+                    {
+                        ((ChainedSymbolNode)latest.Expr.Children[^1]).Components.Add(node);
+                        node = null;
+                        latest.EncounteredPropertyAccess = false;
+                    }
                 }
 
                 // Is type literal
@@ -1307,99 +1339,309 @@ namespace UglyLang.Source
                         col++;
 
                     string s = expr[startPos..col];
-                    node = new TypeNode(new(s));
-                    node.ColumnNumber = colNumber + startPos;
+                    node = new TypeNode(new(s))
+                    {
+                        LineNumber = lineNumber,
+                        ColumnNumber = colNumber + startPos
+                    };
                 }
 
-                // Extract the next word and proceed from there
-                else
+                // Type casting?
+                else if (expr[col] == '(')
                 {
-                    AbstractSymbolNode? symbol = null;
+                    ExprNode exprNode = exprStack.Peek().Expr;
 
-                    if (col < expr.Length && expr[col] != '{')
+                    // Already a type casting?
+                    if (exprNode.CastType == null)
                     {
-                        // Parse symbol. If null, typeless.
-                        (symbol, int endCol) = ParseSymbol(expr[col..], lineNumber, col + colNumber);
-                        col += endCol;
-                        if (IsError()) return (null, col);
+                        int end = GetMatchingClosingItem(expr[col..], '(', ')');
+                        if (end == -1)
+                        {
+                            AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("unterminated bracket '{0}'", expr[col])));
+                            return (null, col);
+                        }
+
+                        string str = expr[(col + 1)..(col + end)];
+                        UnresolvedType type = new(str);
+                        exprNode.CastType = type;
+                        col += end + 1;
                     }
+                    else
+                    {
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '(': type cast already encountered for this expression (" + exprNode.CastType.Value.GetSymbolString() + ")"));
+                        return (null, col);
+                    }
+                }
+
+                // Precedence grouping?
+                else if (expr[col] == '[')
+                {
+                    exprStack.Push(new(false)
+                    {
+                        Expr = new()
+                        {
+                            LineNumber = lineNumber,
+                            ColumnNumber = colNumber + col
+                        }
+                    });
+
+                    col++;
+                }
+                else if (expr[col] == ']')
+                {
+                    if (exprStack.Count > 1)
+                    {
+                        col++;
+                        NestedExpr old = exprStack.Pop();
+                        if (old.EncounteredPropertyAccess)
+                        {
+                            AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected ']' after '.'"));
+                            return (null, col);
+                        }
+
+                        NestedExpr latest = exprStack.Peek();
+
+                        if (latest.EncounteredPropertyAccess)
+                        {
+                            ((ChainedSymbolNode)latest.Expr.Children[^1]).Components.Add(old.Expr);
+                            latest.EncounteredPropertyAccess = false;
+                        }
+                        else
+                        {
+                            latest.Expr.Children.Add(old.Expr);
+                        }
+                    }
+                    else
+                    {
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected ']', got '{0}'", expr[col])));
+                        return (null, col);
+                    }
+                }
+
+                // Property access?
+                else if (expr[col] == '.')
+                {
+                    NestedExpr state = exprStack.Peek();
+                    if (state.EncounteredPropertyAccess || state.Expr.Children.Count == 0)
+                    {
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '.'"));
+                        return (null, col);
+                    }
+
+                    ASTNode latest = state.Expr.Children[^1];
+                    if (latest is not ChainedSymbolNode)
+                    {
+                        ChainedSymbolNode chain = new();
+                        chain.Components.Add(latest);
+                        state.Expr.Children[^1] = chain;
+                    }
+
+                    col++;
+                    state.EncounteredPropertyAccess = true;
+                    state.UpdatedPropertyAccess = true;
+                }
+
+                // Type constructor?
+                else if (expr[col] == '{')
+                {
+                    NestedExpr state = exprStack.Peek();
+                    TypeConstructNode typeNode;
+
+                    if (state.Expr.Children.Count > 0 && state.Expr.Children[^1] is AbstractSymbolNode asn)
+                    {
+                        typeNode = new(new(asn))
+                        {
+                            ColumnNumber = asn.ColumnNumber,
+                            LineNumber = lineNumber
+                        };
+                        state.Expr.Children[^1] = typeNode;
+                    }
+                    else
+                    {
+                        typeNode = new()
+                        {
+                            ColumnNumber = colNumber + col,
+                            LineNumber = lineNumber
+                        };
+                        node = typeNode;
+                    }
+
+                    col++;
+                    startPos = col;
 
                     // Eat whitespace
                     while (col < expr.Length && char.IsWhiteSpace(expr[col]))
                         col++;
 
-                    // If there is a brace, it is a type constructor, else it is a symbol
-                    if (col < expr.Length && expr[col] == '{')
+                    // Ending brace? Or arguments?
+                    if (col < expr.Length && expr[col] == '}')
                     {
-                        TypeConstructNode typeNode = new(symbol == null ? null : new(symbol))
+                        if (typeNode.Construct == null) // We cannot determine the type as no arguments where provided
                         {
-                            ColumnNumber = colNumber + startPos
-                        };
+                            AddError(new(lineNumber, colNumber + startPos, Error.Types.Syntax, "expected type name, got '{'"));
+                            return (null, col);
+                        }
 
                         col++;
-                        startPos = col;
-
-                        // Eat whitespace
-                        while (col < expr.Length && char.IsWhiteSpace(expr[col]))
-                            col++;
-
-                        // End?
-                        if (col < expr.Length && expr[col] == '}')
+                    }
+                    else
+                    {
+                        // Extract each argument, seperated by ','
+                        while (col < expr.Length)
                         {
-                            if (symbol == null) // We cannot determine the type as no arguments where provided
+                            (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '}', null });
+
+                            if (argExpr == null)
                             {
-                                AddError(new(lineNumber, colNumber + startPos, Error.Types.Syntax, "expected type name, got '{'"));
                                 return (null, col);
                             }
+                            else
+                            {
+                                col += end;
+                                typeNode.Arguments.Add(argExpr);
+                                if (expr[col] == '}')
+                                    break;
+                                col++;
+                            }
+                        }
 
+                        if (col == expr.Length)
+                        {
+                            AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '}', got end of line"));
+                            return (null, col);
+                        }
+                        else if (expr[col] == '}')
+                        {
                             col++;
                         }
                         else
                         {
-                            // Extract each argument, seperated by ','
-                            while (col < expr.Length)
-                            {
-                                (ExprNode? argExpr, int end) = ParseExpression(expr[col..], lineNumber, colNumber + col, new char?[] { ',', '}', null });
-
-                                if (argExpr == null)
-                                {
-                                    return (null, col);
-                                }
-                                else
-                                {
-                                    col += end;
-                                    typeNode.Arguments.Add(argExpr);
-                                    if (expr[col] == '}')
-                                        break;
-                                    col++;
-                                }
-                            }
-
-                            if (col == expr.Length)
-                            {
-                                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "expected '}', got end of line"));
-                                return (null, col);
-                            }
-                            else if (expr[col] == '}')
-                            {
-                                col++;
-                            }
-                            else
-                            {
-                                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}}', got {0}", expr[col])));
-                                return (null, col);
-                            }
+                            AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected '}}', got {0}", expr[col])));
+                            return (null, col);
                         }
+                    }
+                }
 
-                        node = typeNode;
+                // Function arguments?
+                else if (expr[col] == '<')
+                {
+                    ExprNode exprNode = exprStack.Peek().Expr;
+                    if (exprNode.Children.Count == 0 || exprNode.Children[^1] is not AbstractSymbolNode)
+                    {
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '<' (must be preceeded by a symbol)"));
+                        return (null, col);
                     }
 
+                    // Retrieve the SymbolNode instance which the arguments which attach to
+                    AbstractSymbolNode aSymbolNode = (AbstractSymbolNode)exprNode.Children[^1];
+                    SymbolNode symbolNode;
+                    if (aSymbolNode is SymbolNode symbol)
+                        symbolNode = symbol;
+                    else if (aSymbolNode is ChainedSymbolNode chain)
+                    {
+                        if (chain.Components.Count == 0 || chain.Components[^1] is not SymbolNode)
+                        {
+                            AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '<' (must be preceeded by a symbol)"));
+                            return (null, col);
+                        }
+                        else
+                        {
+                            symbolNode = (SymbolNode)chain.Components[^1];
+                        }
+                    }
                     else
                     {
-                        (node, int endCol) = ParseSymbol(expr[startPos..], lineNumber, colNumber + startPos);
-                        if (node == null)
-                            return (null, endCol);
-                        col = startPos + endCol;
+                        throw new NotSupportedException();
+                    }
+
+                    if (symbolNode.CallArguments == null)
+                    {
+                        // Extract the arguments
+                        (List<ExprNode>? arguments, int endCol) = ParseSymbolArguments(expr[col..], lineNumber, colNumber + col);
+                        col += endCol;
+
+                        if (arguments == null)
+                            return (null, col);
+
+                        symbolNode.CallArguments = arguments;
+                    }
+                    else
+                    {
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '<' (must be preceeded by a symbol)"));
+                        return (null, col);
+                    }
+                }
+
+                // Parse as a symbol
+                else
+                {
+                    int startCol = col;
+                    string symbol = ExtractSymbolFromString(expr[startCol..]);
+                    if (symbol.Length == 0)
+                    {
+                        string got = startCol == expr.Length ? "end of line" : expr[col].ToString();
+                        AddError(new(lineNumber, colNumber + startCol, Error.Types.Syntax, string.Format("expected symbol, got {0}", got)));
+                        return (null, startCol);
+                    }
+                    col += symbol.Length;
+
+                    // Special list syntax: '[]' AND 'MAP[..]'
+                    while (true)
+                    {
+                        if (col + 1 < expr.Length && expr[col] == '[' && expr[col + 1] == ']')
+                        {
+                            symbol += "[]";
+                            col += 2;
+                        }
+                        else if (symbol.EndsWith("MAP") && expr[col] == '[')
+                        {
+                            int tmp = col;
+                            int end = GetMatchingClosingItem(expr[col..], '[', ']');
+                            col++;
+
+                            if (end == -1)
+                            {
+                                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unterminated '['"));
+                                return (null, startCol);
+                            }
+
+                            col += end;
+                            symbol += expr[tmp..col];
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    SymbolNode symbolNode = new(symbol)
+                    {
+                        LineNumber = lineNumber,
+                        ColumnNumber = colNumber + startCol
+                    };
+
+                    NestedExpr state = exprStack.Peek();
+                    if (state.EncounteredPropertyAccess)
+                    {
+                        ((ChainedSymbolNode)state.Expr.Children[^1]).Components.Add(symbolNode);
+                        state.EncounteredPropertyAccess = false;
+                    }
+                    else
+                    {
+                        node = symbolNode;
+                    }
+                }
+
+                // Check property access
+                NestedExpr nest = exprStack.Peek();
+                if (!nest.UpdatedPropertyAccess)
+                {
+                    if (nest.EncounteredPropertyAccess)
+                    {
+                        col = startLoopPos;
+                        string got = col == expr.Length ? "end of line" : expr[col].ToString();
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("unexpected '{0}' following '.'", got)));
+                        return (null, col);
                     }
                 }
 
@@ -1409,31 +1651,33 @@ namespace UglyLang.Source
 
                 if (node != null)
                 {
-                    node.LineNumber = lineNumber;
-                    exprNode.Children.Add(node);
+                    nest.Expr.Children.Add(node);
                 }
+
+                bool doBreak = false;
 
                 // Stop if: Reached the end of the line? Comment? Bracket? Met and ending character?
-                if (col == expr.Length || col < expr.Length && (expr[col] == '(' || (endChar != null && endChar.Contains(expr[col]))))
-                    break;
-                if (expr[col] == CommentChar)
-                    return (exprNode, expr.Length);
-            }
-
-            // Type casting?
-            if (col < expr.Length && expr[col] == '(')
-            {
-                int end = GetMatchingClosingItem(expr[col..], '(', ')');
-                if (end == -1)
+                if (col == expr.Length || (endChar != null && endChar.Contains(expr[col])))
+                    doBreak = true;
+                else if (expr[col] == CommentChar)
                 {
-                    AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("unterminated bracket '{0}'", expr[col])));
-                    return (null, col);
+                    endChar = null;
+                    col = expr.Length;
+                    doBreak = true;
                 }
 
-                string str = expr[(col + 1)..(col + end)];
-                UnresolvedType type = new(str);
-                exprNode.CastType = type;
-                col += end + 1;
+                if (doBreak)
+                {
+                    if (nest.EncounteredPropertyAccess)
+                    {
+                        col = startLoopPos;
+                        string got = col == expr.Length ? "end of line" : expr[col].ToString();
+                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected symbol, number, string or '[', got '{0}'", got)));
+                        return (null, col);
+                    }
+
+                    break;
+                }
             }
 
             // Eat whitespace
@@ -1471,7 +1715,16 @@ namespace UglyLang.Source
                 }
             }
 
-            return (exprNode, col);
+            if (exprStack.Count == 1)
+            {
+                return (exprStack.Peek().Expr, col);
+            }
+            else
+            {
+                string got = col == expr.Length ? "end of line" : expr[col].ToString();
+                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, string.Format("expected ']', got {0}", got)));
+                return (null, col);
+            }
         }
 
         /// <summary>
