@@ -2,7 +2,7 @@ DEF About: <n: MAP[a]>
 	PRINTLN: "Map with " n.Size " " a " values"
 END
 
-LET names: NEW<@MAP[STRING]>
+LET names: @MAP[STRING]<>
 DO: About<names>
 PRINTLN: names.Has<"developer">
 DO: names.Set<"developer", "Sandra">

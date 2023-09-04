@@ -1,4 +1,6 @@
-﻿using UglyLang.Source.Functions.List;
+﻿using UglyLang.Source.Functions;
+using UglyLang.Source.Functions.List;
+using UglyLang.Source.Functions.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -22,6 +24,8 @@ namespace UglyLang.Source.Types
             new("Set", new FSet()),
             new("Slice", new FSlice()),
         });
+
+        private static readonly Function Constructor = new FListConstructor();
 
         public readonly Type Member;
 
@@ -64,36 +68,17 @@ namespace UglyLang.Source.Types
 
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
-            return new ListType(Member.ResolveParametersAgainst(col));
+            return Type.List(Member.ResolveParametersAgainst(col));
         }
 
         public override bool CanConstruct()
         {
-            return true;
+            return Member is not Any && Member is not EmptyType && Member.CanConstruct();
         }
 
-        public override Value? ConstructNoArgs(Context context)
+        public override Function GetConstructorFunction()
         {
-            return new ListValue(Member);
-        }
-
-        public override Value? ConstructWithArgs(Context context, List<Value> args)
-        {
-            ListValue list = new(Member);
-
-            foreach (Value arg in args)
-            {
-                Value? value = arg.To(Member);
-                if (value == null)
-                {
-                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", arg.Type, Member));
-                    return null;
-                }
-
-                list.Value.Add(value);
-            }
-
-            return list;
+            return Constructor;
         }
 
         public override Dictionary<string, Property> GetProperties()

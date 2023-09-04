@@ -9,47 +9,82 @@ Every value in this language has a type. The type of a value may be obtained usi
 - `ANY`. This is a special type that matches any value. It is only used internally, and cannot be used nor constructed by the user.
 - `EMPTY`. This is a special type that represents an absence of a value. It is returned by functions with no return type, but cannot be constructed nor refernced by the user.
 
+	Note that the `EMPTY` values does not necessarily have the `EMPTY` type. `EMPTY` values may have another type and simply portrays a placeholder for any other value of that type.
+
 **Primitive Types**
 - `INT`. Represents an integer in the range -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 (same as `long` in C#).
 
-Note that integers are used to represent Booleans, with 0 representing False and any other number representing True.
+	Note that integers are used to represent Booleans, with 0 representing False and any other number representing True.
+
+	**Constructors**:
+	- `<>` - Returns a new int with value 0.
+	- `<v: ANY>` - Casts the provided value to `INT`.
+
 - `FLOAT`. Represents a floating point number in the range +-1.5e-45 to +-3.4e38 (same as `float` in C#).
+
+	**Constructors**:
+	- `<>` - Returns a new float with value 0.
+	- `<v: ANY>` - Casts the provided value to `FLOAT`.
+
 - `STRING`. Represents a sequence of characters.
+
+	**Constructors**:
+	- `<>` - Returns a new string of length 0.
+	- `<v: ANY>` - Casts the provided value to `STRING`.
+
 - `TYPE`. Represents a type itself. The value of such a variable may be `INT`, `FLOAT`, or even `TYPE` itself.
 
 **Compound Types**
 - `a[]`. Represents a list of type `a`.
 	- Property `.MemberType: TYPE` contains the type of the members (`a`).
 	- A list of any type may be referenced using `@LIST`.
+	
+	**Constructors**:
+	- `<>` - Returns a new list of length 0.
+	- `<len: INT>` - Returns a new list of length `len` populated with empty instances.
+
 - `MAP[a]`. Represents a map between `STRING` keys and values of type `a`.
 	- Property `.ValueType: TYPE` contains the type of the values (`a`).
 	- A map of any type may be referenced using `@MAP`.
+	
+	**Constructors**:
+	- `<>` - Returns a new map with no entries.
+
 - `NAMESPACE`. Represents a collection of symbols. Primarily used when importing a file.
 	- It **cannot** be constructed.
 	- It contains symbols which can be accessed as properties.
 
 # User-Defined Types
 
-Custom types may be created using the `TYPE` keyword. A type consists of fields, introduced using the `FIELD` keyword, and methods, defined using the `DEF` keyword. For example,
+Custom types may be created using the `TYPE` keyword. A type consists of fields, introduced using the `FIELD` keyword, and methods, defined using the `DEF` keyword. Constructor(s) are defined using the `NEW` keyword like functions but with no return type For example,
 
 ```
 TYPE Vec
 	FIELD x: INT
 	FIELD y: INT
 
+	NEW
+		SET x: 0
+		SET y: 0
+	END
+
+	NEW <ax: INT, ay: INT>
+		SET x: ax
+		SET y: ay
+	END
+
 	DEF Repr: STRING <>
 		FINISH: "<" x "," y ">"
 	END
 
-	LET i: Vec { 1, 0 }
-	LET j: Vec { 0, 1 }
+	LET i: Vec<1, 0>
+	LET j: Vec<0, 1>
 END
 ```
 
-This defines a new type, `Vec`, which contains two fields and one method. Custom types may be constructed using no arguments, or any number of arguments that doesn't exceed the number of fields. In this case, the values passed to the constructor will be assigned to the type's fields in order of definition. Fields for which no value was applies will be instantiated using no arguments (or raise an error if this cannot be done). For example, the result of calling `Vec:Repr` on the following values:
-- `Vec { }` -> `<0,0>`
-- `Vec { 1 }` -> `<1,0>`
-- `Vec { 1, 2 }` -> `<1,2>`
+This defines a new type, `Vec`, which contains two fields and one method. An instance of this type may be constructed by calling the type like a function, which is matched against one of the defined constructors. For example, the result of calling `Vec:Repr` on the following values:
+- `Vec<>` -> `<0,0>`
+- `Vec<1, 2>` -> `<1,2>`
 
 When methods are called, the containing type instance resides in the stack. As such, all fields are accessible seemingly as normal variables and may be updated as such.
 
@@ -57,11 +92,9 @@ When methods are called, the containing type instance resides in the stack. As s
 
 # Constructing Types
 
-Each type is constructed differently, requiring different arguments or none at all. Types which require no arguments may be constructed using the `NEW<t: TYPE>` function.
+Most types have a constructor. These can be invoked by "calling" the type e.g. `@STRING<>`.
 
-Every type (unless specified above) may be constructed using the following syntax:
-
-``` <type> { <arg1>, <arg2>, ... } ```
+Note that, as long as the value is resolved to a type, it may be called, so `SET t: @STRING \n ... t<>` is also valid.
 
 ## Baked Constructors
 

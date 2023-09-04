@@ -7,61 +7,42 @@ namespace UglyLang.Source.Functions.Types
     /// <summary>
     /// Function to create a list of said type
     /// </summary>
-    public class FList : Function, IDefinedGlobally
+    public class FListConstructor : Function
     {
-        public FList()
+        public FListConstructor()
         {
             Overloads.Add(new OverloadOne());
             Overloads.Add(new OverloadTwo());
-            Overloads.Add(new OverloadThree());
-        }
-
-        public string GetDefinedName()
-        {
-            return "LIST";
         }
 
 
         internal class OverloadOne : FunctionOverload
         {
+            private static readonly Type[] Arguments = new Type[] { Type.TypeT };
+
             public OverloadOne()
-            : base(Array.Empty<Type>(), Type.TypeT)
+            : base(Arguments, new ListType(new Any()))
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                context.SetFunctionReturnValue(new TypeValue(Type.List(Type.AnyT)));
+                ListType type = (ListType)((TypeValue)arguments[0]).Value;
+                context.SetFunctionReturnValue(new ListValue(type.Member));
                 return Signal.NONE;
             }
         }
 
         internal class OverloadTwo : FunctionOverload
         {
-            private static readonly Type[] Arguments = new Type[] { new TypeType() };
+            private static readonly Type[] Arguments = new Type[] { Type.TypeT, Type.IntT };
 
             public OverloadTwo()
-            : base(Arguments, new ListType(new Any()))
+            : base(Arguments, Type.List(Type.AnyT))
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                Type type = ((TypeValue)arguments[0]).Value;
-                context.SetFunctionReturnValue(new ListValue(type));
-                return Signal.NONE;
-            }
-        }
-
-        internal class OverloadThree : FunctionOverload
-        {
-            private static readonly Type[] Arguments = new Type[] { new TypeType(), Type.IntT };
-
-            public OverloadThree()
-            : base(Arguments, new ListType(new Any()))
-            { }
-
-            public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
-            {
-                Type type = ((TypeValue)arguments[0]).Value;
+                ListType type = (ListType)((TypeValue)arguments[0]).Value;
                 int length = (int)((IntValue)arguments[1]).Value;
 
                 // Can the type be constructed?
@@ -75,13 +56,10 @@ namespace UglyLang.Source.Functions.Types
                 List<Value> values = new();
                 for (int i = 0; i < length; i++)
                 {
-                    Value? value = type.ConstructNoArgs(context);
-                    if (value == null)
-                        return Signal.ERROR;
-                    values.Add(value);
+                    values.Add(new EmptyValue(type.Member));
                 }
 
-                context.SetFunctionReturnValue(new ListValue(type, values));
+                context.SetFunctionReturnValue(new ListValue(type.Member, values));
                 return Signal.NONE;
             }
         }

@@ -77,6 +77,7 @@ namespace UglyLang.Source.AST
                             // Get the property
                             parentProperty = parentValue.GetProperty(propertyName);
                             parent = parentProperty.GetValue();
+                            if (parent is Types.Type t) parent = new TypeValue(t);
 
                             // if it is a function, call it
                             if (parent is ICallable func)
@@ -118,15 +119,51 @@ namespace UglyLang.Source.AST
                             }
                             else if (parent is Value pValue)
                             {
-                                if (component is SymbolNode symbol && symbol.CallArguments != null && symbol.CallArguments.Count != 0)
+                                if (component is SymbolNode symbol)
                                 {
-                                    context.Error = new(component.LineNumber, component.ColumnNumber, Error.Types.Syntax, string.Format("value of type {0} is not callable", pValue.Type));
-                                    return null;
+                                    if (pValue is TypeValue typeValue && symbol.CallArguments != null) // Construct the type
+                                    {
+                                        Types.Type type = typeValue.Value.ResolveParametersAgainst(context.GetBoundTypeParams());
+                                        if (type.IsParameterised())
+                                        {
+                                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("parameterised type {0} cannot be resolved", typeValue.Value));
+                                            return null;
+                                        }
+
+                                        if (!type.CanConstruct())
+                                        {
+                                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
+                                            return null;
+                                        }
+
+                                        // Evaluate arguments
+                                        List<Value> arguments = new();
+                                        foreach (ExprNode expr in symbol.CallArguments)
+                                        {
+                                            Value? arg = expr.Evaluate(context);
+                                            if (arg == null)
+                                                return null;
+                                            if (context.Error != null)
+                                            {
+                                                return null; // Propagate error
+                                            }
+
+                                            arguments.Add(arg);
+                                        }
+
+                                        // Construct the type
+                                        (Signal s, Value? newValue) = type.Construct(context, arguments, LineNumber, ColumnNumber);
+                                        if (s == Signal.ERROR || newValue == null)
+                                            return null;
+
+                                        parent = newValue;
+                                    }
+                                    else if (symbol.CallArguments != null && symbol.CallArguments.Count != 0)
+                                    {
+                                        context.Error = new(component.LineNumber, component.ColumnNumber, Error.Types.Syntax, string.Format("value of type {0} is not callable", pValue.Type));
+                                        return null;
+                                    }
                                 }
-                            }
-                            else if (parent is Types.Type tValue)
-                            {
-                                parent = new TypeValue(tValue);
                             }
                             else
                             {

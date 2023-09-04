@@ -1,4 +1,6 @@
-﻿using UglyLang.Source.Functions.String;
+﻿using UglyLang.Source.Functions;
+using UglyLang.Source.Functions.String;
+using UglyLang.Source.Functions.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -33,6 +35,8 @@ namespace UglyLang.Source.Types
 
     public class IntType : PrimitiveType
     {
+        private static readonly Function Constructor = new FIntConstructor();
+
         public override bool Equals(Type other)
         {
             return other is IntType;
@@ -45,37 +49,12 @@ namespace UglyLang.Source.Types
 
         public override string ToString()
         {
-            return AsString();
-        }
-
-        public override Value? ConstructNoArgs(Context context)
-        {
-            return IntValue.Default();
-        }
-
-        public override Value? ConstructWithArgs(Context context, List<Value> args)
-        {
-            if (args.Count == 1)
-            {
-                IntValue? value = (IntValue?)args[0].To(this);
-                if (value == null)
-                {
-                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", args[0].Type, this));
-                    return null;
-                }
-
-                return new IntValue(value.Value);
-            }
-            else
-            {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} requires 1 argument, got {1}", this, args.Count));
-                return null;
-            }
-        }
-
-        public static string AsString()
-        {
             return "INT";
+        }
+
+        public override Function GetConstructorFunction()
+        {
+            return Constructor;
         }
 
         public override bool IsTypeOf(Value v)
@@ -86,6 +65,8 @@ namespace UglyLang.Source.Types
 
     public class FloatType : PrimitiveType
     {
+        private static readonly Function Constructor = new FFloatConstructor();
+
         public override bool Equals(Type other)
         {
             return other is FloatType;
@@ -98,36 +79,6 @@ namespace UglyLang.Source.Types
 
         public override string ToString()
         {
-            return AsString();
-        }
-
-        public override Value? ConstructNoArgs(Context context)
-        {
-            return FloatValue.Default();
-        }
-
-        public override Value? ConstructWithArgs(Context context, List<Value> args)
-        {
-            if (args.Count == 1)
-            {
-                FloatValue? value = (FloatValue?)args[0].To(this);
-                if (value == null)
-                {
-                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", args[0].Type, this));
-                    return null;
-                }
-
-                return new FloatValue(value.Value);
-            }
-            else
-            {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} requires 1 argument, got {1}", this, args.Count));
-                return null;
-            }
-        }
-
-        public static string AsString()
-        {
             return "FLOAT";
         }
 
@@ -135,10 +86,17 @@ namespace UglyLang.Source.Types
         {
             return v.Type is FloatType;
         }
+
+        public override Function GetConstructorFunction()
+        {
+            return Constructor;
+        }
     }
 
     public class StringType : PrimitiveType
     {
+        private static readonly Function Constructor = new FStringConstructor();
+
         public static readonly Dictionary<string, Property> Properties = Property.CreateDictionary(new Property[]
         {
             new("Contains", new FContains()),
@@ -164,32 +122,7 @@ namespace UglyLang.Source.Types
 
         public override string ToString()
         {
-            return AsString();
-        }
-
-        public override Value? ConstructNoArgs(Context context)
-        {
-            return StringValue.Default();
-        }
-
-        public override Value? ConstructWithArgs(Context context, List<Value> args)
-        {
-            if (args.Count == 1)
-            {
-                StringValue? value = (StringValue?)args[0].To(this);
-                if (value == null)
-                {
-                    context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1}", args[0].Type, this));
-                    return null;
-                }
-
-                return new StringValue(value.Value);
-            }
-            else
-            {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} requires 1 argument, got {1}", this, args.Count));
-                return null;
-            }
+            return "STRING";
         }
 
         public override Dictionary<string, Property> GetProperties()
@@ -197,14 +130,14 @@ namespace UglyLang.Source.Types
             return Properties;
         }
 
-        public static string AsString()
-        {
-            return "STRING";
-        }
-
         public override bool IsTypeOf(Value v)
         {
             return v.Type is StringType;
+        }
+
+        public override Function GetConstructorFunction()
+        {
+            return Constructor;
         }
     }
 }

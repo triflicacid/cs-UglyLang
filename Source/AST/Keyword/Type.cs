@@ -48,6 +48,12 @@ namespace UglyLang.Source.AST.Keyword
 
             // Create user type
             UserType type = new(data);
+            if (type.Constructor == null)
+            {
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("type {0} must have at least one constructor", Name));
+                return Signal.ERROR;
+            }
+
             context.CreateSymbol(Name, type);
 
             NamespaceValue ns = new();

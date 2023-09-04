@@ -133,7 +133,7 @@ namespace UglyLang.Source
         {
             if (OwnerType.HasField(symbol)) return Owner.FieldValues[symbol];
             if (OwnerType.HasMethod(symbol)) return OwnerType.GetMethod(symbol);
-            throw new ArgumentException(symbol);
+            return base.GetSymbol(symbol);
         }
 
         public override void SetSymbol(string symbol, ISymbolValue value)

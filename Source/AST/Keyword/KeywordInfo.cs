@@ -49,11 +49,12 @@
             new("LET", TriState.YES, ParseOptions.Before.SYMBOL, TriState.YES, ParseOptions.After.EXPR),
             new("LOOP", TriState.OPTIONAL, ParseOptions.Before.SYMBOL, TriState.OPTIONAL, ParseOptions.After.EXPR),
             new("NAMESPACE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "NAMESPACE", "DEF", "LET", "TYPE", "END" }),
+            new("NEW", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE, null, new string[] { "TYPE" }),
             new("PRINT", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("PRINTLN", TriState.NO, ParseOptions.Before.NONE, TriState.YES, ParseOptions.After.EXPR),
             new("SET", TriState.YES, ParseOptions.Before.CHAINED_SYMBOL, TriState.YES, ParseOptions.After.EXPR),
             new("STOP", TriState.NO, ParseOptions.Before.NONE, TriState.NO, ParseOptions.After.NONE),
-            new("TYPE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "DEF", "LET", "FIELD", "END" }),
+            new("TYPE", TriState.YES, ParseOptions.Before.SYMBOL, TriState.NO, ParseOptions.After.NONE, new string[] { "DEF", "LET", "NEW", "FIELD", "END" }),
         };
 
         public static readonly Dictionary<string, KeywordInfo> Lookup = new();

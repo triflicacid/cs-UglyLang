@@ -25,7 +25,7 @@ namespace UglyLang.Source.Values
         {
             if (type is Any) return this;
             if (type is UserType ut && ((UserType)Type).Id == ut.Id) return this;
-            if (type is StringType) return new StringValue("<TYPE " + ((UserType)Type).Name + ">");
+            if (type is StringType) return new StringValue("@" + ((UserType)Type).Name);
             return null;
         }
 

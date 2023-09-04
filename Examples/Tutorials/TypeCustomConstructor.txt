@@ -1,0 +1,21 @@
+TYPE Person
+	FIELD name: STRING
+
+	NEW
+		SET name: "John Doe"
+	END
+
+	NEW <n: STRING>
+		SET name: n
+	END
+
+	DEF Say: STRING <message: STRING>
+		FINISH: name " says '" message "'"
+	END
+END
+
+LET person: @Person<>
+PRINTLN: person.Say<"Hi :D">
+
+SET person: @Person<"Sandra Gold">
+PRINTLN: person.Say<"Hello.">

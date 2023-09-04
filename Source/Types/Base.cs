@@ -1,4 +1,5 @@
 ﻿using UglyLang.Source.AST;
+using UglyLang.Source.Functions;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -35,7 +36,7 @@ namespace UglyLang.Source.Types
         public abstract Type ResolveParametersAgainst(TypeParameterCollection col);
 
         /// <summary>
-        /// Can this type be constructed?
+        /// Can this type be constructed? This is checked before GetConstructorFunction() is called.
         /// </summary>
         public virtual bool CanConstruct()
         {
@@ -43,21 +44,73 @@ namespace UglyLang.Source.Types
         }
 
         /// <summary>
-        /// Attempt to construct this type with no arguments, or return null
+        /// Get the defined constructr function for the given type. Note that this is different from the other Construct functions.
         /// </summary>
-        public virtual Value? ConstructNoArgs(Context context)
+        public virtual Function GetConstructorFunction()
         {
-            context.Error = new(0, 0, Error.Types.Type, string.Format("cannot construct type {0} with no arguments", this));
-            return null;
+            throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Attempt to construct this type with the given arguments, or return null
+        /// Attempt to construct this type by applying the given argument values to GetConstructorFunction().
         /// </summary>
-        public virtual Value? ConstructWithArgs(Context context, List<Value> args)
+        public (Signal, Value?) Construct(Context context, List<Value> arguments, int lineNumber, int colNumber)
         {
-            context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} accepts no arguments, got {1}", this, args.Count));
-            return null;
+            if (!CanConstruct())
+            {
+                context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("type {0} cannot be constructed", this));
+                return (Signal.ERROR, null);
+            }
+
+            Function constructor = GetConstructorFunction();
+            Value? finalValue = null;
+            string name = ToString();
+
+            if (this is UserType userType)
+            {
+                UserValue initial = userType.ConstructInitialValue();
+                finalValue = initial;
+                context.PushMethodStackContext(lineNumber, colNumber, name, initial);
+            }
+            else
+            {
+                context.PushStackContext(lineNumber, colNumber, StackContextType.Function, name);
+            }
+
+            // Built-in types requires the type itself to be passed in for reference
+            if (this is not UserType)
+                arguments.Insert(0, new TypeValue(this));
+
+            // Call function with given arguments
+            Signal signal = constructor.Call(context, arguments, lineNumber, colNumber + name.Length);
+            if (signal == Signal.ERROR) return (signal, null);
+
+            Value returnValue = context.GetFunctionReturnValue() ?? new EmptyValue();
+            if (this is UserType)
+            {
+                if (returnValue.Type is not EmptyType)
+                {
+                    context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("{0} constructor: expected constructor to return EMPTY, got {1}", name, returnValue.Type));
+                    return (Signal.ERROR, null);
+                }
+            }
+            else
+            {
+                if (returnValue.Type.Equals(this))
+                {
+                    finalValue = returnValue;
+                }
+                else
+                {
+                    context.Error = new(lineNumber, colNumber, Error.Types.Type, string.Format("{0} constructor: expected constructor to return {1}, got {2}", name, this, returnValue.Type));
+                    return (Signal.ERROR, null);
+                }
+            }
+
+            // Pop stack context
+            context.PopStackContext();
+
+            return (Signal.NONE, finalValue);
         }
 
         public virtual Dictionary<string, Property> GetProperties()
@@ -100,11 +153,11 @@ namespace UglyLang.Source.Types
         public static readonly Type FloatT = new FloatType();
         public static readonly Type StringT = new StringType();
         public static readonly Type TypeT = new TypeType();
-        public static Type List(Type t)
+        public static ListType List(Type t)
         {
             return new ListType(t);
         }
-        public static Type Map(Type t)
+        public static MapType Map(Type t)
         {
             return new MapType(t);
         }

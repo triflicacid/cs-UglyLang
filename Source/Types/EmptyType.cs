@@ -14,7 +14,7 @@ namespace UglyLang.Source.Types
 
         public override bool DoesMatch(Type other, TypeParameterCollection coll)
         {
-            return other is EmptyType;
+            return other is EmptyType or Any;
         }
 
         public override string ToString()

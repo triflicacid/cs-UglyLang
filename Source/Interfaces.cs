@@ -1,4 +1,6 @@
-﻿namespace UglyLang.Source
+﻿using UglyLang.Source.Values;
+
+namespace UglyLang.Source
 {
     /// <summary>
     /// If inherited from, this symbol will be defined as a global symbol on any new Context.
@@ -31,5 +33,13 @@
         public void CreateSymbol(string symbol, ISymbolValue value);
 
         public void SetSymbol(string symbol, ISymbolValue value);
+    }
+
+    public interface ICallable
+    {
+        /// <summary>
+        /// Call the given function with said arguments. Redirect call to CallOverload once the correct overload has been found. All stack context preparations should be done before calling this method.
+        /// </summary>
+        public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber);
     }
 }

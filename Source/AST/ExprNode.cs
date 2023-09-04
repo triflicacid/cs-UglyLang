@@ -60,23 +60,37 @@ namespace UglyLang.Source.AST
             }
             else
             {
-                string str = "";
-                Value? value;
+                List<Value> values = new();
 
                 foreach (ASTNode child in Children)
                 {
-                    value = child.Evaluate(context);
+                    Value? value = child.Evaluate(context);
                     if (value == null)
                         return null;
+                    values.Add(value);
+                }
 
-                    Value? newValue = value.To(new StringType());
-                    if (newValue == null)
+                // One of the first two values must be strings
+                if (values[0].Type is not StringType && values[1].Type is not StringType)
+                {
+                    context.Error = new(Children[1].LineNumber, Children[1].ColumnNumber, Error.Types.Type, string.Format("expected at least one STRING, got {0} and {1} in concatenation expression", values[0].Type, values[1].Type));
+                    return null;
+                }
+
+                // Concatenate to form a string
+                string str = "";
+                foreach (Value value in values)
+                {
+                    Value? sValue = value.To(Types.Type.StringT);
+                    if (sValue == null)
                     {
                         context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("cannot cast type {0} to STRING", value.Type));
                         return null;
                     }
-
-                    str += newValue == null ? "" : ((StringValue)newValue).Value;
+                    else
+                    {
+                        str += ((StringValue)sValue).Value;
+                    }
                 }
 
                 return new StringValue(str);

@@ -3,7 +3,7 @@
 namespace UglyLang.Source.AST.Keyword
 {
     /// <summary>
-    /// Increment the given symbol
+    /// Decrement the given symbol
     /// </summary>
     public class DecKeywordNode : KeywordNode
     {
@@ -16,10 +16,10 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context)
         {
-            return Symbol.UpdateValue(context, Increment, true) ? Signal.NONE : Signal.ERROR;
+            return Symbol.UpdateValue(context, Decrement, true) ? Signal.NONE : Signal.ERROR;
         }
 
-        private Value? Increment(Context context, Value value)
+        private Value? Decrement(Context context, Value value)
         {
             if (value is IntValue iValue)
             {

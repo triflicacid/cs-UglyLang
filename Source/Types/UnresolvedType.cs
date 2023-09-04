@@ -35,38 +35,38 @@ namespace UglyLang.Source.Types
                 string value = symbolNode.Symbol;
 
                 // Primitives?
-                if (value == IntType.AsString())
-                    return new IntType();
-                if (value == FloatType.AsString())
-                    return new FloatType();
-                if (value == StringType.AsString())
-                    return new StringType();
-                if (value == TypeType.AsString())
-                    return new TypeType();
+                if (value == "INT")
+                    return Type.IntT;
+                if (value == "FLOAT")
+                    return Type.FloatT;
+                if (value == "STRING")
+                    return Type.StringT;
+                if (value == "TYPE")
+                    return Type.TypeT;
 
                 // Namespace? Hide it from public viewing.
                 if (value == "NAMESPACE")
                     return null;
 
-                // Generis list and map types?
+                // Generic list and map types?
                 if (value == "MAP")
-                    return new MapType(Type.AnyT);
+                    return Type.Map(Type.AnyT);
 
                 if (value == "LIST")
-                    return new ListType(Type.AnyT);
+                    return Type.List(Type.AnyT);
 
                 // List of a type?
                 if (value.Length > 2 && value[^1] == ']' && value[^2] == '[')
                 {
                     Type? member = Resolve(context, new SymbolNode(value[..^2]));
-                    return member == null ? null : new ListType(member);
+                    return member == null ? null : Type.List(member);
                 }
 
                 // Map of a type
                 if (value.StartsWith("MAP[") && value[^1] == ']')
                 {
                     Type? member = Resolve(context, new SymbolNode(value[4..^1]));
-                    return member == null ? null : new MapType(member);
+                    return member == null ? null :Type.Map(member);
                 }
 
                 // User type?

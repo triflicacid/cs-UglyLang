@@ -4,14 +4,6 @@ using Type = UglyLang.Source.Types.Type;
 
 namespace UglyLang.Source.Functions
 {
-    public interface ICallable
-    {
-        /// <summary>
-        /// Call the given function with said arguments. Redirect call to CallOverload once the correct overload has been found.
-        /// </summary>
-        public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber);
-    }
-
     /// <summary>
     /// A wrapper around a function with a given value as the "context". This will be automatically prepended to the argument list on call.
     /// </summary>
@@ -41,10 +33,15 @@ namespace UglyLang.Source.Functions
     {
         protected readonly List<FunctionOverload> Overloads = new();
 
+        public int CountOverloads()
+        {
+            return Overloads.Count;
+        }
+
         /// <summary>
         /// Does this function contain an overload which matches the given signature
         /// </summary>
-        public bool DoesOverloadExist(Type[] argumentTypes, Type returnType)
+        public bool DoesOverloadExist(Type[] argumentTypes)
         {
             // TODO
             /*foreach (FunctionOverload overload in Overloads)
@@ -55,9 +52,9 @@ namespace UglyLang.Source.Functions
             return false;
         }
 
-        public bool RegisterOverload(FunctionOverload overload)
+        public bool RegisterOverload(FunctionOverload overload, bool skipCheck = false)
         {
-            if (DoesOverloadExist(overload.ArgumentTypes, overload.ReturnType))
+            if (!skipCheck && DoesOverloadExist(overload.ArgumentTypes))
                 return false;
 
             Overloads.Add(overload);

@@ -10,8 +10,7 @@ The following section contains ideas for the language. The bullets are not liste
 
 - ~~Add user-defined types.~~
 	- Add inheritance
-
-- Type constraints: add option to allow an instance of a type. Either make this the behaviour by default (equl to or instance of), or add a new symbol such as `'`.
+	- Type constraint arguments
 
 - Allow multi-word keywords (key*phrases*)
 	- Add keyphrase `LOOP OVER <symbol>: <symbol>` where the first symbol is iterated over, each member being set to the second symbol.

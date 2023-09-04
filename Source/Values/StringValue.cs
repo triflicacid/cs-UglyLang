@@ -9,7 +9,7 @@ namespace UglyLang.Source.Values
     {
         public string Value;
 
-        public StringValue(string value = "") : base(new StringType())
+        public StringValue(string value = "") : base(Types.Type.StringT)
         {
             Value = value;
         }
@@ -27,9 +27,8 @@ namespace UglyLang.Source.Values
                 return new(fvalue.Value.ToString());
             if (value is StringValue svalue)
                 return new(svalue.Value);
-            if (value is EmptyValue)
-                return new("");
-            Value? v = value.To(new StringType());
+
+            Value? v = value.To(Types.Type.StringT);
             return v == null ? throw new InvalidOperationException() : (StringValue)v;
         }
 

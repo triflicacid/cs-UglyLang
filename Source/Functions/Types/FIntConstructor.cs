@@ -4,49 +4,49 @@ using Type = UglyLang.Source.Types.Type;
 
 namespace UglyLang.Source.Functions.Types
 {
-    /// <summary>
-    /// Function to create a map of said type
-    /// </summary>
-    public class FMap : Function, IDefinedGlobally
+    public class FIntConstructor : Function
     {
-        public FMap()
+        public FIntConstructor()
         {
             Overloads.Add(new OverloadOne());
             Overloads.Add(new OverloadTwo());
         }
 
-        public string GetDefinedName()
-        {
-            return "MAP";
-        }
-
-
         internal class OverloadOne : FunctionOverload
         {
             public OverloadOne()
-            : base(Array.Empty<Type>(), Type.TypeT)
+            : base(new Type[] { Type.TypeT }, Type.IntT)
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                context.SetFunctionReturnValue(new TypeValue(Type.Map(Type.AnyT)));
+                context.SetFunctionReturnValue(new IntValue());
                 return Signal.NONE;
             }
         }
 
         internal class OverloadTwo : FunctionOverload
         {
-            private static readonly Type[] Arguments = new Type[] { new TypeType() };
+            private static readonly Type[] Arguments = new Type[] { Type.TypeT, Type.AnyT };
 
             public OverloadTwo()
-            : base(Arguments, new MapType(new Any()))
+            : base(Arguments, Type.IntT)
             { }
 
             public override Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNo, int colNo)
             {
-                Type type = ((TypeValue)arguments[0]).Value;
-                context.SetFunctionReturnValue(new MapValue(type));
-                return Signal.NONE;
+                Value value = arguments[1];
+                Value? newValue = value.To(Type.IntT);
+                if (newValue == null)
+                {
+                    context.Error = new(lineNo, colNo, Error.Types.Cast, string.Format("casting {0} to {1}", value.Type, "INT"));
+                    return Signal.ERROR;
+                }
+                else
+                {
+                    context.SetFunctionReturnValue(newValue);
+                    return Signal.NONE;
+                }
             }
         }
     }

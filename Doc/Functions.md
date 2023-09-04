@@ -161,26 +161,8 @@ Returns the string in uppercase.
  
 ## Type Functions
 
-- `INT -> TYPE`
-Returns the int type.
-- `INT<x: ANY> -> INT`
-Casts the argument to an integer.
 - `IS<x: ANY, t: TYPE> -> INT`
 Returns whether the value x is an instance of the given type t.
-- `FLOAT -> TYPE`
-Returns the float type.
-- `FLOAT<x: ANY> -> FLOAT`
-Casts the argument to a float.
-- `LIST -> TYPE`
-Returns the generic list type.
-- `LIST<a: TYPE, [len: INT]> -> ANY[]`
-Creates a new list instance containing type a. If a length is provided, populates the list with instances of type (must be able to be condtructed without any arguments).
-- `MAP -> TYPE`
-Returns the generic map type.
-- `MAP<a: TYPE> -> MAP[ANY]`
-Creates a new map instance containing type a.
-- `NEW<a: TYPE> -> ANY`
-Create a new instance of type a and return it. Note, that a must be able to be created with no arguments.
 - `TYPE -> TYPE`
 Returns the type type.
 - `TYPE<a: ANY> -> TYPE`

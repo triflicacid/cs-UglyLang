@@ -15,7 +15,7 @@ namespace UglyLang.Source.AST
             Value = value;
         }
 
-        public override Value? Evaluate(Context context)
+        public override TypeValue? Evaluate(Context context)
         {
             Types.Type? type = Value.Resolve(context);
             if (type == null)

@@ -136,7 +136,7 @@ namespace UglyLang.Source
             string pre = new(' ', lineNumberS.Length);
             if (colIdx >= line.Length)
             {
-                //Console.WriteLine($"BEFORE: #{lineNumber} '{line}' ({line.Length}) {colNumber} {origLength} {colIdx}'");
+                Console.WriteLine($"BEFORE: #{lineNumber} '{line}' ({line.Length}) {colNumber} {origLength} {colIdx}'");
                 throw new ArgumentOutOfRangeException("colIdx=" + colIdx);
             }
             else
@@ -239,7 +239,7 @@ namespace UglyLang.Source
             return peek;
         }
 
-        public void SetFunctionReturnValue(Value value)
+        public void SetFunctionReturnValue(Value? value)
         {
             var context = (AbstractStackContext)Stack[^1];
             context.FunctionReturnValue = value;

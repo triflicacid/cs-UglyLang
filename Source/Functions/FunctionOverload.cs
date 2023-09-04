@@ -95,7 +95,7 @@ namespace UglyLang.Source.Types
         public readonly string[] ParameterNames;
         public readonly ASTStructure Body;
 
-        public UserFunctionOverload(List<(string, Types.Type)> arguments, ASTStructure body, Types.Type returnType, Dictionary<string, Types.Type[]> constraints)
+        public UserFunctionOverload(List<(string, Type)> arguments, ASTStructure body, Type returnType, Dictionary<string, Type[]>? constraints = null)
         : base(arguments.Select(p => p.Item2).ToArray(), returnType, constraints)
         {
             ParameterNames = arguments.Select(p => p.Item1).ToArray();

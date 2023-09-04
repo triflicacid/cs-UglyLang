@@ -1,5 +1,7 @@
 ﻿using System.Data.Common;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using System.Xml.Xsl;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
@@ -370,6 +372,82 @@ namespace UglyLang.Source
                     continue;
                 }
 
+                else if (keyword == "NEW")
+                {
+                    // Eat whitespace
+                    while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                        colNumber++;
+
+                    List<(string, UnresolvedType)> argumentPairs;
+
+                    // Expect angled bracket
+                    int beforeColNumber = colNumber;
+                    if (colNumber == line.Length)
+                    {
+                        // No arguments
+                        argumentPairs = new();
+                    }
+                    else if (line[colNumber] != '<')
+                    {
+                        string got = colNumber == line.Length ? "end of line" : line[colNumber].ToString();
+                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected '<', got {0}", got)));
+                        break;
+                    }
+                    else
+                    {
+                        colNumber++;
+
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                            colNumber++;
+
+                        if (colNumber == line.Length)
+                        {
+                            AddError(new(lineNumber, colNumber, Error.Types.Syntax, "expected '>' or symbol, got end of line"));
+                            break;
+                        }
+
+                        if (line[colNumber] == '>')
+                        {
+                            colNumber++;
+                            argumentPairs = new();
+                        }
+                        else
+                        {
+                            (argumentPairs, int endCol) = ParseArgumentDeclaration(line[beforeColNumber..], beforeColNumber, lineNumber);
+
+                            colNumber = beforeColNumber + endCol;
+
+                            if (IsError())
+                                break;
+                        }
+
+                        // Eat whitespace
+                        while (colNumber < line.Length && char.IsWhiteSpace(line[colNumber]))
+                            colNumber++;
+                    }
+
+                    // Expect EOL
+                    if (colNumber < line.Length)
+                    {
+                        AddError(new(lineNumber, colNumber, Error.Types.Syntax, string.Format("expected end of line, got '{0}'", line[colNumber])));
+                        break;
+                    }
+
+                    NewKeywordNode node = new(argumentPairs)
+                    {
+                        LineNumber = lineNumber,
+                        ColumnNumber = colNumber
+                    };
+
+                    // Nest and add a new tree
+                    trees.Peek().AddNode(node);
+                    trees.Push(new());
+                    infoStack.Push((node, keywordInfo));
+
+                    continue;
+                }
+
                 // Create nodes to store Before and After entities
                 ASTNode? before = null, after = null;
                 int beforeCol = 0, afterCol = 0;
@@ -655,6 +733,10 @@ namespace UglyLang.Source
                                 else if (latest is NamespaceKeywordNode nsKeyword)
                                 {
                                     nsKeyword.Body = previousTree;
+                                }
+                                else if (latest is NewKeywordNode newKeyword)
+                                {
+                                    newKeyword.Body = previousTree;
                                 }
                                 else if (latest is DoBlockKeywordNode dbKeyword)
                                 {
@@ -1094,6 +1176,8 @@ namespace UglyLang.Source
                 // Extract each argument, seperated by ','
                 while (col < str.Length)
                 {
+                    if (str[col] == '>') break;
+
                     (ExprNode? argExpr, int end) = ParseExpression(str[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
 
                     if (argExpr == null)
@@ -1398,6 +1482,11 @@ namespace UglyLang.Source
                             AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected ']' after '.'"));
                             return (null, col);
                         }
+                        if (old.Expr.Children.Count == 0)
+                        {
+                            AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected ']' in nested expression"));
+                            return (null, col);
+                        }
 
                         NestedExpr latest = exprStack.Peek();
 
@@ -1441,29 +1530,30 @@ namespace UglyLang.Source
                     state.UpdatedPropertyAccess = true;
                 }
 
-                // Type constructor?
+                // List constructor?
                 else if (expr[col] == '{')
                 {
-                    NestedExpr state = exprStack.Peek();
-                    TypeConstructNode typeNode;
+                    ListConstructNode listNode;
 
-                    if (state.Expr.Children.Count > 0 && state.Expr.Children[^1] is AbstractSymbolNode asn)
+                    // Type node before?
+                    ExprNode prev = exprStack.Peek().Expr;
+                    if (prev.Children.Count > 0 && prev.Children[^1] is TypeNode tNode)
                     {
-                        typeNode = new(new(asn))
+                        listNode = new(tNode.Value)
                         {
-                            ColumnNumber = asn.ColumnNumber,
-                            LineNumber = lineNumber
+                            ColumnNumber = tNode.ColumnNumber,
+                            LineNumber = tNode.LineNumber,
                         };
-                        state.Expr.Children[^1] = typeNode;
+
+                        prev.Children.RemoveAt(prev.Children.Count - 1);
                     }
                     else
                     {
-                        typeNode = new()
+                        listNode = new()
                         {
                             ColumnNumber = colNumber + col,
                             LineNumber = lineNumber
                         };
-                        node = typeNode;
                     }
 
                     col++;
@@ -1476,13 +1566,15 @@ namespace UglyLang.Source
                     // Ending brace? Or arguments?
                     if (col < expr.Length && expr[col] == '}')
                     {
-                        if (typeNode.Construct == null) // We cannot determine the type as no arguments where provided
+                        if (listNode.ListType == null)
                         {
-                            AddError(new(lineNumber, colNumber + startPos, Error.Types.Syntax, "expected type name, got '{'"));
+                            AddError(new(lineNumber, colNumber + startPos, Error.Types.Syntax, "unexpected '{' (cannot construct empty list of unknown type)"));
                             return (null, col);
                         }
-
-                        col++;
+                        else
+                        {
+                            col++;
+                        }
                     }
                     else
                     {
@@ -1498,7 +1590,7 @@ namespace UglyLang.Source
                             else
                             {
                                 col += end;
-                                typeNode.Arguments.Add(argExpr);
+                                listNode.Members.Add(argExpr);
                                 if (expr[col] == '}')
                                     break;
                                 col++;
@@ -1520,42 +1612,68 @@ namespace UglyLang.Source
                             return (null, col);
                         }
                     }
+
+                    node = listNode;
                 }
 
                 // Function arguments?
                 else if (expr[col] == '<')
                 {
                     ExprNode exprNode = exprStack.Peek().Expr;
-                    if (exprNode.Children.Count == 0 || exprNode.Children[^1] is not AbstractSymbolNode)
+                    if (exprNode.Children.Count == 0 || (exprNode.Children[^1] is not AbstractSymbolNode && exprNode.Children[^1] is not TypeNode))
                     {
                         AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '<' (must be preceeded by a symbol)"));
                         return (null, col);
                     }
 
-                    // Retrieve the SymbolNode instance which the arguments which attach to
-                    AbstractSymbolNode aSymbolNode = (AbstractSymbolNode)exprNode.Children[^1];
-                    SymbolNode symbolNode;
-                    if (aSymbolNode is SymbolNode symbol)
-                        symbolNode = symbol;
-                    else if (aSymbolNode is ChainedSymbolNode chain)
+                    if (exprNode.Children[^1] is AbstractSymbolNode aSymbolNode)
                     {
-                        if (chain.Components.Count == 0 || chain.Components[^1] is not SymbolNode)
+                        // Retrieve the SymbolNode instance which the arguments which attach to
+                        SymbolNode symbolNode;
+                        if (aSymbolNode is SymbolNode symbol)
+                            symbolNode = symbol;
+                        else if (aSymbolNode is ChainedSymbolNode chain)
+                        {
+                            if (chain.Components.Count == 0 || chain.Components[^1] is not SymbolNode)
+                            {
+                                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '<' (must be preceeded by a symbol)"));
+                                return (null, col);
+                            }
+                            else
+                            {
+                                symbolNode = (SymbolNode)chain.Components[^1];
+                            }
+                        }
+                        else
+                        {
+                            throw new NotSupportedException();
+                        }
+
+                        if (symbolNode.CallArguments == null)
+                        {
+                            // Extract the arguments
+                            (List<ExprNode>? arguments, int endCol) = ParseSymbolArguments(expr[col..], lineNumber, colNumber + col);
+                            col += endCol;
+
+                            if (arguments == null)
+                                return (null, col);
+
+                            symbolNode.CallArguments = arguments;
+                        }
+                        else
                         {
                             AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '<' (must be preceeded by a symbol)"));
                             return (null, col);
                         }
-                        else
+                    }
+                    else if (exprNode.Children[^1] is TypeNode typeNode)
+                    {
+                        TypeConstructNode constructNode = new(typeNode.Value)
                         {
-                            symbolNode = (SymbolNode)chain.Components[^1];
-                        }
-                    }
-                    else
-                    {
-                        throw new NotSupportedException();
-                    }
+                            LineNumber = typeNode.LineNumber,
+                            ColumnNumber = typeNode.ColumnNumber
+                        };
 
-                    if (symbolNode.CallArguments == null)
-                    {
                         // Extract the arguments
                         (List<ExprNode>? arguments, int endCol) = ParseSymbolArguments(expr[col..], lineNumber, colNumber + col);
                         col += endCol;
@@ -1563,12 +1681,12 @@ namespace UglyLang.Source
                         if (arguments == null)
                             return (null, col);
 
-                        symbolNode.CallArguments = arguments;
+                        constructNode.Arguments = arguments;
+                        exprNode.Children[^1] = constructNode;
                     }
                     else
                     {
-                        AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unexpected '<' (must be preceeded by a symbol)"));
-                        return (null, col);
+                        throw new NotSupportedException();
                     }
                 }
 
@@ -1584,35 +1702,6 @@ namespace UglyLang.Source
                         return (null, startCol);
                     }
                     col += symbol.Length;
-
-                    // Special list syntax: '[]' AND 'MAP[..]'
-                    while (true)
-                    {
-                        if (col + 1 < expr.Length && expr[col] == '[' && expr[col + 1] == ']')
-                        {
-                            symbol += "[]";
-                            col += 2;
-                        }
-                        else if (symbol.EndsWith("MAP") && expr[col] == '[')
-                        {
-                            int tmp = col;
-                            int end = GetMatchingClosingItem(expr[col..], '[', ']');
-                            col++;
-
-                            if (end == -1)
-                            {
-                                AddError(new(lineNumber, colNumber + col, Error.Types.Syntax, "unterminated '['"));
-                                return (null, startCol);
-                            }
-
-                            col += end;
-                            symbol += expr[tmp..col];
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
 
                     SymbolNode symbolNode = new(symbol)
                     {

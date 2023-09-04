@@ -1,4 +1,5 @@
 ﻿using UglyLang.Source.Functions;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 using static UglyLang.Source.Functions.Function;
 
@@ -59,10 +60,10 @@ namespace UglyLang.Source.AST
                 if (variable is Types.Type t) variable = new TypeValue(t);
                 Value value;
 
-                if (variable is ICallable func)
+                if (variable is ICallable callable)
                 {
                     // Push new stack context
-                    if (func is Method method)
+                    if (callable is Method method)
                     {
                         context.PushMethodStackContext(LineNumber, ColumnNumber, Symbol, method.Owner);
                     }
@@ -78,19 +79,15 @@ namespace UglyLang.Source.AST
                         foreach (ExprNode expr in CallArguments)
                         {
                             Value? arg = expr.Evaluate(context);
-                            if (arg == null)
-                                return null;
-                            if (context.Error != null)
-                            {
-                                return null; // Propagate error
-                            }
+                            if (arg == null) return null;
+                            if (context.Error != null) return null; // Propagate error
 
                             arguments.Add(arg);
                         }
                     }
 
                     // Call function with given arguments
-                    Signal signal = func.Call(context, arguments, LineNumber, ColumnNumber + Symbol.Length);
+                    Signal signal = callable.Call(context, arguments, LineNumber, ColumnNumber + Symbol.Length);
                     if (signal == Signal.ERROR)
                     {
                         return null;
@@ -104,13 +101,51 @@ namespace UglyLang.Source.AST
                 }
                 else if (variable is Value val)
                 {
-                    if (CallArguments != null && CallArguments.Count != 0)
+                    if (val is TypeValue typeValue && CallArguments != null) // Construct the type
+                    {
+                        Types.Type type = typeValue.Value.ResolveParametersAgainst(context.GetBoundTypeParams());
+                        if (type.IsParameterised())
+                        {
+                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("parameterised type {0} cannot be resolved", typeValue.Value));
+                            return null;
+                        }
+
+                        if (!type.CanConstruct())
+                        {
+                            context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
+                            return null;
+                        }
+
+                        // Evaluate arguments
+                        List<Value> arguments = new();
+                        foreach (ExprNode expr in CallArguments)
+                        {
+                            Value? arg = expr.Evaluate(context);
+                            if (arg == null)
+                                return null;
+                            if (context.Error != null)
+                            {
+                                return null; // Propagate error
+                            }
+
+                            arguments.Add(arg);
+                        }
+
+                        // Construct the type
+                        (Signal s, Value? newValue) = type.Construct(context, arguments, LineNumber, ColumnNumber);
+                        if (s == Signal.ERROR || newValue == null) return null;
+
+                        value = newValue;
+                    }
+                    else if (CallArguments != null && CallArguments.Count != 0)
                     {
                         context.Error = new(LineNumber, ColumnNumber, Error.Types.Syntax, string.Format("value of type {0} is not callable", val.Type));
                         return null;
                     }
-
-                    value = val;
+                    else
+                    {
+                        value = val;
+                    }
                 }
                 else
                 {

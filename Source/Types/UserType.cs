@@ -1,4 +1,5 @@
-﻿using UglyLang.Source.Functions;
+﻿using System.Reflection.Emit;
+using UglyLang.Source.Functions;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -9,13 +10,17 @@ namespace UglyLang.Source.Types
 
         public readonly int Id;
         public readonly string Name;
-        private readonly Dictionary<string, Type> Fields = new(); // Contains the fields of an instance
-        private readonly Dictionary<string, Function> Methods = new(); // Contains methods
+        private readonly Dictionary<string, Type> Fields; // Contains the fields of an instance
+        private readonly Dictionary<string, Function> Methods; // Contains methods
         public NamespaceValue Statics = new(); // Store static members
+        public readonly Function? Constructor;
 
         public UserType(string name)
         {
             Name = name;
+            Fields = new();
+            Methods = new();
+            Constructor = null;
             Id = GlobalId++;
         }
 
@@ -24,7 +29,22 @@ namespace UglyLang.Source.Types
             Name = data.Name;
             Fields = data.Fields;
             Methods = data.Functions;
+            Constructor = data.Constructor.CountOverloads() == 0 ? null : data.Constructor;
             Id = GlobalId++;
+        }
+
+        /// <summary>
+        /// Construct an "empty" version of this type, this is what is passed to the constructor
+        /// </summary>
+        public UserValue ConstructInitialValue()
+        {
+            UserValue value = new(this);
+            foreach (var t in GetAllFields())
+            {
+                value.FieldValues.Add(t.Item1, new EmptyValue(t.Item2));
+            }
+
+            return value;
         }
 
         public bool HasMethod(string methodName)
@@ -52,9 +72,9 @@ namespace UglyLang.Source.Types
             return Fields[fieldName];
         }
 
-        public string[] GetAllFields()
+        public Tuple<string, Type>[] GetAllFields()
         {
-            return Fields.Select(p => p.Key).ToArray();
+            return Fields.Select(p => new Tuple<string, Type>(p.Key, p.Value)).ToArray();
         }
 
         public override string ToString()
@@ -94,104 +114,12 @@ namespace UglyLang.Source.Types
 
         public override bool CanConstruct()
         {
-            return true;
+            return Constructor is not null;
         }
 
-        private bool ConstructFieldOnValue(Context context, UserValue value, string fieldName)
+        public override Function GetConstructorFunction()
         {
-            Type fieldType = GetField(fieldName);
-            if (fieldType.IsParameterised())
-            {
-                Type resolved = fieldType.ResolveParametersAgainst(context.GetBoundTypeParams());
-                if (resolved.IsParameterised())
-                {
-                    context.Error = new(0, 0, Error.Types.Type, string.Format("cannot resolve parameterised type '{0}' (partially resolved to {1}; in construction of type {2}, field {3})", fieldType, resolved, this, fieldName));
-                    return false;
-                }
-            }
-
-            if (fieldType.CanConstruct())
-            {
-                Value? fieldValue = fieldType.ConstructNoArgs(context);
-                if (fieldValue == null)
-                {
-                    context.Error = new(0, 0, Error.Types.Type, string.Format("cannot construct type {0} with no arguments (in construction of type {1}, field {2})", fieldType, this, fieldName));
-                    return false;
-                }
-                else
-                {
-                    value.FieldValues.Add(fieldName, fieldValue);
-                    return true;
-                }
-            }
-            else
-            {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("cannot construct type {0} (in construction of type {1}, field {2})", fieldType, this, fieldName));
-                return false;
-            }
-        }
-
-        public override Value? ConstructNoArgs(Context context)
-        {
-            UserValue value = new(this);
-            foreach (string fieldName in GetAllFields())
-            {
-                if (!ConstructFieldOnValue(context, value, fieldName)) return null;
-            }
-
-            return value;
-        }
-
-        public override Value? ConstructWithArgs(Context context, List<Value> args)
-        {
-            string[] fieldNames = GetAllFields();
-            if (fieldNames.Length < args.Count)
-            {
-                context.Error = new(0, 0, Error.Types.Type, string.Format("type {0} expects at most {1} arguments, got {2}", this, fieldNames.Length, args.Count));
-                return null;
-            }
-
-            UserValue value = new(this);
-
-            // Assign given values
-            for (int i = 0; i < args.Count; i++)
-            {
-                Type fieldType = GetField(fieldNames[i]);
-                if (args[i].Type is Any || args[i].Type.DoesMatch(fieldType))
-                {
-                    Value fieldValue;
-                    if (args[i].Type is not Any && !args[i].Equals(fieldType))
-                    {
-                        Value? casted = args[i].To(fieldType);
-                        if (casted == null)
-                        {
-                            context.Error = new(0, 0, Error.Types.Cast, string.Format("cannot cast {0} to {1} (in construction of type {2}, field {3})", args[i].Type, fieldType, this, fieldNames[i]));
-                            return null;
-                        }
-
-                        fieldValue = casted;
-                    }
-                    else
-                    {
-                        fieldValue = args[i];
-                    }
-
-                    value.FieldValues.Add(fieldNames[i], fieldValue);
-                }
-                else
-                {
-                    context.Error = new(0, 0, Error.Types.Type, string.Format("expected {0}, got {1} (in construction of type {2}, field {3})", fieldType, args[i].Type, this, fieldNames[i]));
-                    return null;
-                }
-            }
-
-            // Construct remaining values
-            for (int i = args.Count; i < fieldNames.Length; i++)
-            {
-                if (!ConstructFieldOnValue(context, value, fieldNames[i])) return null;
-            }
-
-            return value;
+            return Constructor ?? throw new NullReferenceException();
         }
 
         public override bool HasStaticProperty(string name)
@@ -218,6 +146,7 @@ namespace UglyLang.Source.Types
         public readonly string Name;
         public readonly Dictionary<string, Function> Functions = new();
         public readonly Dictionary<string, Type> Fields = new();
+        public readonly Function Constructor = new();
 
         public UserTypeDataContainer(string name)
         {

@@ -2,7 +2,7 @@ DEF Show: <list: a[]>
 	PRINTLN: a "[" list.Length "] " list
 END
 
-LET seq: INT[] { 1, 2 }
+LET seq: @INT[] { 1, 2 }
 DO: Show<seq>
 PRINTLN: "length: " seq.Length
 PRINTLN: "member type: " seq.MemberType

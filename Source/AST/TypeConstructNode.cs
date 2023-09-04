@@ -1,14 +1,17 @@
-﻿using UglyLang.Source.Types;
+﻿using System;
+using UglyLang.Source.Functions;
+using UglyLang.Source.Types;
 using UglyLang.Source.Values;
+using static UglyLang.Source.Functions.Function;
 
 namespace UglyLang.Source.AST
 {
     public class TypeConstructNode : ASTNode
     {
-        public UnresolvedType? Construct;
+        public UnresolvedType Construct;
         public List<ExprNode> Arguments;
 
-        public TypeConstructNode(UnresolvedType? construct = null)
+        public TypeConstructNode(UnresolvedType construct)
         {
             Construct = construct;
             Arguments = new();
@@ -16,45 +19,13 @@ namespace UglyLang.Source.AST
 
         public override Value? Evaluate(Context context)
         {
-            // Evaluate each argument
-            List<Value> evaldArguments = new();
-            Value? value;
-            foreach (ExprNode node in Arguments)
+            Types.Type? rawType = Construct.Resolve(context);
+            if (rawType == null)
             {
-                value = node.Evaluate(context);
-                if (value == null)
-                    return null; // Propagate error
-                evaldArguments.Add(value);
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", Construct.Value.GetSymbolString()));
+                return null;
             }
-
-            Types.Type? rawType; // resolved Construct type
-            if (Construct == null)
-            {
-                // Construct is a list - determine member type from arguments
-                ListType listType = new(evaldArguments[0].Type);
-
-                for (int i = 1; i < evaldArguments.Count; i++)
-                {
-                    if (!evaldArguments[i].Type.Equals(listType.Member))
-                    {
-                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("expected {0}, got {1}, in {2} construct (argument {3})", listType.Member, evaldArguments[i].Type, listType, i + 1));
-                        return null;
-                    }
-                }
-
-                rawType = listType;
-            }
-            else
-            {
-                rawType = Construct.Resolve(context);
-
-                if (rawType == null)
-                {
-                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", Construct.Value.GetSymbolString()));
-                    return null;
-                }
-            }
-
+                
             Types.Type type = rawType.ResolveParametersAgainst(context.GetBoundTypeParams());
             if (type.IsParameterised())
             {
@@ -62,31 +33,32 @@ namespace UglyLang.Source.AST
                 return null;
             }
 
-            // Can the type be constructed?
             if (!type.CanConstruct())
             {
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("type {0} cannot be constructed", type));
                 return null;
             }
 
-            // Construct the type using the arguments, if necessary
-            value = Arguments.Count == 0 ? type.ConstructNoArgs(context) : type.ConstructWithArgs(context, evaldArguments);
-
-            // Propagate error or return
-            if (value == null)
+            // Evaluate arguments
+            List<Value> arguments = new();
+            foreach (ExprNode expr in Arguments)
             {
+                Value? arg = expr.Evaluate(context);
+                if (arg == null)
+                    return null;
                 if (context.Error != null)
                 {
-                    context.Error.LineNumber = LineNumber;
-                    context.Error.ColumnNumber = ColumnNumber;
+                    return null; // Propagate error
                 }
 
-                return null;
+                arguments.Add(arg);
             }
-            else
-            {
-                return value;
-            }
+
+            // Construct the type
+            (Signal s, Value? value) = type.Construct(context, arguments, LineNumber, ColumnNumber);
+            if (s == Signal.ERROR) return null;
+
+            return value;
         }
     }
 }

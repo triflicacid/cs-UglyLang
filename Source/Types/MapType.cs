@@ -1,4 +1,6 @@
-﻿using UglyLang.Source.Functions.Map;
+﻿using UglyLang.Source.Functions;
+using UglyLang.Source.Functions.Map;
+using UglyLang.Source.Functions.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -17,6 +19,8 @@ namespace UglyLang.Source.Types
             new("Set", new FSet()),
             new("Size", new FSize()),
         });
+
+        private static readonly Function Constructor = new FMapConstructor();
 
         public readonly Type ValueType;
 
@@ -59,17 +63,17 @@ namespace UglyLang.Source.Types
 
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
-            return new MapType(ValueType.ResolveParametersAgainst(col));
+            return Map(ValueType.ResolveParametersAgainst(col));
         }
 
         public override bool CanConstruct()
         {
-            return true;
+            return ValueType is not Any && ValueType is not EmptyType && ValueType.CanConstruct();
         }
 
-        public override Value? ConstructNoArgs(Context context)
+        public override Function GetConstructorFunction()
         {
-            return new MapValue(ValueType);
+            return Constructor;
         }
 
         public override Dictionary<string, Property> GetProperties()

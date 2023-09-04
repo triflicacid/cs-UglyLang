@@ -2,16 +2,31 @@ TYPE Vec
 	FIELD x: INT
 	FIELD y: INT
 
-	DEF Repr: STRING <>
+	NEW
+		SET x: 0
+		SET y: 0
+	END
+
+	NEW <n: INT>
+		SET x: n
+		SET y: n
+	END
+
+	NEW <ax: INT, ay: INT>
+		SET x: ax
+		SET y: ay
+	END
+
+	DEF Repr: STRING
 		FINISH: "<" x "," y ">"
 	END
 
-	DEF Length: FLOAT <>
+	DEF Length: FLOAT
 		FINISH: SQRT<ADD<MUL<x,x>, MUL<y,y>>>
 	END
 
-	LET i: Vec { 1, 0 }
-	LET j: Vec { 0, 1 }
+	LET i: Vec<1, 0>
+	LET j: Vec<0, 1>
 END
 
 DEF Fn: <v: Vec>
@@ -19,10 +34,10 @@ DEF Fn: <v: Vec>
 END
 
 DEF ADD: Vec <a: Vec, b: Vec>
-	FINISH: Vec { ADD<a.x, b.x>, ADD<a.y, b.y> }
+	FINISH: Vec<ADD<a.x, b.x>, ADD<a.y, b.y>>
 END
 
-SET v: Vec { 3, 4 }
+SET v: Vec<3, 4>
 DO: Fn<v>
 SET v.x: 4.3
 DO: Fn<v>
