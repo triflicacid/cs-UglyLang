@@ -1,8 +1,4 @@
-﻿using System.Data.Common;
-using System.Reflection.Metadata.Ecma335;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using System.Xml.Xsl;
+﻿using System.Text.RegularExpressions;
 using UglyLang.Source.AST;
 using UglyLang.Source.AST.Keyword;
 using UglyLang.Source.Types;
@@ -1176,7 +1172,8 @@ namespace UglyLang.Source
                 // Extract each argument, seperated by ','
                 while (col < str.Length)
                 {
-                    if (str[col] == '>') break;
+                    if (str[col] == '>')
+                        break;
 
                     (ExprNode? argExpr, int end) = ParseExpression(str[col..], lineNumber, colNumber + col, new char?[] { ',', '>', null });
 

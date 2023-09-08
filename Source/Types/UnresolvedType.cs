@@ -66,7 +66,7 @@ namespace UglyLang.Source.Types
                 if (value.StartsWith("MAP[") && value[^1] == ']')
                 {
                     Type? member = Resolve(context, new SymbolNode(value[4..^1]));
-                    return member == null ? null :Type.Map(member);
+                    return member == null ? null : Type.Map(member);
                 }
 
                 // User type?

@@ -1,5 +1,4 @@
-﻿using UglyLang.Source.AST;
-using UglyLang.Source.Functions;
+﻿using UglyLang.Source.Functions;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -83,7 +82,8 @@ namespace UglyLang.Source.Types
 
             // Call function with given arguments
             Signal signal = constructor.Call(context, arguments, lineNumber, colNumber + name.Length);
-            if (signal == Signal.ERROR) return (signal, null);
+            if (signal == Signal.ERROR)
+                return (signal, null);
 
             Value returnValue = context.GetFunctionReturnValue() ?? new EmptyValue();
             if (this is UserType)

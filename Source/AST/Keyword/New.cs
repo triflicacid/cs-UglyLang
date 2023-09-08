@@ -18,7 +18,8 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context)
         {
-            if (Body == null) throw new NullReferenceException();
+            if (Body == null)
+                throw new NullReferenceException();
 
             // Resolve the arguments
             List<(string, Type)> resolvedArguments = new();

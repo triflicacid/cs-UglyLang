@@ -1,5 +1,4 @@
-﻿using UglyLang.Source.Functions;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 using static UglyLang.Source.Functions.Function;
 
@@ -77,7 +76,8 @@ namespace UglyLang.Source.AST
                             // Get the property
                             parentProperty = parentValue.GetProperty(propertyName);
                             parent = parentProperty.GetValue();
-                            if (parent is Types.Type t) parent = new TypeValue(t);
+                            if (parent is Types.Type t)
+                                parent = new TypeValue(t);
 
                             // if it is a function, call it
                             if (parent is ICallable func)
@@ -345,7 +345,8 @@ namespace UglyLang.Source.AST
             {
                 // Transform value
                 Value? value = transformer(context, oldValue);
-                if (value == null) return false;
+                if (value == null)
+                    return false;
 
                 if (forceCast || oldValue.Type.DoesMatch(value.Type))
                 {

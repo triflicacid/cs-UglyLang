@@ -1,8 +1,5 @@
-﻿using System;
-using UglyLang.Source.Functions;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
-using static UglyLang.Source.Functions.Function;
 
 namespace UglyLang.Source.AST
 {
@@ -25,7 +22,7 @@ namespace UglyLang.Source.AST
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("failed to resolve '{0}' to a type", Construct.Value.GetSymbolString()));
                 return null;
             }
-                
+
             Types.Type type = rawType.ResolveParametersAgainst(context.GetBoundTypeParams());
             if (type.IsParameterised())
             {
@@ -56,7 +53,8 @@ namespace UglyLang.Source.AST
 
             // Construct the type
             (Signal s, Value? value) = type.Construct(context, arguments, LineNumber, ColumnNumber);
-            if (s == Signal.ERROR) return null;
+            if (s == Signal.ERROR)
+                return null;
 
             return value;
         }

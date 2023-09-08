@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using UglyLang.Source.Functions;
-using UglyLang.Source.Types;
+﻿using UglyLang.Source.Types;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.AST
@@ -28,8 +25,10 @@ namespace UglyLang.Source.AST
             foreach (ExprNode expr in Members)
             {
                 Value? arg = expr.Evaluate(context);
-                if (arg == null) return null;
-                if (context.Error != null) return null; // Propagate error
+                if (arg == null)
+                    return null;
+                if (context.Error != null)
+                    return null; // Propagate error
 
                 members.Add(arg);
             }

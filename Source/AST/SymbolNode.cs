@@ -1,6 +1,4 @@
-﻿using UglyLang.Source.Functions;
-using UglyLang.Source.Types;
-using UglyLang.Source.Values;
+﻿using UglyLang.Source.Values;
 using static UglyLang.Source.Functions.Function;
 
 namespace UglyLang.Source.AST
@@ -57,7 +55,8 @@ namespace UglyLang.Source.AST
             if (context.HasSymbol(Symbol))
             {
                 ISymbolValue variable = context.GetSymbol(Symbol);
-                if (variable is Types.Type t) variable = new TypeValue(t);
+                if (variable is Types.Type t)
+                    variable = new TypeValue(t);
                 Value value;
 
                 if (variable is ICallable callable)
@@ -79,8 +78,10 @@ namespace UglyLang.Source.AST
                         foreach (ExprNode expr in CallArguments)
                         {
                             Value? arg = expr.Evaluate(context);
-                            if (arg == null) return null;
-                            if (context.Error != null) return null; // Propagate error
+                            if (arg == null)
+                                return null;
+                            if (context.Error != null)
+                                return null; // Propagate error
 
                             arguments.Add(arg);
                         }
@@ -133,7 +134,8 @@ namespace UglyLang.Source.AST
 
                         // Construct the type
                         (Signal s, Value? newValue) = type.Construct(context, arguments, LineNumber, ColumnNumber);
-                        if (s == Signal.ERROR || newValue == null) return null;
+                        if (s == Signal.ERROR || newValue == null)
+                            return null;
 
                         value = newValue;
                     }
@@ -214,7 +216,8 @@ namespace UglyLang.Source.AST
                 {
                     // Transform the old value to new
                     Value? value = transformer(context, oldValue);
-                    if (value == null) return false;
+                    if (value == null)
+                        return false;
 
                     // Cast to match?
                     if (forceCast || oldValue.Type.DoesMatch(value.Type))

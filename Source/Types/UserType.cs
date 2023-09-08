@@ -1,5 +1,4 @@
-﻿using System.Reflection.Emit;
-using UglyLang.Source.Functions;
+﻿using UglyLang.Source.Functions;
 using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
@@ -167,7 +166,8 @@ namespace UglyLang.Source.Types
 
         public ISymbolValue GetSymbol(string symbol)
         {
-            if (Functions.ContainsKey(symbol)) return Functions[symbol];
+            if (Functions.ContainsKey(symbol))
+                return Functions[symbol];
             throw new ArgumentException(symbol);
         }
 

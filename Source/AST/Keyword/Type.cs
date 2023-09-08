@@ -43,7 +43,8 @@ namespace UglyLang.Source.AST.Keyword
             UserTypeDataContainer data = new(Name);
             context.PushStack(data);
             Signal s = dynamics.Evaluate(context);
-            if (s == Signal.ERROR) return s;
+            if (s == Signal.ERROR)
+                return s;
             context.PopStack();
 
             // Create user type
@@ -59,7 +60,8 @@ namespace UglyLang.Source.AST.Keyword
             NamespaceValue ns = new();
             context.PushStack(ns);
             s = statics.Evaluate(context);
-            if (s == Signal.ERROR) return s;
+            if (s == Signal.ERROR)
+                return s;
             context.PopStack();
             type.Statics = ns;
 

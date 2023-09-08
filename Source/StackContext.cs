@@ -131,14 +131,17 @@ namespace UglyLang.Source
 
         public override ISymbolValue GetSymbol(string symbol)
         {
-            if (OwnerType.HasField(symbol)) return Owner.FieldValues[symbol];
-            if (OwnerType.HasMethod(symbol)) return OwnerType.GetMethod(symbol);
+            if (OwnerType.HasField(symbol))
+                return Owner.FieldValues[symbol];
+            if (OwnerType.HasMethod(symbol))
+                return OwnerType.GetMethod(symbol);
             return base.GetSymbol(symbol);
         }
 
         public override void SetSymbol(string symbol, ISymbolValue value)
         {
-            if (OwnerType.HasMethod(symbol)) throw new InvalidOperationException();
+            if (OwnerType.HasMethod(symbol))
+                throw new InvalidOperationException();
             else if (OwnerType.HasField(symbol))
             {
                 Owner.FieldValues[symbol] = (Value)value;

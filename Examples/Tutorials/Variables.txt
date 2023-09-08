@@ -1,0 +1,12 @@
+DEF Dump: STRING <v: ANY>
+	FINISH: TYPE<v> ": " v
+END
+
+; Define a new variable
+LET x: 4
+PRINTLN: Dump<x> ; => INT: 4
+; SET x: "Hello" ; ERROR cannot match INT and STRING
+
+; "Shadow" variable x
+LET x: "Hello"
+PRINTLN: Dump<x> ; => STRING: "Hello"

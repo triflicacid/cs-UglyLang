@@ -18,23 +18,21 @@ namespace UglyLang.Source.AST.Keyword
 
         public override Signal Action(Context context)
         {
+            Value? evaldValue = Value.Evaluate(context);
+            if (evaldValue == null) // Propagate error?
+                return Signal.ERROR;
+
             if (context.CanCreateSymbol(Name))
             {
-                Value? evaldValue = Value.Evaluate(context);
-                if (evaldValue == null) // Propagate error?
-                {
-                    return Signal.ERROR;
-                }
-
                 context.CreateSymbol(Name, evaldValue);
-                return Signal.NONE;
-
             }
             else
             {
-                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("\"{0}\" is already defined.", Name));
-                return Signal.ERROR;
+                context.SetSymbol(Name, evaldValue);
+                //context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("\"{0}\" is already defined.", Name));
             }
+
+            return Signal.NONE;
         }
     }
 }

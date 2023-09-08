@@ -28,7 +28,8 @@ namespace UglyLang.Source.AST.Keyword
             NamespaceValue ns = new();
             context.PushStack(ns);
             Signal s = Body.Evaluate(context);
-            if (s == Signal.ERROR) return s;
+            if (s == Signal.ERROR)
+                return s;
             context.PopStack();
             context.CreateSymbol(Name, ns);
 
