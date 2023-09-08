@@ -1,5 +1,6 @@
 LET a: 2
 LET b: 3
+PRINTLN: "a = " a ", b = " b
 PRINTLN: "a + b: " ADD<a,b>
 PRINTLN: "a - b: " SUB<a,b>
 PRINTLN: "   -a: " NEG<a>
@@ -7,3 +8,10 @@ PRINTLN: "a * b: " MUL<a,b>
 PRINTLN: "a / b: " DIV<a,b>
 PRINTLN: "a % b: " MOD<a,b>
 PRINTLN: "a ^ b: " EXP<a,b>
+
+LET c: 5.4
+PRINTLN: "c = " c
+PRINTLN: "round(c): " ROUND<c>
+PRINTLN: "floor(c): " FLOOR<c>
+PRINTLN: " ceil(c): " CEIL<c>
+PRINTLN: "abs(a - b): " ABS<SUB<a,b>>

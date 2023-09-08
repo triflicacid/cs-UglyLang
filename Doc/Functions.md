@@ -120,12 +120,18 @@ Sets the key to the given value. Creates the key if does not exist in the map.
 
 ## Mathematical Functions
 
+- `ABS<a: FLOAT> -> FLOAT`
+Returns the absolute value of a (removes negative sign).
 - `ADD<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a + b.
+- `CEIL<a: FLOAT> -> INT`
+Returns the ceiling of a.
 - `DIV<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a / b.
 - `EXP<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a ^ b.
+- `FLOOR<a: FLOAT> -> INT`
+Returns the floor of a.
 - `MOD<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a % b.
 - `MUL<a: FLOAT, b: FLOAT> -> FLOAT`
@@ -134,6 +140,8 @@ Returns a * b.
 Returns -a.
 - `PRED<a: INT> -> INT`
 Returns the predecessor of integer a.
+- `ROUND<a: FLOAT> -> INT`
+Rounds the given decimal number
 - `SUB<a: FLOAT, b: FLOAT> -> FLOAT`
 Returns a - b.
 - `SUCC<a: INT> -> INT`

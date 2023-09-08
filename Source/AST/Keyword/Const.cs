@@ -39,7 +39,7 @@ namespace UglyLang.Source.AST.Keyword
                     AppendString = string.Format("Previously defined at {0}:{1}", variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
                     AdditionalSource = ((ILocatable)variable).GetLocation()
                 };
-                
+
                 return Signal.ERROR;
             }
 
