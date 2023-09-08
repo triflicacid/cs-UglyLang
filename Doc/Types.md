@@ -88,7 +88,7 @@ This defines a new type, `Vec`, which contains two fields and one method. An ins
 
 When methods are called, the containing type instance resides in the stack. As such, all fields are accessible seemingly as normal variables and may be updated as such.
 
-`LET` statements are used to create static properties. Such properties exist on the type itself, so `Vec.i`, not one any one instance.
+`LET` and `CONST` statements can be used to create static properties. Such properties exist on the type itself, so `Vec.i`, not one any one instance.
 
 # Constructing Types
 

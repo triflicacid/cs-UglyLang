@@ -51,11 +51,11 @@ namespace UglyLang.Source.AST.Keyword
                 // Push the new stack context
                 if (Namespace == null)
                 {
-                    context.PushProxyStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
+                    context.PushProxyStackContext(LineNumber, ColumnNumber, StackContextType.File, this, Filename);
                 }
                 else
                 {
-                    context.PushStackContext(LineNumber, ColumnNumber, StackContextType.File, Filename);
+                    context.PushStackContext(LineNumber, ColumnNumber, StackContextType.File, this, Filename);
                 }
 
                 s = Content.Evaluate(context);
@@ -84,7 +84,7 @@ namespace UglyLang.Source.AST.Keyword
                 }
                 else
                 {
-                    context.CreateSymbol(Namespace.Symbol, ns);
+                    context.CreateSymbol(new(Namespace.Symbol, ns));
                 }
             }
 

@@ -97,7 +97,7 @@ namespace UglyLang.Source.Types
     {
         private static readonly Function Constructor = new FStringConstructor();
 
-        public static readonly Dictionary<string, Property> Properties = Property.CreateDictionary(new Property[]
+        public static readonly Dictionary<string, Variable> Properties = Variable.CreateDictionary(new Variable[]
         {
             new("Contains", new FContains()),
             new("IndexOf", new FIndexOf()),
@@ -125,7 +125,7 @@ namespace UglyLang.Source.Types
             return "STRING";
         }
 
-        public override Dictionary<string, Property> GetProperties()
+        public override Dictionary<string, Variable> GetProperties()
         {
             return Properties;
         }

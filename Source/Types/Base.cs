@@ -69,11 +69,11 @@ namespace UglyLang.Source.Types
             {
                 UserValue initial = userType.ConstructInitialValue();
                 finalValue = initial;
-                context.PushMethodStackContext(lineNumber, colNumber, name, initial);
+                context.PushMethodStackContext(lineNumber, colNumber, userType, name, initial);
             }
             else
             {
-                context.PushStackContext(lineNumber, colNumber, StackContextType.Function, name);
+                context.PushStackContext(lineNumber, colNumber, StackContextType.Function, null, name);
             }
 
             // Built-in types requires the type itself to be passed in for reference
@@ -113,7 +113,7 @@ namespace UglyLang.Source.Types
             return (Signal.NONE, finalValue);
         }
 
-        public virtual Dictionary<string, Property> GetProperties()
+        public virtual Dictionary<string, Variable> GetProperties()
         {
             return new();
         }
@@ -129,7 +129,7 @@ namespace UglyLang.Source.Types
         /// <summary>
         /// Get a static property, or null if it cannot be retrieved.
         /// </summary>
-        public virtual Property? GetStaticProperty(string name)
+        public virtual Variable? GetStaticProperty(string name)
         {
             return null;
         }

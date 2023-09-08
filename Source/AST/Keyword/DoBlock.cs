@@ -12,7 +12,7 @@
             if (Body == null)
                 throw new NullReferenceException();
 
-            context.PushStackContext(LineNumber, ColumnNumber, StackContextType.DoBlock, "");
+            context.PushStackContext(LineNumber, ColumnNumber, StackContextType.DoBlock, this, "");
 
             Signal s = Body.Evaluate(context);
             if (s == Signal.ERROR)

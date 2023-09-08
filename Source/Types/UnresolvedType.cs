@@ -70,10 +70,8 @@ namespace UglyLang.Source.Types
                 }
 
                 // User type?
-                if (context.HasSymbol(value) && context.GetSymbol(value) is UserType t)
-                {
+                if (context.HasSymbol(value) && context.GetSymbol(value).GetValue() is UserType t)
                     return t;
-                }
 
                 // Assume it is a type parameter
                 return new TypeParameter(value);

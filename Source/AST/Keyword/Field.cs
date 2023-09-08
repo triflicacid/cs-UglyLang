@@ -45,13 +45,14 @@ namespace UglyLang.Source.AST.Keyword
                         return Signal.ERROR;
                     }
 
-                    data.Fields.Add(Name, resolved);
-                }
-                else
-                {
-                    data.Fields.Add(Name, type);
+                    type = resolved;
                 }
 
+                data.Fields.Add(Name, new(Name, type)
+                {
+                    LineNumber = LineNumber,
+                    ColumnNumber = ColumnNumber
+                });
                 return Signal.NONE;
             }
         }

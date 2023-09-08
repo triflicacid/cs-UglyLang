@@ -29,25 +29,34 @@ namespace UglyLang.Source.AST.Keyword
             {
                 if (context.HasSymbol(Counter))
                 {
-                    ISymbolValue oldValue = context.GetSymbol(Counter);
-                    if (oldValue is IntValue intValue)
+                    var variable = context.GetSymbol(Counter);
+                    if (variable.IsReadonly)
+                    {
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("symbol '{0}' is read-only", Counter))
+                        {
+                            AppendString = string.Format("Symbol {0} was defined at {1}:{2}", Counter, variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                            AdditionalSource = ((ILocatable)variable).GetLocation()
+                        };
+                        return Signal.ERROR;
+                    }
+                    else if (variable.GetValue() is IntValue intValue)
                     {
                         intValue.Value = 0;
                     }
-                    else if (oldValue is FloatValue floatValue)
+                    else if (variable.GetValue() is FloatValue floatValue)
                     {
                         floatValue.Value = 0;
                         counterIsFloat = true;
                     }
                     else
                     {
-                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("expected counter to be INT or FLOAT, got {0}", oldValue is Value val ? val.Type : "unknown"));
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("expected counter to be INT or FLOAT, got {0}", variable.GetValue() is Value val ? val.Type : "unknown"));
                         return Signal.ERROR;
                     }
                 }
                 else
                 {
-                    context.CreateSymbol(Counter, new IntValue(0));
+                    context.CreateSymbol(new(Counter, new IntValue(0)));
                 }
             }
 
@@ -76,7 +85,7 @@ namespace UglyLang.Source.AST.Keyword
                 // Increment the counter variable, if present
                 if (Counter != null)
                 {
-                    Value oldValue = (Value)context.GetSymbol(Counter);
+                    Value oldValue = (Value)context.GetSymbol(Counter).GetValue();
                     if (counterIsFloat)
                     {
                         ((FloatValue)oldValue).Value++;

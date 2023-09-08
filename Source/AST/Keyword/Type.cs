@@ -29,7 +29,7 @@ namespace UglyLang.Source.AST.Keyword
             ASTStructure statics = new(), dynamics = new();
             foreach (ASTNode node in Body)
             {
-                if (node is LetKeywordNode)
+                if (node is LetKeywordNode or ConstKeywordNode)
                 {
                     statics.AddNode(node);
                 }
@@ -55,7 +55,7 @@ namespace UglyLang.Source.AST.Keyword
                 return Signal.ERROR;
             }
 
-            context.CreateSymbol(Name, type);
+            context.CreateSymbol(new(Name, type));
 
             NamespaceValue ns = new();
             context.PushStack(ns);

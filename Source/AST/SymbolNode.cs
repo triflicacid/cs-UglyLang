@@ -54,7 +54,7 @@ namespace UglyLang.Source.AST
         {
             if (context.HasSymbol(Symbol))
             {
-                ISymbolValue variable = context.GetSymbol(Symbol);
+                ISymbolValue variable = (ISymbolValue)context.GetSymbol(Symbol).GetValue();
                 if (variable is Types.Type t)
                     variable = new TypeValue(t);
                 Value value;
@@ -64,11 +64,11 @@ namespace UglyLang.Source.AST
                     // Push new stack context
                     if (callable is Method method)
                     {
-                        context.PushMethodStackContext(LineNumber, ColumnNumber, Symbol, method.Owner);
+                        context.PushMethodStackContext(LineNumber, ColumnNumber, null, Symbol, method.Owner);
                     }
                     else
                     {
-                        context.PushStackContext(LineNumber, ColumnNumber, StackContextType.Function, Symbol);
+                        context.PushStackContext(LineNumber, ColumnNumber, StackContextType.Function, null, Symbol);
                     }
 
                     // Evaluate arguments
@@ -90,9 +90,7 @@ namespace UglyLang.Source.AST
                     // Call function with given arguments
                     Signal signal = callable.Call(context, arguments, LineNumber, ColumnNumber + Symbol.Length);
                     if (signal == Signal.ERROR)
-                    {
                         return null;
-                    }
 
                     // Fetch return value
                     value = context.GetFunctionReturnValue() ?? new EmptyValue();
@@ -168,9 +166,18 @@ namespace UglyLang.Source.AST
             // Make sure that the types line up
             if (context.HasSymbol(Symbol))
             {
-                ISymbolValue oldSymbolValue = context.GetSymbol(Symbol);
+                var variable = context.GetSymbol(Symbol);
 
-                if (oldSymbolValue is Value oldValue)
+                if (variable.IsReadonly)
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("symbol '{0}' is read-only", Symbol))
+                    {
+                        AppendString = string.Format("Symbol {0} was defined at {1}:{2}", GetSymbolString(), variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                        AdditionalSource = ((ILocatable)variable).GetLocation()
+                    };
+                    return false;
+                }
+                else if (variable.GetValue() is Value oldValue)
                 {
                     if (forceCast || oldValue.Type.DoesMatch(value.Type))
                     {
@@ -182,7 +189,7 @@ namespace UglyLang.Source.AST
                         }
                         else
                         {
-                            context.SetSymbol(Symbol, newValue);
+                            variable.SetValue(newValue);
                             return true;
                         }
                     }
@@ -200,7 +207,7 @@ namespace UglyLang.Source.AST
             }
             else
             {
-                context.CreateSymbol(Symbol, value);
+                context.CreateSymbol(new(Symbol, value));
                 return true;
             }
         }
@@ -210,9 +217,18 @@ namespace UglyLang.Source.AST
             // Make sure that the types line up
             if (context.HasSymbol(Symbol))
             {
-                ISymbolValue oldSymbolValue = context.GetSymbol(Symbol);
+                var variable = context.GetSymbol(Symbol);
 
-                if (oldSymbolValue is Value oldValue)
+                if (variable.IsReadonly)
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("symbol '{0}' is read-only", Symbol))
+                    {
+                        AppendString = string.Format("Symbol {0} was defined at {1}:{2}", GetSymbolString(), variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                        AdditionalSource = ((ILocatable)variable).GetLocation()
+                    };
+                    return false;
+                }
+                else if (variable.GetValue() is Value oldValue)
                 {
                     // Transform the old value to new
                     Value? value = transformer(context, oldValue);
@@ -230,7 +246,7 @@ namespace UglyLang.Source.AST
                         }
                         else
                         {
-                            context.SetSymbol(Symbol, newValue);
+                            variable.SetValue(newValue);
                             return true;
                         }
                     }
@@ -257,18 +273,31 @@ namespace UglyLang.Source.AST
         {
             if (context.HasSymbol(Symbol))
             {
-                ISymbolValue sValue = context.GetSymbol(Symbol);
-                if (sValue is Value value)
+                var variable = context.GetSymbol(Symbol);
+                if (variable.IsReadonly)
+                {
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("symbol '{0}' is read-only", Symbol))
+                    {
+                        AppendString = string.Format("Symbol {0} was defined at {1}:{2}", GetSymbolString(), variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                        AdditionalSource = ((ILocatable)variable).GetLocation()
+                    };
+                    return false;
+                }
+                else if (variable.GetValue() is Value value)
                 {
                     Value? newValue = value.To(type);
                     if (newValue == null)
                     {
-                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} of type {1} to type {2}", Symbol, value.Type, type));
+                        context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} of type {1} to type {2}", Symbol, value.Type, type))
+                        {
+                            AppendString = string.Format("Symbol {0} was defined at {1}:{2}", Symbol, variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                            AdditionalSource = ((ILocatable)variable).GetLocation()
+                        };
                         return false;
                     }
                     else
                     {
-                        context.SetSymbol(Symbol, newValue);
+                        variable.SetValue(newValue);
                         return true;
                     }
                 }

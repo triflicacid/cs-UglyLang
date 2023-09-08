@@ -10,7 +10,7 @@ namespace UglyLang.Source.Types
     /// </summary>
     public class MapType : Type
     {
-        public static readonly Dictionary<string, Property> Properties = Property.CreateDictionary(new Property[]
+        public static readonly Dictionary<string, Variable> Properties = Variable.CreateDictionary(new Variable[]
         {
             new("Delete", new FDelete()),
             new("Get", new FGet()),
@@ -76,7 +76,7 @@ namespace UglyLang.Source.Types
             return Constructor;
         }
 
-        public override Dictionary<string, Property> GetProperties()
+        public override Dictionary<string, Variable> GetProperties()
         {
             return Properties;
         }

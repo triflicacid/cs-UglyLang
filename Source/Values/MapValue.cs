@@ -52,10 +52,13 @@ namespace UglyLang.Source.Values
             return false;
         }
 
-        protected override Property? GetPropertyExtra(string name)
+        protected override Variable? GetPropertyExtra(string name)
         {
             if (name == ValueTypeProperty)
-                return new Property(ValueTypeProperty, new TypeValue(((MapType)Type).ValueType), true);
+                return new Variable(ValueTypeProperty, new TypeValue(((MapType)Type).ValueType))
+                {
+                    IsReadonly = true
+                };
             return null;
         }
     }

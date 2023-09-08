@@ -10,3 +10,9 @@ PRINTLN: Dump<x> ; => INT: 4
 ; "Shadow" variable x
 LET x: "Hello"
 PRINTLN: Dump<x> ; => STRING: "Hello"
+
+; Define a constant
+CONST pi: 3.14159
+; SET pi: 3 ; ERROR pi is read-only
+; LET pi: 3 ; ERROR pi is read-only and cannot be shadowed
+; CAST pi: INT ; ERROR pi is read-only

@@ -21,15 +21,15 @@ namespace UglyLang.Source.AST
         public new int ColumnNumber => Components[0].ColumnNumber;
 
         /// <summary>
-        /// Get the values of this symbol chain. Return (value, valueProperty, valuesParent), or null if error (see context.Error).
+        /// Get the values of this symbol chain. Return (value, valueVariable, valuesParent), or null if error (see context.Error).
         /// </summary>
-        private (ISymbolValue, Property?, Value?)? RetrieveValues(Context context)
+        private (ISymbolValue, Variable?, Value?)? RetrieveValues(Context context)
         {
             if (Components.Count == 0)
                 throw new InvalidOperationException();
 
             ISymbolValue? parent = null;
-            Property? parentProperty = null;
+            Variable? parentVar = null;
             Value? grandparent = null;
 
             foreach (ASTNode component in Components)
@@ -74,8 +74,8 @@ namespace UglyLang.Source.AST
                         if (parentValue.HasProperty(propertyName))
                         {
                             // Get the property
-                            parentProperty = parentValue.GetProperty(propertyName);
-                            parent = parentProperty.GetValue();
+                            parentVar = parentValue.GetProperty(propertyName);
+                            parent = (ISymbolValue)parentVar.GetValue();
                             if (parent is Types.Type t)
                                 parent = new TypeValue(t);
 
@@ -85,11 +85,11 @@ namespace UglyLang.Source.AST
                                 // Push new stack context
                                 if (func is Method method)
                                 {
-                                    context.PushMethodStackContext(component.LineNumber, component.ColumnNumber, propertyName, method.Owner);
+                                    context.PushMethodStackContext(component.LineNumber, component.ColumnNumber, parentVar, propertyName, method.Owner);
                                 }
                                 else
                                 {
-                                    context.PushStackContext(component.LineNumber, component.ColumnNumber, StackContextType.Function, propertyName);
+                                    context.PushStackContext(component.LineNumber, component.ColumnNumber, StackContextType.Function, parentVar, propertyName);
                                 }
 
                                 // Evaluate arguments
@@ -189,7 +189,7 @@ namespace UglyLang.Source.AST
                 throw new InvalidOperationException();
             }
 
-            return new(parent, parentProperty, grandparent);
+            return new(parent, parentVar, grandparent);
         }
 
         public override Value? Evaluate(Context context)
@@ -198,7 +198,7 @@ namespace UglyLang.Source.AST
             if (values == null)
                 return null; // Propagate
 
-            (ISymbolValue value, Property? _, ISymbolValue? _) = values.Value;
+            (ISymbolValue value, Variable? _, ISymbolValue? _) = values.Value;
 
             if (value is Value val)
                 return val;
@@ -214,21 +214,25 @@ namespace UglyLang.Source.AST
             if (values == null)
                 return false; // Propagate
 
-            (ISymbolValue oldChild, Property? property, Value? parent) = values.Value;
+            (ISymbolValue oldChild, var variable, Value? parent) = values.Value;
 
-            if (parent == null || property == null)
+            if (parent == null || variable == null)
                 throw new NullReferenceException();
 
             // Is readonly?
-            if (property.IsReadonly)
+            if (variable.IsReadonly)
             {
                 ASTNode latest = Components[^1];
-                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), property.GetName()));
+                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), variable.GetName()))
+                {
+                    AppendString = string.Format("Symbol {0} was defined at {1}:{2}", GetSymbolString(), variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                    AdditionalSource = ((ILocatable)variable).GetLocation()
+                };
                 return false;
             }
 
             // Make sure that the types line up
-            if (property.GetValue() is Value && oldChild is Value oldValue)
+            if (variable.GetValue() is Value && oldChild is Value oldValue)
             {
                 if (forceCast || oldValue.Type.DoesMatch(value.Type))
                 {
@@ -241,11 +245,11 @@ namespace UglyLang.Source.AST
                     else
                     {
                         // Update the property
-                        bool isOk = parent.SetProperty(property.GetName(), newValue);
+                        bool isOk = parent.SetProperty(variable.GetName(), newValue);
                         if (!isOk)
                         {
                             ASTNode latest = Components[^1];
-                            context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", property.GetName()));
+                            context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", variable.GetName()));
                         }
 
                         return isOk;
@@ -270,16 +274,20 @@ namespace UglyLang.Source.AST
             if (values == null)
                 return false; // Propagate
 
-            (ISymbolValue child, Property? property, Value? parent) = values.Value;
+            (ISymbolValue child, var variable, Value? parent) = values.Value;
 
-            if (parent == null || property == null)
+            if (parent == null || variable == null)
                 throw new NullReferenceException();
 
             // Is readonly?
-            if (property.IsReadonly)
+            if (variable.IsReadonly)
             {
                 ASTNode latest = Components[^1];
-                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot cast {0} to {1} as property {2} is read-only", GetSymbolString(), type, property.GetName()));
+                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot cast {0} to {1} as property {2} is read-only", GetSymbolString(), type, variable.GetName()))
+                {
+                    AppendString = string.Format("Symbol {0} was defined at {1}:{2}", GetSymbolString(), variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                    AdditionalSource = ((ILocatable)variable).GetLocation()
+                };
                 return false;
             }
 
@@ -297,16 +305,20 @@ namespace UglyLang.Source.AST
                 Value? newValue = oldValue.To(type);
                 if (newValue == null)
                 {
-                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} of type {1} to type {2}", GetSymbolString(), oldValue.Type, type));
+                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Cast, string.Format("casting {0} of type {1} to type {2}", GetSymbolString(), oldValue.Type, type))
+                    {
+                        AppendString = string.Format("Symbol {0} was defined at {1}:{2}", GetSymbolString(), variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                        AdditionalSource = ((ILocatable)variable).GetLocation()
+                    };
                     return false;
                 }
                 else
                 {
-                    bool isOk = parent.SetProperty(property.GetName(), newValue);
+                    bool isOk = parent.SetProperty(variable.GetName(), newValue);
                     if (!isOk)
                     {
                         ASTNode latest = Components[^1];
-                        context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be cast", property.GetName()));
+                        context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be cast", variable.GetName()));
                     }
 
                     return isOk;
@@ -327,21 +339,25 @@ namespace UglyLang.Source.AST
             if (values == null)
                 return false; // Propagate
 
-            (ISymbolValue oldChild, Property? property, Value? parent) = values.Value;
+            (ISymbolValue oldChild, var variable, Value? parent) = values.Value;
 
-            if (parent == null || property == null)
+            if (parent == null || variable == null)
                 throw new NullReferenceException();
 
             // Is readonly?
-            if (property.IsReadonly)
+            if (variable.IsReadonly)
             {
                 ASTNode latest = Components[^1];
-                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), property.GetName()));
+                context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("cannot set {0} as property {1} is read-only", GetSymbolString(), variable.GetName()))
+                {
+                    AppendString = string.Format("Symbol {0} was defined at {1}:{2}", GetSymbolString(), variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                    AdditionalSource = ((ILocatable)variable).GetLocation()
+                };
                 return false;
             }
 
             // Make sure that the types line up
-            if (property.GetValue() is Value && oldChild is Value oldValue)
+            if (variable.GetValue() is Value && oldChild is Value oldValue)
             {
                 // Transform value
                 Value? value = transformer(context, oldValue);
@@ -359,14 +375,15 @@ namespace UglyLang.Source.AST
                     else
                     {
                         // Update the property
-                        bool isOk = parent.SetProperty(property.GetName(), value);
-                        if (!isOk)
-                        {
-                            ASTNode latest = Components[^1];
-                            context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", property.GetName()));
-                        }
+                        variable.SetValue(value);
+                        //bool isOk = parent.SetProperty(variable.GetName(), value);
+                        //if (!isOk)
+                        //{
+                        //    ASTNode latest = Components[^1];
+                        //    context.Error = new(latest.LineNumber, latest.ColumnNumber, Error.Types.Name, string.Format("property {0} cannot be changed", variable.GetName()));
+                        //}
 
-                        return isOk;
+                        return true;
                     }
                 }
                 else

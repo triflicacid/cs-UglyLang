@@ -25,8 +25,8 @@ TYPE Vec
 		FINISH: SQRT<ADD<MUL<x,x>, MUL<y,y>>>
 	END
 
-	LET i: Vec<1, 0>
-	LET j: Vec<0, 1>
+	CONST i: Vec<1, 0>
+	CONST j: Vec<0, 1>
 END
 
 DEF Fn: <v: Vec>

@@ -2,16 +2,16 @@
 
 namespace UglyLang.Source.Values
 {
-    public class NamespaceValue : Value, ISymbolContainer
+    public class NamespaceValue : Value, IVariableContainer
     {
-        public Dictionary<string, ISymbolValue> Value;
+        public Dictionary<string, Variable> Value;
 
         public NamespaceValue() : base(new NamespaceType())
         {
             Value = new();
         }
 
-        public NamespaceValue(Dictionary<string, ISymbolValue> members) : base(new NamespaceType())
+        public NamespaceValue(Dictionary<string, Variable> members) : base(new NamespaceType())
         {
             Value = members;
         }
@@ -43,18 +43,18 @@ namespace UglyLang.Source.Values
             return false;
         }
 
-        protected override Property? GetPropertyExtra(string name)
+        protected override Variable? GetPropertyExtra(string name)
         {
             if (Value.ContainsKey(name))
-                return new(name, Value[name]);
+                return Value[name];
             return null;
         }
 
         protected override bool SetPropertyExtra(string name, ISymbolValue value)
         {
-            if (Value.ContainsKey(name) && Value[name] is Value)
+            if (Value.ContainsKey(name) && Value[name].GetValue() is Value)
             {
-                Value[name] = value;
+                Value[name].SetValue(value);
                 return true;
             }
 
@@ -71,19 +71,19 @@ namespace UglyLang.Source.Values
             return Value.ContainsKey(symbol);
         }
 
-        public ISymbolValue GetSymbol(string symbol)
+        public Variable GetSymbol(string symbol)
         {
             return Value[symbol];
         }
 
-        public void CreateSymbol(string symbol, ISymbolValue value)
+        public void CreateSymbol(Variable value)
         {
-            Value.Add(symbol, value);
+            Value.Add(value.GetName(), value);
         }
 
         public void SetSymbol(string symbol, ISymbolValue value)
         {
-            Value[symbol] = value;
+            Value[symbol].SetValue(value);
         }
     }
 }

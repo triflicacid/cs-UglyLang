@@ -1,6 +1,6 @@
 ﻿namespace UglyLang.Source
 {
-    public class Error
+    public class Error : ILocatable
     {
         public enum Types
         {
@@ -19,6 +19,7 @@
         public readonly Types Type;
         public readonly string Message;
         public string AppendString = "";
+        public Location? AdditionalSource = null;
 
         public Error(int lineNumber, int colNumber, Types type, string message)
         {
@@ -31,6 +32,16 @@
         public override string ToString()
         {
             return Type.ToString() + " Error (" + (LineNumber + 1) + ":" + (ColumnNumber + 1) + ") - " + Message;
+        }
+
+        public int GetLineNumber()
+        {
+            return LineNumber;
+        }
+
+        public int GetColumnNumber()
+        {
+            return ColumnNumber;
         }
     }
 }

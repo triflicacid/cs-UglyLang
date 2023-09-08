@@ -126,21 +126,20 @@ namespace UglyLang.Source.Values
             if (name == MemberTypeProperty)
                 return true;
             if (double.TryParse(name, out double n) && n >= 0 && n < Value.Count)
-            {
                 return true;
-            }
 
             return false;
         }
 
-        protected override Property? GetPropertyExtra(string name)
+        protected override Variable? GetPropertyExtra(string name)
         {
             if (name == MemberTypeProperty)
-                return new Property(MemberTypeProperty, new TypeValue(((ListType)Type).Member), true);
+                return new Variable(MemberTypeProperty, new TypeValue(((ListType)Type).Member))
+                {
+                    IsReadonly = true
+                };
             if (double.TryParse(name, out double n) && n >= 0 && n < Value.Count)
-            {
-                return new Property(name, Value[(int)n]);
-            }
+                return new Variable(name, Value[(int)n]);
 
             return null;
         }

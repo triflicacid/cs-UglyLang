@@ -43,7 +43,7 @@ namespace UglyLang.Source.Values
             return Value.HasStaticProperty(name);
         }
 
-        protected override Property? GetPropertyExtra(string name)
+        protected override Variable? GetPropertyExtra(string name)
         {
             return Value.GetStaticProperty(name);
         }

@@ -31,7 +31,7 @@ namespace UglyLang.Source.AST.Keyword
             if (s == Signal.ERROR)
                 return s;
             context.PopStack();
-            context.CreateSymbol(Name, ns);
+            context.CreateSymbol(new(Name, ns));
 
             return Signal.NONE;
         }

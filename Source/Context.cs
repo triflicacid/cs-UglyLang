@@ -4,9 +4,9 @@ using static UglyLang.Source.ParseOptions;
 
 namespace UglyLang.Source
 {
-    public class Context : ISymbolContainer
+    public class Context : IVariableContainer
     {
-        private readonly List<ISymbolContainer> Stack; // Stack of pushed contexts. It can be any symbol container, but at runtime it is always an AbstractStackContext.
+        private readonly List<IVariableContainer> Stack; // Stack of pushed contexts. It can be any symbol container, but at runtime it is always an AbstractStackContext.
         public Error? Error = null;
         public readonly ParseOptions ParseOptions;
 
@@ -15,9 +15,12 @@ namespace UglyLang.Source
         /// </summary>
         public Context(ParseOptions options, string filename)
         {
-            Stack = new() { new StackContext(0, 0, StackContextType.File, filename) };
+            Stack = new() { new StackContext(0, 0, StackContextType.File, null, filename) };
             ParseOptions = options;
-            CreateSymbol("_BaseDir", new StringValue(options.BaseDirectory));
+            CreateSymbol(new("_BaseDir", new StringValue(options.BaseDirectory))
+            {
+                IsReadonly = true
+            });
         }
 
         /// <summary>
@@ -36,7 +39,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Get the value of the given variable or throw an error. Looks from the topmost scope downwards.
         /// </summary>
-        public ISymbolValue GetSymbol(string name)
+        public Variable GetSymbol(string name)
         {
             for (int i = Stack.Count - 1; i >= 0; i--)
             {
@@ -48,27 +51,8 @@ namespace UglyLang.Source
         }
 
         /// <summary>
-        /// Set the value of the given symbol, or create a new one. Sets from the topmost scope down.
-        /// </summary>
-        public void SetSymbol(string name, ISymbolValue value)
-        {
-            for (int i = Stack.Count - 1; i >= 0; i--)
-            {
-                if (Stack[i].HasSymbol(name))
-                {
-                    Stack[i].SetSymbol(name, value);
-                    return;
-                }
-            }
-
-            CreateSymbol(name, value);
-        }
-
-        /// <summary>
         /// Can the followig symbol be created?
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
         public bool CanCreateSymbol(string name)
         {
             return !Stack[^1].HasSymbol(name);
@@ -77,12 +61,12 @@ namespace UglyLang.Source
         /// <summary>
         /// Creates a new symbol in the topmost scope and sets it
         /// </summary>
-        public void CreateSymbol(string name, ISymbolValue value)
+        public void CreateSymbol(Variable value)
         {
-            if (!CanCreateSymbol(name))
-                throw new InvalidOperationException(name);
+            if (!CanCreateSymbol(value.GetName()))
+                throw new InvalidOperationException(value.GetName());
 
-            Stack[^1].CreateSymbol(name, value);
+            Stack[^1].CreateSymbol(value);
         }
 
         private string GetSourceLine(string filename, int lineNumber)
@@ -124,7 +108,7 @@ namespace UglyLang.Source
             return Error == null ? "" : ErrorToString(Error);
         }
 
-        private string GetLineError(int stackIdx, int lineNumber, int colNumber)
+        private string GetLineError(int stackIdx, int lineNumber, int colNumber, string pad1 = "", string? pad2 = null)
         {
             string line = GetSourceLine(stackIdx, lineNumber);
             int origLength = line.Length;
@@ -132,18 +116,18 @@ namespace UglyLang.Source
             string lineNumberS = (lineNumber + 1).ToString();
             int colIdx = colNumber - (origLength - line.Length);
 
-            string str = Environment.NewLine + (lineNumber + 1) + " | " + line;
+            string str = Environment.NewLine + pad1 + (lineNumber + 1) + " | " + line;
             string pre = new(' ', lineNumberS.Length);
             if (colIdx >= line.Length)
             {
-                Console.WriteLine($"BEFORE: #{lineNumber} '{line}' ({line.Length}) {colNumber} {origLength} {colIdx}'");
+                // Console.WriteLine($"BEFORE: #{lineNumber} '{line}' ({line.Length}) {colNumber} {origLength} {colIdx}'");
                 throw new ArgumentOutOfRangeException("colIdx=" + colIdx);
             }
             else
             {
                 string before = Parser.NonWhitespaceRegex.Replace(line[..colIdx], " ");
                 string after = Parser.NonWhitespaceRegex.Replace(line[colIdx..], " ");
-                str += Environment.NewLine + pre + "   " + before + "^" + after + Environment.NewLine;
+                str += Environment.NewLine + (pad2 ?? pad1) + pre + "   " + before + "^" + after + Environment.NewLine;
             }
 
             return str;
@@ -163,7 +147,16 @@ namespace UglyLang.Source
                     str += frame.ToString() + Environment.NewLine;
 
                     if (i != 0)
+                    {
                         str += GetLineError(i == 0 ? 0 : i - 1, frame.LineNumber, frame.ColNumber);
+
+                        if (frame.Initiator != null)
+                        {
+                            string initStr = frame.GetInitiatedString();
+                            if (initStr.Length > 0)
+                                str += " > " + initStr + Environment.NewLine + "   " + GetLineError(i == 0 ? 0 : i - 1, frame.Initiator.GetLineNumber(), frame.Initiator.GetColumnNumber(), "   ", null);
+                        }
+                    }
                 }
 
             }
@@ -173,6 +166,8 @@ namespace UglyLang.Source
 
             if (error.AppendString.Length > 0)
                 str += error.AppendString;
+            if (error.AdditionalSource != null)
+                str += (error.AppendString.Length == 0 ? "" : Environment.NewLine) + GetLineError(Stack.Count - 1, error.AdditionalSource.GetLineNumber(), error.AdditionalSource.GetColumnNumber());
 
             return str;
         }
@@ -180,7 +175,7 @@ namespace UglyLang.Source
         /// <summary>
         /// Push a new item on to the stack
         /// </summary>
-        public void PushStack(ISymbolContainer container)
+        public void PushStack(IVariableContainer container)
         {
             Stack.Add(container);
         }
@@ -188,25 +183,25 @@ namespace UglyLang.Source
         /// <summary>
         /// Push a new stack context
         /// </summary>
-        public void PushStackContext(int line, int col, StackContextType type, string name, TypeParameterCollection? typeParams = null)
+        public void PushStackContext(int line, int col, StackContextType type, ILocatable? initiator, string name, TypeParameterCollection? typeParams = null)
         {
-            Stack.Add(new StackContext(line, col, type, name, typeParams));
+            Stack.Add(new StackContext(line, col, type, initiator, name, typeParams));
         }
 
         /// <summary>
         /// Push a new method stack context
         /// </summary>
-        public void PushMethodStackContext(int line, int col, string name, UserValue owner)
+        public void PushMethodStackContext(int line, int col, ILocatable? initiator, string name, UserValue owner)
         {
-            Stack.Add(new MethodStackContext(line, col, name, owner));
+            Stack.Add(new MethodStackContext(line, col, initiator, name, owner));
         }
 
         /// <summary>
         /// Push a new proxy stack context forthe latest stack context
         /// </summary>
-        public void PushProxyStackContext(int line, int col, StackContextType type, string name)
+        public void PushProxyStackContext(int line, int col, StackContextType type, ILocatable? initiator, string name)
         {
-            Stack.Add(new ProxyStackContext(line, col, type, name, (AbstractStackContext)Stack[^1]));
+            Stack.Add(new ProxyStackContext(line, col, type, initiator, name, (AbstractStackContext)Stack[^1]));
         }
 
         public AbstractStackContext PeekStackContext()
@@ -214,7 +209,7 @@ namespace UglyLang.Source
             return (AbstractStackContext)Stack[^1];
         }
 
-        public ISymbolContainer PeekStack()
+        public IVariableContainer PeekStack()
         {
             return Stack[^1];
         }
@@ -230,11 +225,11 @@ namespace UglyLang.Source
         /// <summary>
         /// Pop the latest item from the stack
         /// </summary>
-        public ISymbolContainer PopStack()
+        public IVariableContainer PopStack()
         {
             if (Stack.Count < 2)
                 throw new InvalidOperationException();
-            ISymbolContainer peek = Stack[^1];
+            IVariableContainer peek = Stack[^1];
             Stack.RemoveAt(Stack.Count - 1);
             return peek;
         }
@@ -264,7 +259,7 @@ namespace UglyLang.Source
         public TypeParameterCollection GetBoundTypeParams()
         {
             TypeParameterCollection c = new();
-            foreach (ISymbolContainer context in Stack)
+            foreach (IVariableContainer context in Stack)
             {
                 if (context is AbstractStackContext stackContext)
                     c.MergeWith(stackContext.GetTypeParameters());
@@ -306,7 +301,7 @@ namespace UglyLang.Source
             if (replaceCachedNamespace || cache.Namespace == null)
             {
                 // Push the new stack context
-                PushStackContext(entryLine, entryColumn, StackContextType.File, path);
+                PushStackContext(entryLine, entryColumn, StackContextType.File, null, path);
 
                 s = p.GetAST().Evaluate(this);
                 if (s == Signal.ERROR)
@@ -333,7 +328,7 @@ namespace UglyLang.Source
                 .Where(p => type.IsAssignableFrom(p) && !p.IsInterface)
                 .Select(o => (IDefinedGlobally)Activator.CreateInstance(o)))
             {
-                CreateSymbol(x.GetDefinedName(), x);
+                CreateSymbol(new(x.GetDefinedName(), x));
             }
         }
     }

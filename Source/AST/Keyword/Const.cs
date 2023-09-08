@@ -3,14 +3,14 @@
 namespace UglyLang.Source.AST.Keyword
 {
     /// <summary>
-    /// Node for the LET keyword - create a new variable
+    /// Node for the CONST keyword - create a new constant
     /// </summary>
-    public class LetKeywordNode : KeywordNode
+    public class ConstKeywordNode : KeywordNode
     {
         public readonly string Name;
         public readonly ExprNode Value;
 
-        public LetKeywordNode(string name, ExprNode value)
+        public ConstKeywordNode(string name, ExprNode value)
         {
             Name = name;
             Value = value;
@@ -28,24 +28,19 @@ namespace UglyLang.Source.AST.Keyword
                 {
                     LineNumber = LineNumber,
                     ColumnNumber = ColumnNumber,
+                    IsReadonly = true
                 });
             }
             else
             {
                 var variable = context.GetSymbol(Name);
-                if (variable.IsReadonly)
+                context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("symbol '{0}' already exists", Name))
                 {
-                    context.Error = new(LineNumber, ColumnNumber, Error.Types.Name, string.Format("symbol '{0}' is read-only and cannot be shadowed", Name))
-                    {
-                        AppendString = string.Format("Previously defined at {0}:{1}", variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
-                        AdditionalSource = ((ILocatable)variable).GetLocation()
-                    };
-                    return Signal.ERROR;
-                }
-                else
-                {
-                    variable.SetValue(evaldValue);
-                }
+                    AppendString = string.Format("Previously defined at {0}:{1}", variable.GetLineNumber() + 1, variable.GetColumnNumber() + 1),
+                    AdditionalSource = ((ILocatable)variable).GetLocation()
+                };
+                
+                return Signal.ERROR;
             }
 
             return Signal.NONE;

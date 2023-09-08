@@ -17,22 +17,20 @@ namespace UglyLang.Source
     { }
 
     /// <summary>
-    /// Represent a structure whichcontains symbols
+    /// Represent a structure which contains variables
     /// </summary>
-    public interface ISymbolContainer
+    public interface IVariableContainer
     {
         public bool HasSymbol(string symbol);
 
-        public ISymbolValue GetSymbol(string symbol);
+        public Variable GetSymbol(string symbol);
 
         public virtual bool CanCreateSymbol(string name)
         {
             return true;
         }
 
-        public void CreateSymbol(string symbol, ISymbolValue value);
-
-        public void SetSymbol(string symbol, ISymbolValue value);
+        public void CreateSymbol(Variable value);
     }
 
     public interface ICallable
@@ -41,5 +39,38 @@ namespace UglyLang.Source
         /// Call the given function with said arguments. Redirect call to CallOverload once the correct overload has been found. All stack context preparations should be done before calling this method.
         /// </summary>
         public Signal Call(Context context, List<Value> arguments, int lineNumber, int colNumber);
+    }
+
+    public interface ILocatable
+    {
+        public int GetLineNumber();
+        public int GetColumnNumber();
+
+        public Location GetLocation()
+        {
+            return new(GetLineNumber(), GetColumnNumber());
+        }
+    }
+
+    public class Location : ILocatable
+    {
+        private readonly int LineNumber;
+        private readonly int ColumnNumber;
+
+        public Location(int lineNumber, int columnNumber)
+        {
+            LineNumber = lineNumber;
+            ColumnNumber = columnNumber;
+        }
+
+        public int GetLineNumber()
+        {
+            return LineNumber;
+        }
+
+        public int GetColumnNumber()
+        {
+            return ColumnNumber;
+        }
     }
 }

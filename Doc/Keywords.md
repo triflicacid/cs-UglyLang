@@ -13,6 +13,7 @@ The following document will describe each keyword, split up into appropriate sec
 | Keyword | Before | After | Description |
 | - | - | - | - |
 | `CAST` | `symbol_chain` | `type` | Change the type of the given symbol/property. |
+| `LET` | `symbol` | `expr` | Defines a new symbol and initialises it. Once defined, the symbol cannot be changed nor shadowed. |
 | `DEC` | `symbol_chain` | none | Decrement the given numerical symbol. |
 | `DO` | none | none | Creates a do-block. Code execution proceeds as normal, but in a new scope, like a function. |
 | `DO` | none | `expr` | Evaluate the given expression. |

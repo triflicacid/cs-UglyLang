@@ -10,7 +10,7 @@ namespace UglyLang.Source.Types
     /// </summary>
     public class ListType : Type
     {
-        public static readonly Dictionary<string, Property> Properties = Property.CreateDictionary(new Property[]
+        public static readonly Dictionary<string, Variable> Properties = Variable.CreateDictionary(new Variable[]
         {
             new("Add", new FAdd()),
             new("Contains", new FContains()),
@@ -68,7 +68,7 @@ namespace UglyLang.Source.Types
 
         public override Type ResolveParametersAgainst(TypeParameterCollection col)
         {
-            return Type.List(Member.ResolveParametersAgainst(col));
+            return List(Member.ResolveParametersAgainst(col));
         }
 
         public override bool CanConstruct()
@@ -81,7 +81,7 @@ namespace UglyLang.Source.Types
             return Constructor;
         }
 
-        public override Dictionary<string, Property> GetProperties()
+        public override Dictionary<string, Variable> GetProperties()
         {
             return Properties;
         }

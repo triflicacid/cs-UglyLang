@@ -5,7 +5,7 @@ namespace UglyLang.Source.AST
     /// <summary>
     ///  Base class for a node in an AST
     /// </summary>
-    public abstract class ASTNode
+    public abstract class ASTNode : ILocatable
     {
         public int LineNumber = 0;
         public int ColumnNumber = 0;
@@ -17,6 +17,16 @@ namespace UglyLang.Source.AST
         public virtual Signal Action(Context context)
         {
             return Signal.NONE;
+        }
+
+        public int GetLineNumber()
+        {
+            return LineNumber;
+        }
+
+        public int GetColumnNumber()
+        {
+            return ColumnNumber;
         }
     }
 }

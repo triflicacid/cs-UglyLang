@@ -76,6 +76,7 @@ namespace UglyLang.Source.Functions
                 if (overload.IsMatch(context, receivedArgumentTypes, typeParameters))
                 {
                     chosenOverload = overload;
+                    context.PeekStackContext().Initiator = overload;
                     break;
                 }
                 else
@@ -144,7 +145,7 @@ namespace UglyLang.Source.Functions
             // Set type parameters as variables, so they can be referenced as types
             foreach (string p in typeParameters.GetParamerNames())
             {
-                context.CreateSymbol(p, new TypeValue(typeParameters.GetParameter(p)));
+                context.CreateSymbol(new(p, new TypeValue(typeParameters.GetParameter(p))));
             }
 
             // Invoke the overload

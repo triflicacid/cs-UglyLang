@@ -32,7 +32,7 @@ namespace UglyLang.Source.AST.Keyword
             Function func;
             if (context.HasSymbol(Name))
             {
-                ISymbolValue variable = context.GetSymbol(Name);
+                ISymbolValue variable = (ISymbolValue)context.GetSymbol(Name).GetValue();
                 if (variable is Function funcValue)
                 {
                     func = funcValue;
@@ -46,7 +46,11 @@ namespace UglyLang.Source.AST.Keyword
             else
             {
                 func = new Function();
-                context.CreateSymbol(Name, func);
+                context.CreateSymbol(new(Name, func)
+                {
+                    LineNumber = LineNumber,
+                    ColumnNumber = ColumnNumber
+                });
             }
 
 
@@ -99,7 +103,12 @@ namespace UglyLang.Source.AST.Keyword
             }
 
             // Create the overload and attempt to register it with the function
-            UserFunctionOverload overload = new(resolvedArguments, Body, resolvedReturnType, resolvedConstraints);
+            UserFunctionOverload overload = new(resolvedArguments, Body, resolvedReturnType, resolvedConstraints)
+            {
+                LineNumber = LineNumber,
+                ColumnNumber = ColumnNumber
+            };
+
             if (!func.RegisterOverload(overload))
             {
                 context.Error = new(LineNumber, ColumnNumber, Error.Types.Type, string.Format("an overload matching this signature has already been defined\n<{0}> -> {1}", string.Join(",", resolvedArguments.Select(p => p.Item2)), resolvedReturnType));

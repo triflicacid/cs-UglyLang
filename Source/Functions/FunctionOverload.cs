@@ -6,13 +6,15 @@ namespace UglyLang.Source.Types
     /// <summary>
     /// An overload of a function.
     /// </summary>
-    public abstract class FunctionOverload
+    public abstract class FunctionOverload : ILocatable
     {
-        public readonly Types.Type[] ArgumentTypes;
-        public readonly Types.Type ReturnType;
-        public readonly Dictionary<string, Types.Type[]> Constraints;
+        public readonly Type[] ArgumentTypes;
+        public readonly Type ReturnType;
+        public readonly Dictionary<string, Type[]> Constraints;
+        public int LineNumber = 0;
+        public int ColumnNumber = 0;
 
-        public FunctionOverload(Types.Type[] argumentTypes, Types.Type returnType, Dictionary<string, Types.Type[]>? constraints = null)
+        public FunctionOverload(Type[] argumentTypes, Type returnType, Dictionary<string, Type[]>? constraints = null)
         {
             ArgumentTypes = argumentTypes;
             ReturnType = returnType;
@@ -22,7 +24,7 @@ namespace UglyLang.Source.Types
         /// <summary>
         /// Check if the given arguments match against this overload. Populate the type parameter collection with the resolved type parameters. The context.Error field may be set, so keep an eye out for that.
         /// </summary>
-        public bool IsMatch(Context context, List<Types.Type> arguments, TypeParameterCollection typeParameters)
+        public bool IsMatch(Context context, List<Type> arguments, TypeParameterCollection typeParameters)
         {
             if (arguments.Count != ArgumentTypes.Length)
                 return false;
@@ -38,13 +40,13 @@ namespace UglyLang.Source.Types
 
                         foreach (string p in result.GetParamerNames())
                         {
-                            Types.Type pType = result.GetParameter(p);
+                            Type pType = result.GetParameter(p);
 
                             // Does the parameter match up with the constraints
-                            if (Constraints.TryGetValue(p, out Types.Type[]? constraints))
+                            if (Constraints.TryGetValue(p, out Type[]? constraints))
                             {
                                 bool found = false;
-                                foreach (Types.Type constraint in constraints)
+                                foreach (Type constraint in constraints)
                                 {
                                     if (pType.Equals(constraint))
                                     {
@@ -60,7 +62,7 @@ namespace UglyLang.Source.Types
                             // Does the result match with the existing type parameter type?
                             if (typeParameters.HasParameter(p))
                             {
-                                Types.Type oType = typeParameters.GetParameter(p);
+                                Type oType = typeParameters.GetParameter(p);
                                 if (!oType.Equals(pType)) // BAD
                                 {
                                     context.Error = new(0, 0, Error.Types.Type, string.Format("type parameter {0} in argument {1}: expected {2}, got {3}", p, i + 1, oType, pType));
@@ -88,6 +90,16 @@ namespace UglyLang.Source.Types
         /// Call this overload.
         /// </summary>
         public abstract Signal Call(Context context, List<Value> arguments, TypeParameterCollection typeParameters, int lineNumber, int colNumber);
+
+        public int GetLineNumber()
+        {
+            return LineNumber;
+        }
+
+        public int GetColumnNumber()
+        {
+            return ColumnNumber;
+        }
     }
 
     public class UserFunctionOverload : FunctionOverload
@@ -107,7 +119,7 @@ namespace UglyLang.Source.Types
             // Create variables for the parameters
             for (int i = 0; i < arguments.Count; i++)
             {
-                context.CreateSymbol(ParameterNames[i], arguments[i]);
+                context.CreateSymbol(new(ParameterNames[i], arguments[i]));
             }
 
             // Evaluate the function's body

@@ -3,24 +3,28 @@ using UglyLang.Source.Values;
 
 namespace UglyLang.Source.Types
 {
-    public class UserType : Type, ISymbolValue
+    public class UserType : Type, ILocatable, ISymbolValue
     {
         private static int GlobalId = 0; // Give each type instance a new ID
 
         public readonly int Id;
         public readonly string Name;
-        private readonly Dictionary<string, Type> Fields; // Contains the fields of an instance
-        private readonly Dictionary<string, Function> Methods; // Contains methods
+        private readonly Dictionary<string, Variable> Fields; // Contains the fields of an instance
+        private readonly Dictionary<string, Variable> Methods; // Contains methods
         public NamespaceValue Statics = new(); // Store static members
         public readonly Function? Constructor;
+        public readonly int LineNumber;
+        public readonly int ColNumber;
 
-        public UserType(string name)
+        public UserType(string name, int lineNo, int colNo)
         {
             Name = name;
             Fields = new();
             Methods = new();
             Constructor = null;
             Id = GlobalId++;
+            ColNumber = colNo;
+            LineNumber = lineNo;
         }
 
         public UserType(UserTypeDataContainer data)
@@ -30,6 +34,8 @@ namespace UglyLang.Source.Types
             Methods = data.Functions;
             Constructor = data.Constructor.CountOverloads() == 0 ? null : data.Constructor;
             Id = GlobalId++;
+            ColNumber = data.ColNumber;
+            LineNumber = data.LineNumber;
         }
 
         /// <summary>
@@ -40,7 +46,7 @@ namespace UglyLang.Source.Types
             UserValue value = new(this);
             foreach (var t in GetAllFields())
             {
-                value.FieldValues.Add(t.Item1, new EmptyValue(t.Item2));
+                value.FieldValues.Add(t.Item1, new(t.Item2, new EmptyValue((Type)t.Item2.GetValue())));
             }
 
             return value;
@@ -51,7 +57,7 @@ namespace UglyLang.Source.Types
             return Methods.ContainsKey(methodName);
         }
 
-        public Function GetMethod(string methodName)
+        public Variable GetMethod(string methodName)
         {
             return Methods[methodName];
         }
@@ -66,14 +72,24 @@ namespace UglyLang.Source.Types
             return Fields.ContainsKey(fieldName);
         }
 
-        public Type GetField(string fieldName)
+        public Variable GetField(string fieldName)
         {
             return Fields[fieldName];
         }
 
-        public Tuple<string, Type>[] GetAllFields()
+        public Tuple<string, Variable>[] GetAllFields()
         {
-            return Fields.Select(p => new Tuple<string, Type>(p.Key, p.Value)).ToArray();
+            return Fields.Select(p => new Tuple<string, Variable>(p.Key, p.Value)).ToArray();
+        }
+
+        public bool HasStaticField(string fieldName)
+        {
+            return Statics.HasSymbol(fieldName);
+        }
+
+        public Variable GetStaticField(string fieldName)
+        {
+            return Statics.GetSymbol(fieldName);
         }
 
         public override string ToString()
@@ -126,37 +142,49 @@ namespace UglyLang.Source.Types
             return Statics.HasSymbol(name);
         }
 
-        public override Property? GetStaticProperty(string name)
+        public override Variable? GetStaticProperty(string name)
         {
-            return new(name, Statics.GetSymbol(name), true);
+            return Statics.GetSymbol(name);
         }
 
         public override bool IsTypeOf(Value v)
         {
             return v.Type is UserType ut && Id == ut.Id;
         }
+
+        public int GetLineNumber()
+        {
+            return LineNumber;
+        }
+
+        public int GetColumnNumber()
+        {
+            return ColNumber;
+        }
     }
 
     /// <summary>
     /// A special symbol container used by TypeKeywordNode.
     /// </summary>
-    public class UserTypeDataContainer : ISymbolContainer
+    public class UserTypeDataContainer : IVariableContainer
     {
         public readonly string Name;
-        public readonly Dictionary<string, Function> Functions = new();
-        public readonly Dictionary<string, Type> Fields = new();
+        public readonly Dictionary<string, Variable> Functions = new();
+        public readonly Dictionary<string, Variable> Fields = new();
         public readonly Function Constructor = new();
+        public int LineNumber = -1;
+        public int ColNumber = -1;
 
         public UserTypeDataContainer(string name)
         {
             Name = name;
         }
 
-        public void CreateSymbol(string symbol, ISymbolValue value)
+        public void CreateSymbol(Variable value)
         {
-            if (value is Function f)
+            if (value.GetValue() is Function)
             {
-                Functions.Add(symbol, f);
+                Functions.Add(value.GetName(), value);
             }
             else
             {
@@ -164,7 +192,7 @@ namespace UglyLang.Source.Types
             }
         }
 
-        public ISymbolValue GetSymbol(string symbol)
+        public Variable GetSymbol(string symbol)
         {
             if (Functions.ContainsKey(symbol))
                 return Functions[symbol];
@@ -174,18 +202,6 @@ namespace UglyLang.Source.Types
         public bool HasSymbol(string symbol)
         {
             return Functions.ContainsKey(symbol) || Fields.ContainsKey(symbol);
-        }
-
-        public void SetSymbol(string symbol, ISymbolValue value)
-        {
-            if (value is Function f)
-            {
-                Functions[symbol] = f;
-            }
-            else
-            {
-                throw new ArgumentException(value.ToString());
-            }
         }
     }
 }

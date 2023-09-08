@@ -42,12 +42,12 @@ namespace UglyLang.Source.Values
             return false;
         }
 
-        public Property GetProperty(string name)
+        public Variable GetProperty(string name)
         {
             if (!HasProperty(name))
                 throw new InvalidOperationException(name);
 
-            Property? prop = Type.GetProperties().ContainsKey(name) ? Type.GetProperties()[name] : GetPropertyExtra(name);
+            Variable? prop = Type.GetProperties().ContainsKey(name) ? Type.GetProperties()[name] : GetPropertyExtra(name);
             if (prop == null)
                 throw new NullReferenceException();
             if (AreFunctionsContextual() && prop.GetValue() is Function func)
@@ -58,7 +58,7 @@ namespace UglyLang.Source.Values
             return prop;
         }
 
-        protected virtual Property? GetPropertyExtra(string name)
+        protected virtual Variable? GetPropertyExtra(string name)
         {
             return null;
         }
@@ -67,14 +67,13 @@ namespace UglyLang.Source.Values
         {
             // Insert into a function context?
             if (value is Function func)
-            {
                 value = new FunctionContext(func, this);
-            }
 
             var properties = Type.GetProperties();
             if (properties.ContainsKey(name))
             {
-                return properties[name].SetValue(value);
+                properties[name].SetValue(value);
+                return true;
             }
             else
             {

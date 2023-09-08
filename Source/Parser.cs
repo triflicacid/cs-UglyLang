@@ -246,7 +246,11 @@ namespace UglyLang.Source
                     if (colNumber == line.Length)
                     {
                         // Create keyword node and add to tree structure
-                        DefKeywordNode defNode = new(functionName, new(), ResolvedType.Empty);
+                        DefKeywordNode defNode = new(functionName, new(), ResolvedType.Empty)
+                        {
+                            LineNumber = lineNumber,
+                            ColumnNumber = startOfLineCol
+                        };
                         trees.Peek().AddNode(defNode);
                         trees.Push(new());
                         infoStack.Push((defNode, keywordInfo));
@@ -351,7 +355,11 @@ namespace UglyLang.Source
                     }
 
                     // Create keyword node and add to tree structure
-                    DefKeywordNode node = new(functionName, argumentPairs, returnType, constraints);
+                    DefKeywordNode node = new(functionName, argumentPairs, returnType, constraints)
+                    {
+                        LineNumber = lineNumber,
+                        ColumnNumber = startOfLineCol
+                    };
                     trees.Peek().AddNode(node);
 
                     // Should be at the end of the line
@@ -618,6 +626,11 @@ namespace UglyLang.Source
                     case "CAST":
                         {
                             keywordNode = new CastKeywordNode((AbstractSymbolNode)before, new UnresolvedType(((SymbolNode)after).Symbol));
+                            break;
+                        }
+                    case "CONST":
+                        {
+                            keywordNode = new ConstKeywordNode(((SymbolNode)before).Symbol, (ExprNode)after);
                             break;
                         }
                     case "DEC":

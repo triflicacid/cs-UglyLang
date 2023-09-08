@@ -1,4 +1,5 @@
-﻿using UglyLang.Source.Types;
+﻿using UglyLang.Source.Functions;
+using UglyLang.Source.Types;
 using static UglyLang.Source.Functions.Function;
 
 namespace UglyLang.Source.Values
@@ -6,7 +7,7 @@ namespace UglyLang.Source.Values
     public class UserValue : Value
     {
         /// Contains all the values of associated fields in UserType. Must be set up externally.
-        public Dictionary<string, Value> FieldValues = new();
+        public Dictionary<string, Variable> FieldValues = new();
 
         public UserValue(UserType type) : base(type)
         { }
@@ -28,24 +29,33 @@ namespace UglyLang.Source.Values
             if (type is UserType ut && ((UserType)Type).Id == ut.Id)
                 return this;
             if (type is StringType)
-                return new StringValue("@" + ((UserType)Type).Name);
+                return new StringValue(((UserType)Type).Name);
             return null;
         }
 
         protected override bool HasPropertyExtra(string name)
         {
-            return ((UserType)Type).HasField(name) || ((UserType)Type).HasMethod(name);
+            return ((UserType)Type).HasField(name) || ((UserType)Type).HasMethod(name) || ((UserType)Type).HasStaticField(name);
         }
 
-        protected override Property? GetPropertyExtra(string name)
+        protected override Variable? GetPropertyExtra(string name)
         {
             if (((UserType)Type).HasMethod(name))
             {
-                return new(name, new Method(((UserType)Type).GetMethod(name), this), true);
+                Variable method = ((UserType)Type).GetMethod(name);
+                Variable v = new(method, new Method((Function)method.GetValue(), this))
+                {
+                    IsReadonly = true
+                };
+                return v;
             }
             else if (FieldValues.ContainsKey(name))
             {
-                return new(name, FieldValues[name]);
+                return FieldValues[name];
+            }
+            else if (((UserType)Type).HasStaticField(name))
+            {
+                return ((UserType)Type).GetStaticField(name);
             }
             else
             {
@@ -57,7 +67,7 @@ namespace UglyLang.Source.Values
         {
             if (FieldValues.ContainsKey(name))
             {
-                FieldValues[name] = (Value)value;
+                FieldValues[name].SetValue((Value)value);
                 return true;
             }
             else
